@@ -46,7 +46,7 @@ just_episode_regexs = [
     '(^|[ \.\-_])e(p{0,1}|(pisode){0,1})[ \.\-_]*(?P<ep>[0-9]{2,3})([^0-9c-uw-z%]|$)', # Blah Blah ep234
     '.*?[ \.\-_](?P<ep>[0-9]{2,3})[^0-9c-uw-z%]+',         # Flah - 04 - Blah
     '.*?[ \.\-_](?P<ep>[0-9]{2,3})$',                      # Flah - 04
-    '.*?[^0-9x](?P<ep>[0-9]{2,3})$'                        # Flah707
+    '.*?[^0-9x](?<!OP)(?<!ED)(?P<ep>\d{2,3})' # Flah707 as long as it isn't precede by op, ed
   ]
 # BABS -- modified "Blah Blah ep234" expression to only look for e, ep, or episode -- original scanner looked for e followed by 0 or more a-z
 
@@ -55,20 +55,20 @@ ends_with_number = '.*([0-9]{1,2})$'
 ends_with_episode = ['[ ]*[0-9]{1,2}x[0-9]{1,3}$', '[ ]*S[0-9]+E[0-9]+$']
 
 # Look for episodes.
-def Scan(path, files, mediaList, subdirs):
+def Scan(path, files, mediaList, subdirs, language=None, root=None):
 
   print "BABS: Scan"
   
   # Scan for video files.
-  VideoFiles.Scan(path, files, mediaList, subdirs)
-  
+  VideoFiles.Scan(path, files, mediaList, subdirs, root)
+
   # Take top two as show/season, but require at least the top one.
   paths = Utils.SplitPath(path)
-  
+
   if len(paths) == 1 and len(paths[0]) == 0:
 
     print "BABS: len(paths) == 1 and len(paths[0]) == 0"
-  
+
     # Run the select regexps we allow at the top level.
     for i in files:
       file = os.path.basename(i)
@@ -279,6 +279,10 @@ def Scan(path, files, mediaList, subdirs):
             file = re.sub(rx, ' ', file)
 
           print "BABS: after whackRx, file = |", file, "|"
+
+          #BABS: Before matching for episdodes replace the show name with an X to prevent the regex from matching the show name
+          #important for 3x3 Eyes since 3x3 generally means season 3 episode 3
+          file = re.sub(show, 'X', file)
           
           for rx in episode_regexps:
             
