@@ -9,9 +9,9 @@ How to name the file ?
 ======================
 
 <CODE>
-   Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext
-   
-   File naming convention   Template                              Exemple
+   Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext<BR>
+   <BR>
+   File naming convention   Template                              Exemple<BR>
    ======================   ===================================   ==================================================================
    Splitting folders:       0-9                                   0-9, A,...,Z folder. Add EACH as folder. Do not use the parent folder
    ----------------------   -----------------------------------   ------------------------------------------------------------------
