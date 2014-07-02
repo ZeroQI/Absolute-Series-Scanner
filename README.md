@@ -2,38 +2,41 @@ Naming Conventions Rules by ZeroQI
 ========================
 
 <UL>
-  <LI> Naming convention: Plex:  https://oldwiki.plexapp.com/index.php?title=Media_Naming_and_Organization_Guide<BR>
-                           https://support.plex.tv/hc/en-us/categories/200028098-Media-Preparation</LI>
-  <LI> Naming convention - XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows</LI>
+  <LI> Naming convention for Plex:
+    <UL>
+      <LI> https://oldwiki.plexapp.com/index.php?title=Media_Naming_and_Organization_Guide</LI>
+      <LI> https://support.plex.tv/hc/en-us/categories/200028098-Media-Preparation</LI>
+    </UL>
+  <LI> Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows</LI>
 </UL>
 
 How to name the file ?
 ======================
 
-<CODE>
-   Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext<BR>
+   <CODE>Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE>
    <BR>
-   File naming convention   Template                              Exemple<BR>
-   ======================   ===================================   ==================================================================
-   Splitting folders:       0-9                                   0-9, A,...,Z folder. Add EACH as folder. Do not use the parent folder
-   ----------------------   -----------------------------------   ------------------------------------------------------------------
-   Episode Name Pattern:    Season %S/%SN s%0Se%0E                Season 2/Show Name s02e03.ext
-   Multi-Episode style:     Extend                                Season 2/Show Name s02e03-04-05.ext
-   Multi-part episodes:     cdX, discX, diskX, dvdX, partX, ptX   Season 2/Show Name s02e03 - pt1.ext
-   Multi-Media Version:     Movie Name (year) - 1080p.ext         Movie Name (year) - 1080p.ext         
-   Specials scrapped:       Specials, Season 0                    Specials/Show Name s00e01.ext
-   Other non scrapped:      Extras                                Extras/Show Name xxxx.ext
-   ----------------------   -----------------------------------   ------------------------------------------------------------
-   BD rips                                                        /path/to/series-library/Series Name Season 2/Series.Name.Disc1.S02.E01-E12/BDMV/STREAM
+<TABLE>
+<TH> <TD> File naming convention </TD> <TD> Template            </TD> <TD>Exemple </TD> </TH>
+<TR> <TD> Splitting folders:     </TD> <TD> 0-9                 </TD> <TD> 0-9, A,...,Z folder. Add EACH as folder. Do not use the parent folder </TD> </TR>
+<TR> <TD>    Episode Name Pattern:    Season %S/%SN s%0Se%0E                Season 2/Show Name s02e03.ext
+<TR> <TD> Multi-Episode style:     Extend                                Season 2/Show Name s02e03-04-05.ext
+<TR> <TD> Multi-part episodes:     cdX, discX, diskX, dvdX, partX, ptX   Season 2/Show Name s02e03 - pt1.ext
+<TR> <TD> Multi-Media Version:     Movie Name (year) - 1080p.ext         Movie Name (year) - 1080p.ext         
+<TR> <TD> Specials scrapped:       Specials, Season 0                    Specials/Show Name s00e01.ext
+<TR> <TD> Other non scrapped:      Extras                                Extras/Show Name xxxx.ext
+<TR> <TD> BD rips                                                        /path/to/series-library/Series Name Season 2/Series.Name.Disc1.S02.E01-E12/BDMV/STREAM
+</TABLE>
 
-   Data type                Source                         Comment
-   ======================   ============================   ===================
-   fanart                                                  title-fanart-1.ext or art/backdrop/background/fanart.ext (same level as Video TS)
-   poster                                                  Show name-1.jpg folder, poster, show.ext (jpg, jpeg,png,tbn)
-                            Season                         Season-1a.ext in season folder 
-                            Banner                         Serie Name-bannera.ext or banner.jpg
-   theme song                                              theme.mp3
-   .plexignore
+<TABLE>
+<TH> <TD> File naming conventionTemplate            </TD> <TD>Exemple </TD> </TH>
+
+<TH> <TD> Data type        </TD> <TD>          Source                </TD> <TD>           Comment </TD> </TH>
+<TR> <TD> fanart                                                  title-fanart-1.ext or art/backdrop/background/fanart.ext (same level as Video TS)
+<TR> <TD> poster </TD> <TD> Serie  (Show name-1.jpg folder, poster, show.ext (jpg, jpeg,png,tbn)),  Season                         Season-1a.ext in season folder 
+                            Banner                         Serie Name-bannera.ext or banner.jpg </TD> </TR>
+<TR> <TD> theme song  </TD>
+<TR> <TD> .plexignore </TD>
+</TABLE>
 </CODE>
    
 Where to get the perfect title ?
