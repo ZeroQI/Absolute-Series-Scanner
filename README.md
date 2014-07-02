@@ -8,6 +8,7 @@ Naming convention - XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_fil
 How to name the file ?
 ======================
 
+<CODE>
    Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext
    
    File naming convention   Template                              Exemple
@@ -31,23 +32,23 @@ How to name the file ?
                             Banner                         Serie Name-bannera.ext or banner.jpg
    theme song                                              theme.mp3
    .plexignore
-
+</CODE>
    
 Where to get the perfect title ?
 ================================
 
-   Data type                Source                         Comment
-   ======================   ============================   ===================
-   Series                   TheTVDB.com                    TV database, will not store boxset specific files
-   Movies                   TheMovieDB.org                 Movie Title (Year)
-   Anime                    AniDB.net                      Pick the Anime main title
+<UL>
+  <LI> Series: TheTVDB.com, TV database, will not store boxset specific files, nor sport or porn </LI>
+  <LI> Movies: TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
+  <LI> Anime:  AniDB.net, the Anime main title is generally the best, or romaji (x-jat) </LI>
+</UL>
 
 Local metadata
 ==============
+In progress using HAMA
 
 TeraStorage Folder Structure ?
 ==============================
-
 Implied is original language, folder named dubbed otherwise
 
 <UL>
