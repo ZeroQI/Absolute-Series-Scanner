@@ -52,12 +52,14 @@ Implied is original language, folder named dubbed otherwise
 
 <UL>
   <LI> Series </LI>
+    <UL>
+      <LI> Xx </LI>
+      <LI> Xx Documentaries </LI>
+      <LI> Xx Reality-Shows </LI>
+      <LI> Xx Stand-Up Comedy </LI>
+      <LI> Xx Dubbed </LI>
+    </UL>
 </UL>
-        . Xx
-        . Xx Documentaries
-        . Xx Reality-Shows
-        . Xx Stand-Up Comedy
-        . Xx Dubbed
    . Movies
         . Xx
         . Xx Documentaries
