@@ -1,9 +1,11 @@
 Naming Conventions Rules by ZeroQI
 ========================
 
-Naming convention - Plex:  https://oldwiki.plexapp.com/index.php?title=Media_Naming_and_Organization_Guide
-                           https://support.plex.tv/hc/en-us/categories/200028098-Media-Preparation
-Naming convention - XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
+<UL>
+  <LI> Naming convention: Plex:  https://oldwiki.plexapp.com/index.php?title=Media_Naming_and_Organization_Guide<BR>
+                           https://support.plex.tv/hc/en-us/categories/200028098-Media-Preparation</LI>
+  <LI> Naming convention - XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows</LI>
+</UL>
 
 How to name the file ?
 ======================
