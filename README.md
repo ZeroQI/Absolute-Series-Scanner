@@ -50,7 +50,9 @@ TeraStorage Folder Structure ?
 
 Implied is original language, folder named dubbed otherwise
 
-   . Series
+<UL>
+  <LI> Series </LI>
+</UL>
         . Xx
         . Xx Documentaries
         . Xx Reality-Shows
