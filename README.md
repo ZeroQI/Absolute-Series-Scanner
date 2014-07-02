@@ -59,48 +59,69 @@ Implied is original language, folder named dubbed otherwise
       <LI> Xx Stand-Up Comedy </LI>
       <LI> Xx Dubbed </LI>
     </UL>
+
+  <LI> Movies </LI>
+    <UL>
+      <LI> Xx </LI>
+      <LI> Xx Documentaries </LI>
+      <LI> Xx Reality-Shows </LI>
+      <LI> Xx Stand-Up Comedy </LI>
+    </UL>
+    
+  <LI> Anime </LI>
+    <UL>
+      <LI> Xx </LI>
+      <LI> Xx Hentai </LI>
+      <LI> Xx Kids </LI>
+      <LI> Xx Movies </LI>
+      <LI> Xx Series </LI>
+    </UL>
+    
+  <LI> Knowledge </LI>
+    <UL>
+      <LI> Hobbies </LI>
+      <LI> Litterature </LI>
+      <LI> Trainings </LI>
+    </UL>
+    
+  <LI> Music </LI>
+    <UL>
+      <LI> Albums [\Group\Album (Year)] </LI>
+        <UL>
+          <LI> Compilations </LI>
+          <LI> Karaoke </LI>
+          <LI> Soundtracks </LI>
+            <UL>
+              <LI> Ads </LI>
+              <LI> Anime </LI>
+              <LI> Movies </LI>
+              <LI> Series </LI>
+            </UL>
+        </UL>
+      <LI> Videos </LI>
+        <UL>
+          <LI> Xx </LI>
+          <LI> Xx Concerts </LI>
+        </UL>
+      <LI> Games </LI>
+        <UL>
+          <LI> Karaoke </LI>
+          <LI> Guitar </LI>
+          <LI> Stepmania </LI>
+        </UL>
+    </UL>
+    
+  <LI> Pictures </LI>
+    <UL>
+      <LI> Wallpapers </LI>
+      <LI> Maps </LI>
+      <LI> Textures </LI>
+    </UL>
+    
+  <LI> Scans </LI>
+    <UL>
+      <LI> Art Books </LI>
+      <LI> Xx Comics </LI>
+      <LI> Xx Mangas </LI>
+    </UL>
 </UL>
-   . Movies
-        . Xx
-        . Xx Documentaries
-        . Xx Reality-Shows
-        . Xx Stand-Up Comedy
-
-   . Anime
-        . Xx
-        . Xx Hentai
-        . Xx Kids
-        . Xx Movies
-        . Xx Series
-
-   . Knowledge
-        . Hobbies
-        . Litterature
-        . Trainings
-
-   . Music
-         . Albums [\Group\Album (Year)]
-         . Compilations
-         . Karaoke
-         . Soundtracks
-              . Ads
-              . Anime
-              . Movies
-              . Series
-         . Videos
-              . Xx
-              . Xx Concerts
-         . Games
-              . Karaoke
-              . Guitar
-              . Stepmania
-
-   . Pictures
-         . Wallpapers
-         . Maps
-         . Textures
-
-   . Scans
-         . Art Books
-         . Xx Comics
-         . Xx Mangas
