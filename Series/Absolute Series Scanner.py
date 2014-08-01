@@ -169,6 +169,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
   ### Root scan for OS information that i need to complete the Log function ###
   if path == "":
     Log("================================================================================")
+    try: 
+      with open(path+"/"+"ASS.log", 'w') as file: #with open("/volume1/Plex/Library/Application Support/Plex Media Server/Logs/" + filename, 'a') as file:
+        #for line in file:  if entry in line:  file.write  break  else: file.write( line + "\r\n" ) #time now.strftime("%Y-%m-%d %H:%M") + " " + datetime.datetime.now() + " " + 
+        file.write( "test" + "\r\n" )
+    except:  pass
     try:
       os_uname=""
       for string in os.uname(): os_uname += string
