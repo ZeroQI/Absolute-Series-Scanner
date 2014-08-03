@@ -12,11 +12,11 @@ ignore_suffixes               = ['dvdmedia', 'db']                              
 ignore_files_re_findall       = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.']                          # Skipped files (samples, trailers)
 ignore_dirs_re_findall        = ['extras?', '!?samples?', 'bonus', '.*bonus disc.*', '!?trailers?']     # Skipped folders
 
-specials_re_match             = ['sp(ecial)?s?', 'seasons? ?0?0', 'saisons? ?0?0', 'temporadas? ?0?0']  # Specials folder
+specials_re_match             = ['sp(ecial)?s?']                                                        # Specials folder
 season_re_match               = [                                                                       ### Season folder ### 
-  '.*?(?P<season>season[0-9]+)$',                                                                       # season
-  '.*?(?P<season>saison[0-9]+)$',                                                                       # saison
-  '[0-9]{1,2}a? (?P<season>Stagione)+.*'                                                                # Xa Stagiona
+  '.*?season ?(?P<season>0?[0-9]+)$',                                                                       # season
+  '.*?saison ?(?P<season>[0-9]+)$',                                                                       # saison
+  '(?P<season>[0-9]{1,2})a? Stagione+.*'                                                                # Xa Stagiona
 ]                                                                                                        
 ends_with_episode_re_sub      = ['[ ]*[0-9]{1,2}x[0-9]{1,3}$', '[ ]*S[0-9]+E[0-9]+$']                   #
 ends_with_number_re_sub       = '.*([0-9]{1,2})$'                                                       #
@@ -121,9 +121,12 @@ def Log(entry, filename='Plex Media Scanner Custom.log'): #need relative path):
   #            ['Qnap',              ""]
   #          ]
   try: 
+    #with open(path+"/"+"ASS.log", 'a') as file: #
+    #with open("/volume1/Plex/Library/Application Support/Plex Media Server/Logs/" + filename, 'a') as file: #
+    #with open(filename, 'a') as file: #synology, windows
     with open(filename, 'a') as file: #with open("/volume1/Plex/Library/Application Support/Plex Media Server/Logs/" + filename, 'a') as file:
       #for line in file:  if entry in line:  file.write  break  else: file.write( line + "\r\n" ) #time now.strftime("%Y-%m-%d %H:%M") + " " + datetime.datetime.now() + " " + 
-      file.write( entry + "\r\n" )
+      file.write( entry + "\r\n" ) #\r\n make it readable in notepad under windows directly
       print line + "\n"
   except:  pass
     
@@ -169,11 +172,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
   ### Root scan for OS information that i need to complete the Log function ###
   if path == "":
     Log("================================================================================")
-    try: 
-      with open(path+"/"+"ASS.log", 'w') as file: #with open("/volume1/Plex/Library/Application Support/Plex Media Server/Logs/" + filename, 'a') as file:
-        #for line in file:  if entry in line:  file.write  break  else: file.write( line + "\r\n" ) #time now.strftime("%Y-%m-%d %H:%M") + " " + datetime.datetime.now() + " " + 
-        file.write( "test" + "\r\n" )
-    except:  pass
     try:
       os_uname=""
       for string in os.uname(): os_uname += string
@@ -244,11 +242,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
   ### Check if folder is a season folder and remove it do reduce complexity ###
   folder_season = None
   for folder in reverse_path[:-1]:                  #Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-    for rx in specials_re_match + season_re_match:  #in anime, more specials folders than season folders, so doing it first
+    for rx in specials_re_match + season_re_match :  #in anime, more specials folders than season folders, so doing it first
       match = re.match(rx, folder, re.IGNORECASE)
       if match:
-        folder_season = 0 if rx in specials_re_match else int( match.group(folder) )  #use "if var is | is not None:" as it's faster than "==None" and "if var:" is false if the variable is: False, 0, 0.0, "", () , {}, [], set()
-        Log("Regex specials_regex/season_regex_match: Regex '%s' match for '%s', season: '%d'" % (rx, folder, folder_season) )
+        folder_season = 0 if rx in specials_re_match else int( match.group('season') )  #use "if var is | is not None:" as it's faster than "==None" and "if var:" is false if the variable is: False, 0, 0.0, "", () , {}, [], set()
+        Log("Regex specials_regex/season_regex_match: Regex '%s' match for '%s', season: '%s'" % (rx, folder, str(folder_season)) )
         reverse_path.remove(folder)  #All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         break
     if match: break  #Breaking second for loop doesn't exist parent for
@@ -305,7 +303,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
         show, misc, year2, season, episode, misc, endEpisode, misc, episode_title = match[0]
         endEpisode = int(episode) if len(endEpisode) == 0 else int(endEpisode)
         episode = int(episode)
-        add_episode_into_plex(mediaList, files, file, folder_show if folder_use else show, season, int(episode), episode_title, year, endEpisode)
+        add_episode_into_plex(mediaList, files, file, folder_show if folder_use or show=="" else show, season, int(episode), episode_title, year, endEpisode)
         Log("show: '%s', year: '%s', season: '%s', ep: %s found using standalone_episode_re_findall on cleaned string '%s' gotten from filename '%s'" % (folder_show if folder_use else show, xint(year), xint(season), xint(episode), ep, filename))
         break #return
     if match: continue  # Used "for ... else" before but needed each sub-section shifted, and want to be able to swap the order quickly
@@ -324,7 +322,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None):
         break
     if match: continue  # Used "for ... else" before but needed each sub-section shifted, and want to be able to swap the order quickly
     
-    #Log ("#5 - ep: '%s'" % ep)
     ### Check for just_episode_re_search ###
     for rx in just_episode_re_search:
       match = re.search(rx, ep, re.IGNORECASE)
