@@ -16,26 +16,33 @@ How to name the file ?
    <CODE>Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE>
    <BR>
 <TABLE>
-<TH> <TD> File naming convention </TD> <TD> Template            </TD> <TD>Exemple </TD> </TH>
+<THEAD>
+<TR> <TH> File naming convention </TH> <TH> Template            </TH> <TH>Exemple </TH> </TR>
+</THEAD>
+<TBODY>
 <TR> <TD> Splitting folders:     </TD> <TD> 0-9                 </TD> <TD> 0-9, A,...,Z folder. Add EACH as folder. Do not use the parent folder </TD> </TR>
-<TR> <TD>    Episode Name Pattern:    Season %S/%SN s%0Se%0E                Season 2/Show Name s02e03.ext
-<TR> <TD> Multi-Episode style:     Extend                                Season 2/Show Name s02e03-04-05.ext
-<TR> <TD> Multi-part episodes:     cdX, discX, diskX, dvdX, partX, ptX   Season 2/Show Name s02e03 - pt1.ext
-<TR> <TD> Multi-Media Version:     Movie Name (year) - 1080p.ext         Movie Name (year) - 1080p.ext         
-<TR> <TD> Specials scrapped:       Specials, Season 0                    Specials/Show Name s00e01.ext
-<TR> <TD> Other non scrapped:      Extras                                Extras/Show Name xxxx.ext
-<TR> <TD> BD rips                                                        /path/to/series-library/Series Name Season 2/Series.Name.Disc1.S02.E01-E12/BDMV/STREAM
+<TR> <TD> Episode Name Pattern:  </TD> <TD> Season %S/%SN s%0Se%0E </TD> <TD> Season 2/Show Name s02e03.ext </TD> </TR>
+<TR> <TD> Multi-Episode style:   </TD> <TD> Extend              </TD> <TD> Season 2/Show Name s02e03-04-05.ext </TD> </TR>
+<TR> <TD> Multi-part episodes:   </TD> <TD> cdX, discX, diskX, dvdX, partX, ptX </TD> <TD> Season 2/Show Name s02e03 - pt1.ext </TD> </TR>
+<TR> <TD> Multi-Media Version:   </TD> <TD> Movie Name (year) - 1080p.ext </TD> <TD> Movie Name (year) - 1080p.ext </TD> </TR>
+<TR> <TD> Specials scrapped:     </TD> <TD> Specials, Season 0  </TD> <TD> Specials/Show Name s00e01.ext </TD> </TR>
+<TR> <TD> Other non scrapped:    </TD> <TD> Extras              </TD> <TD> Extras/Show Name xxxx.ext </TD> </TR>
+<TR> <TD> BD rips                </TD> <TD> /path/to/series-library/Series Name Season 2 </TD> <TD> Series.Name.Disc1.S02.E01-E12/BDMV/STREAM </TD> </TR>
+</TBODY>
 </TABLE>
 
 <TABLE>
-<TH> <TD> Data type </TD> <TD> Source                </TD> <TD>           Comment </TD> </TH>
+<THEAD>
+<TR> <TH> Data type </TH> <TH> Source                </TH> <TH>           Comment </TH> </TR>
+</THEAD>
+<TBODY>
 <TR> <TD> fanart    </TD> <TD> title-fanart-1.ext or art/backdrop/background/fanart.ext (same level as Video TS)  </TD>
 <TR> <TD> poster    </TD> <TD> Serie  (Show name-1.jpg folder, poster, show.ext (jpg, jpeg,png,tbn)),  Season          Season-1a.ext in season folder       </TD>           
-                            Banner                         Serie Name-bannera.ext or banner.jpg </TD> </TR>
+<TR> <TD> Banner    </TD> <TD> Serie Name-bannera.ext or banner.jpg </TD> </TR>
 <TR> <TD> theme song  </TD>
 <TR> <TD> .plexignore </TD>
+</TBODY>
 </TABLE>
-</CODE>
    
 Where to get the perfect title ?
 ================================
