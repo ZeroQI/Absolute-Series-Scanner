@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# Most code here is copyright (c) 2010 Plex Development Team. All rights reserved. Modified by ZeroQI from BABS scanner: https://forums.plex.tv/index.php/topic/31081-better-absolute-scanner-babs/
+# Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
+# Modified by ZeroQI from BABS scanner: https://forums.plex.tv/index.php/topic/31081-better-absolute-scanner-babs/
+
 import sys, unicodedata          # titlecase , datetime, Plex (Stack, Filter, PhotoFiles, AudioFiles)
 import os                        # Python       - os.uname, os.listdir
 import os.path                   # Python       - os.path.basename, os.path.splitext, os.path.join, os.path.expandvars, os.path.expanduser, os.path.isdir, os.path.isfile
@@ -7,12 +9,25 @@ import re                        # Python       - re.findall, re.match, re.sub, 
 import string                    # Python       - string
 from string import maketrans     # Python       - string.maketrans
 import time                      # Python       - 
+import logging                   # Python       - logging.basicConfig
 import Utils                     # Plex library - Utils - Utils.SplitPath
 import Media                     # Plex library - ALL   - Media.Episode, 
 import VideoFiles                # Plex library - VIDEO - VideoFiles.Scan
-import logging                   # Python       - logging.basicConfig
+
+### setup logging https://docs.python.org/2/library/logging.html ###  #logging.debug/info/warning/error/critical('some critical message: %s', 'highest category')
+try:      platform = sys.platform.lower()  # sys.platform: win32 | darwin | linux2, 
+except: 
+  try:    platform = Platform.OS.lower()   # Platform.OS:  Windows, MacOSX, or Linux
+  except: platform = ""
+
+LOG_PATH=""
+if   (platform == 'win32'  or platform == 'windows'): LOG_PATH = os.path.expandvars( '%LOCALAPPDATA%\\Plex Media Server\Logs' )
+elif (platform == 'darwin' or platform == 'macosx'):  LOG_PATH = os.path.expandvars( '$HOME/Library/Application Support/Plex Media Server\Logs' )
+elif 'linux' in platform:                             LOG_PATH = os.path.expandvars( '$PLEX_HOME/Library/Application Support/Plex Media Server\Logs' )                          
+if not os.path.isdir(LOG_PATH):                       LOG_PATH = os.path.expanduser('~') #os.path.expandvars( '$HOME ) # unknown, return home  #
+LOG_FILE   = 'Plex Media Scanner (custom ASS).log'
 LOG_FORMAT = '%(asctime)s| %(levelname)-8s| %(message)s'
-logging.basicConfig(filename=os.path.expanduser('~')+'/Plex Media Scanner Custom.log', format=LOG_FORMAT, level=logging.DEBUG)
+logging.basicConfig(filename=os.path.join(LOG_PATH, LOG_FILE), format=LOG_FORMAT, level=logging.DEBUG)  
 
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)
@@ -143,7 +158,7 @@ def clean_filename(string):
           except: Log("word: '%s', words: '%s', rx: '%s'" % (word, str(words), rx))
 
   string = " ".join(words)
-  string       = " ".join(string.split(" "))                             # remove duplicates spaces
+  string = string.replace("  ", " ").strip() # remove duplicates spaces
   return string
 
 ### Log function ########################################################################################
@@ -186,6 +201,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
 
   if not path == "":  return  # Exit every other iteration than the root scan
   Log("=== Scan ================================================================================================================")
+  Log("Platform: '%s', Test location: '%s'" % (platform, LOG_PATH))
   Log("Scan: (root: '%s', path='%s', subdirs: '%s', Files: '%s', language: '%s')" % (root if root is not None else "", path, str(subdirs), str(files), language))
   Log("=========================================================================================================================")
   file_tree = {}                                           # initialize file_tree
@@ -233,7 +249,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
 
     ### Clean folder name and get year if present ###
     misc, folder_year = VideoFiles.CleanName( reverse_path[0] )          # Take folder year
-    folder_show       = clean_filename(       reverse_path[0] )          # Log("From folder, show: '%s', year: '%s'" % (folder_show, xint(folder_year)))  #
+    folder_show       = clean_filename(       reverse_path[0] )          
+    Log("From folder, show: '%s', year: '%s'" % (folder_show, xint(folder_year)))  #
 
     ### Main File loop to start adding files now ###
     for file in files:                                                   # "files" is a list of media files full path, File is one of the entries
@@ -317,10 +334,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       for rx, offset in AniDB_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
-          show       = clean_filename( match.group('show'    )) if not folder_use            else folder_show
+          show    = clean_filename( match.group('show')) if not folder_use else folder_show
           episode = 1 if match.group('ep') == "" or not match.group('ep').isdigit() else int( match.group('ep') )
           episode = offset + episode
-          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using AniDB_re_search on cleaned string '%s' gotten from filename '%s'" % (folder_show, xint(year), "0", xint(episode), ep, filename))
+          if not show: show = folder_show
+          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using AniDB_re_search on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), "0", xint(episode), ep, filename))
           add_episode_into_plex(mediaList, files, file, show, 0, episode, "", year, None)
           break
       if match: continue
