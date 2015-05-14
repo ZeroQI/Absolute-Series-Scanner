@@ -215,9 +215,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     reverse_path  = Utils.SplitPath(relative_path)         # Take top two as show/season, but require at least the top one.
     reverse_path.reverse()                                 # Reverse the order of the folders
    
-    #VideoFiles.Scan(path, files, mediaList, subdirs, root)  # Removes files starting with dot, like hack sign
-    #if files==[]: continue                                  # if no more files just go to the next folder
-  
     ### bluray folder management ###
     # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
     if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv':
@@ -251,7 +248,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     ### Clean folder name and get year if present ###
     misc, folder_year = VideoFiles.CleanName( reverse_path[0] )          # Take folder year
     folder_show       = clean_filename(       reverse_path[0] )          
-    Log("From folder, show: '%s', year: '%s'" % (folder_show, xint(folder_year)))  #
+    Log("Folder: '%s', show: '%s', year: '%s'" % (path, folder_show, xint(folder_year)))  #
 
     ### Main File loop to start adding files now ###
     for file in files:                                                   # "files" is a list of media files full path, File is one of the entries
