@@ -159,6 +159,7 @@ def clean_filename(string):
 
   string = " ".join(words)
   string = string.replace("  ", " ").strip() # remove duplicates spaces
+  if string.endswith(" -"):  string = string[:-len(" -")]
   return string
 
 ### Log function ########################################################################################
