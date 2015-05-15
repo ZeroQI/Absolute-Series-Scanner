@@ -15,32 +15,60 @@ import Media                     # Plex library - ALL   - Media.Episode,
 import VideoFiles                # Plex library - VIDEO - VideoFiles.Scan
 
 ### setup logging https://docs.python.org/2/library/logging.html ###  #logging.debug/info/warning/error/critical('some critical message: %s', 'highest category')
-try:      platform = sys.platform.lower()  # sys.platform: win32 | darwin | linux2, 
-except: 
-  try:    platform = Platform.OS.lower()   # Platform.OS:  Windows, MacOSX, or Linux
-  except: platform = ""
+try:      platform = sys.platform.lower()                                                     # sys.platform: win32 | darwin | linux2, 
+except:                                                                                       #
+  try:    platform = Platform.OS.lower()                                                      # Platform.OS:  Windows, MacOSX, or Linux #  
+  except: platform = ""                                                                       #
 
-LOG_PATH=""
-if   (platform == 'win32'  or platform == 'windows'): LOG_PATH = os.path.expandvars( '%LOCALAPPDATA%\\Plex Media Server\Logs' )
-elif (platform == 'darwin' or platform == 'macosx'):  LOG_PATH = os.path.expandvars( '$HOME/Library/Application Support/Plex Media Server\Logs' )
-elif 'linux' in platform:                             LOG_PATH = os.path.expandvars( '$PLEX_HOME/Library/Application Support/Plex Media Server\Logs' )                          
-if not os.path.isdir(LOG_PATH):                       LOG_PATH = os.path.expanduser('~') #os.path.expandvars( '$HOME ) # unknown, return home  #
 LOG_FILE   = 'Plex Media Scanner (custom ASS).log'
 LOG_FORMAT = '%(asctime)s| %(levelname)-8s| %(message)s'
+LOG_WIN    = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows 8
+               '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]     # ?
+LOG_MAC    = [ '$HOME/Library/Application Support/Plex Media Server/Logs' ]
+LOG_LIN    = [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 #Linux
+               '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs',   #Debian, Fedora, CentOS, Ubuntu
+               '/usr/local/plexdata/Plex Media Server/Logs',                                    #FreeBSD
+               '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                #FreeNAS
+               '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   #ReadyNAS
+               '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          #QNAP
+               '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              #Synology, Asustor
+               '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]             #Synology, if migrated a second raid volume as unique volume in new box         
+LOG_WTF    = [ '$HOME' ]                                                                        #home folder as backup "C:\users\User.Machine" in windows 8, "users\Plex" on synology
+
+if   (platform == 'win32'  or platform == 'windows'): LOG_PATHS = LOG_WIN
+elif (platform == 'darwin' or platform == 'macosx'):  LOG_PATHS = LOG_MAC
+elif 'linux' in platform:                             LOG_PATHS = LOG_LIN
+else:                                                 LOG_PATHS = LOG_WTF
+for folder in LOG_PATHS:
+  LOG_PATH = os.path.expandvars(folder)
+  if os.path.isdir(LOG_PATH):  break
+else: LOG_PATH = os.path.expanduser('~')
 logging.basicConfig(filename=os.path.join(LOG_PATH, LOG_FILE), format=LOG_FORMAT, level=logging.DEBUG)  
 
+### Log function ########################################################################################
+def Log(entry, filename='Plex Media Scanner Custom.log'): #need relative path
+  logging.info(entry + "\n" if (platform == 'win32'  or platform == 'windows') else entry + "\r\n") # allow linux to output windows notepad comp line feeds but windows plex server add additional line feed with this setting
+  print entry                  # when ran from console
+
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
+video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
+  'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
+  'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
+  'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
+translation_table       = maketrans("`", "'")                                                                 # ("`??", "':/") 
+FILTER_CHARS            = "\\/:*?<>|~;._" #,    #- 01-02 cleaned otherwise                                    # Windows file naming limitations + "~-;,._"
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)
 ignore_dirs_re_findall  = ['extras?', '!?samples?', 'bonus', '.*bonus disc.*', '!?trailers?', '@eaDir']       # Skipped folders
+
 season_re_match         = [                                                                                   ### Season folder ### 
   '.*?(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                      # season
   '.*?(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                      # series
   '.*?(SAISON|Saison|saison)[ -_]?(?P<season>[0-9]+).*',                                                      # saison
   '(?P<season>[0-9]{1,2})a? Stagione+.*'                                                                      # Xa Stagiona
 ]                                                                                                         
-specials_re_match = ['sp(ecial)?s?']                                                                          # Specials folder
+specials_re_match = ['(sp|Sp|SP)(ecial|ECIAL|ecials|ECIALS)?']                                                # Specials folder
+
 episode_re_search             = [                                                                             ### Episode search ###
-  #'(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ ]*[eE](?P<ep>[0-9]+)([- ]?[Ee+](?P<secondEp>[0-9]+))?',           # S03E04-E05, S03E04E05 
   '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ ]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)((-E|-e|-|ep|.ep|_ep|_|x)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
   '(?P<show>.*?)[sS](?P<season>[0-9]{2})[\._\- ]+(?P<ep>[0-9]+)',                                             # S03-03
   '(?P<show>.*?)([^0-9]|^)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]+)(-[0-9]+[Xx](?P<secondEp>[0-9]+))?'         # 3x03
@@ -95,23 +123,15 @@ release_groups = [                                                              
   "5BAnime-Koi_5D", "%5Banime-koi%5D", "Minitheatre.org", "minitheatre.org", "mtHD", "THORA",                 #
   "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh",                  #
   ]
-video_exts = [                                                                                                ### Video Extensions ###
-  '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms', 'evo' ,    #
-  'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  , 'mpg' ,    #
-  'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  , 'strm',    #
-  'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm'                      #
-  ]
-translation_table             = maketrans("`", "'")                                                           # ("`꞉∕", "':/") 
-FILTER_CHARS                  = "\\/:*?<>|~;._" #,    #- 01-02 cleaned otherwise                              # Windows file naming limitations + "~-;,._"
 
 ### Allow to display ints even if equal to None at times ################################################
-def xint(s):
-  return str(s) if s is not None and not s=="" else "None"      #and not s=="" to remove ? that make "None" "" and "27"...
+def xint(s): 
+  return str(s) if s is not None and not s=="" else "None"
 
 ### Convert Roman numerals ##############################################################################
-roman_re_match ="^(L?X{0,3})(IX|IV|V?I{0,3})$"                              # Regex for matching #M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})
+roman_re_match ="^(L?X{0,3})(IX|IV|V?I{0,3})$"                  # Regex for matching #M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})
 def roman_to_int(string):
-  roman_values=[['X',10],['IX',9],['V',5],['IV',4],['I',1]]                                             # ['M',1000],['CM',900],['D',500],['CD',400],['C',100],['XC',90],['L',50],['XL',40]
+  roman_values=[['X',10],['IX',9],['V',5],['IV',4],['I',1]]     # ['M',1000],['CM',900],['D',500],['CD',400],['C',100],['XC',90],['L',50],['XL',40]
   result = 0
   string = string.upper()
   for letter, value in roman_values: #is you use {} the list will be in the wrong order
@@ -121,20 +141,20 @@ def roman_to_int(string):
   return str(result)
 
 ### Allow to display ints even if equal to None at times ################################################
-CHARACTERS_MAP = {  50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z',
-                    50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',
+CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z',
+                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',
                  }
 def encodeASCII(text):
-  nrmtxt = unicodedata.normalize('NFC',text).encode('ascii', 'ignore')
-  i = 0
-  ret_str = []
+  i      = 0
+  string = []
+  nrmtxt = unicodedata.normalize('NFC',unicode(text)).encode('ascii', 'ignore')
   while i < len(nrmtxt):
-     if ord(text[i])<129:  ret_str.append(text[i]) # pure ASCII character
-     else:                                         # non ASCII character
-       ret_str.append(CHARACTERS_MAP.get( 256*ord(text[i]) + ord(text[i+1]) ))
+     if ord(text[i])<129:  string.append(text[i]) # pure ASCII character
+     else:                                        # non  ASCII character
+       string.append(CHARACTERS_MAP.get( 256*ord(text[i])+ord(text[i+1]) ))
        i = i+1
      i = i+1
-  return ''.join(ret_str)
+  return ''.join(string)
 
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string):
@@ -160,12 +180,8 @@ def clean_filename(string):
   string = " ".join(words)
   string = string.replace("  ", " ").strip() # remove duplicates spaces
   if string.endswith(" -"):  string = string[:-len(" -")]
+  #string=encodeASCII(string)
   return string
-
-### Log function ########################################################################################
-def Log(entry, filename='Plex Media Scanner Custom.log'): #need relative path):
-  logging.info(entry + "\r\n") # allow to use windows notepad with correct line feeds
-  print entry                  # when ran from console
     
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, episode_title="", year=None, endEpisode = None):
@@ -248,7 +264,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     ### Clean folder name and get year if present ###
     misc, folder_year = VideoFiles.CleanName( reverse_path[0] )          # Take folder year
     folder_show       = clean_filename(       reverse_path[0] )          
-    Log("Folder: '%s', show: '%s', year: '%s'" % (path, folder_show, xint(folder_year)))  #
+    Log("Path: '%s', show: '%s', year: '%s'" % (path, folder_show, xint(folder_year)))  #
 
     ### Main File loop to start adding files now ###
     for file in files:                                                   # "files" is a list of media files full path, File is one of the entries
@@ -352,7 +368,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       ### No regular expression worked ###
       Log("*no show found for ep: '%s', eb_nb: '%s', filename '%s', folder_show: '%s' " % (ep, ep_nb, filename, folder_show))
 
-    #if shouldStack: Stack.Scan(path, files, mediaList, subdirs) # Stack the results.
     Log("-------------------------------------------------------------------------------------------------------------------------")
   Log("")
    
