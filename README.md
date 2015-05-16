@@ -1,14 +1,14 @@
-Fonctionalities
-===============
-  . Logs in Plex Logs folder "Plex Media Scanner (custom ASS).log" with one line per folder, season folder and per file
-  . Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])
-  . Seasons folders with serie name afterwards, including "Series" appelation
-  . AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)
-  . Specials chars handling ("CØDE：BREAKER") and files starting with dors (".Hack")
-  . Movie files in Series accepted if they have the same name as the folder (or 01|ep 01|s01e01)
-  . Episodes from different series in single folder (dump folder) supported
-  . Console output supported if launched from command line
-  
+Functionalities
+<UL>
+      <LI> Logs in Plex Logs folder "Plex Media Scanner (custom ASS).log" with one line per folder, season folder and per file</LI>
+      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])</LI>
+      <LI> Seasons folders with serie name afterwards, including "Series" appelation</LI>
+      <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)</LI>
+      <LI> Specials chars handling ("CØDE：BREAKER") and files starting with dors (".Hack")</LI>
+      <LI> Movie files in Series accepted if they have the same name as the folder (or 01|ep 01|s01e01)</LI>
+      <LI> Episodes from different series in single folder (dump folder) supported</LI>
+      <LI> Console output supported if launched from command line</LI>
+  </UL>
 Naming Conventions Rules by ZeroQI
 ========================
 
