@@ -1,4 +1,5 @@
-Functionalities
+Functionalities<BR>
+===============
 <UL>
       <LI> Logs in Plex Logs folder "Plex Media Scanner (custom ASS).log" with one line per folder, season folder and per file</LI>
       <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])</LI>
@@ -9,7 +10,7 @@ Functionalities
       <LI> Episodes from different series in single folder (dump folder) supported</LI>
       <LI> Console output supported if launched from command line</LI>
   </UL>
-Naming Conventions Rules by ZeroQI
+Naming Conventions Rules<BR>
 ========================
 
 <UL>
