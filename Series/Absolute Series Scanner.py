@@ -9,18 +9,16 @@ import re                        # Python       - re.findall, re.match, re.sub, 
 import string                    # Python       - string
 from string import maketrans     # Python       - string.maketrans
 import time                      # Python       - 
-import logging                   # Python       - logging.basicConfig
+import logging                   # Python       - logging.basicConfig, logging.debug/info/warning/error/critical('some critical message: %s', 'highest category')
 import Utils                     # Plex library - Utils - Utils.SplitPath
 import Media                     # Plex library - ALL   - Media.Episode, 
+import Filter                    # Plex library - ALL   - IGNORE_DIRS, ROOT_IGNORE_DIRS
 import Stack                     # Plex library - VIDEO - Stack
 import VideoFiles                # Plex library - VIDEO - VideoFiles.Scan
+import fnmatch                   # Python       - fnmatch used by .plexignore regex
 
-### setup logging https://docs.python.org/2/library/logging.html ###  #logging.debug/info/warning/error/critical('some critical message: %s', 'highest category')
-try:      platform = sys.platform.lower()                                                     # sys.platform: win32 | darwin | linux2, 
-except:                                                                                       #
-  try:    platform = Platform.OS.lower()                                                      # Platform.OS:  Windows, MacOSX, or Linux #  
-  except: platform = ""                                                                       #
-
+### Log function ########################################################################################
+# setup logging https://docs.python.org/2/library/logging.html ###
 LOG_FILE   = 'Plex Media Scanner (custom ASS).log'
 LOG_FORMAT = '%(asctime)s| %(levelname)-8s| %(message)s'
 LOG_WIN    = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows 8
@@ -36,6 +34,11 @@ LOG_LIN    = [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs', 
                '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]             #Synology, if migrated a second raid volume as unique volume in new box         
 LOG_WTF    = [ '$HOME' ]                                                                        #home folder as backup "C:\users\User.Machine" in windows 8, "users\Plex" on synology
 
+try:      platform = sys.platform.lower()                                                       # sys.platform: win32 | darwin | linux2, 
+except:                                                                                         #
+  try:    platform = Platform.OS.lower()                                                        # Platform.OS:  Windows, MacOSX, or Linux #  
+  except: platform = ""                                                                         #
+
 if   (platform == 'win32'  or platform == 'windows'): LOG_PATHS = LOG_WIN
 elif (platform == 'darwin' or platform == 'macosx'):  LOG_PATHS = LOG_MAC
 elif 'linux' in platform:                             LOG_PATHS = LOG_LIN
@@ -46,30 +49,33 @@ for folder in LOG_PATHS:
 else: LOG_PATH = os.path.expanduser('~')
 logging.basicConfig(filename=os.path.join(LOG_PATH, LOG_FILE), format=LOG_FORMAT, level=logging.DEBUG)  
 
-### Log function ########################################################################################
-def Log(entry, filename='Plex Media Scanner Custom.log'): #need relative path
+def Log(entry, filename='Plex Media Scanner Custom.log'):
   logging.info(entry + "\n" if (platform == 'win32'  or platform == 'windows') else entry + "\r\n") # allow linux to output windows notepad comp line feeds but windows plex server add additional line feed with this setting
-  print entry                  # when ran from console
+  print entry                                                                                       # when ran from console
 
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
+ignore_dirs_re_findall  = ['[Ee]xtras?', '!?[Ss]amples?', '[Bb]onus', '.*[Bb]onus disc.*', '!?[Tt]railers?']  # Skipped folders
+IGNORE_DIRS      = ['@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', '\..*', 'lost\+found', '.AppleDouble']          # Filters.py 
+ROOT_IGNORE_DIRS = ['\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder']  # Filters.py 
+
+season_re_match         = [                                                                                   ### Season folder ### 
+  '.*?(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                      # US - Season
+  '.*?(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                      # UK - Series
+  '.*?(SAISON|Saison|saison)[ -_]?(?P<season>[0-9]+).*',                                                      # FR - Saison
+  '(?P<season>[0-9]{1,2})a? Stagione+.*'                                                                      # IT - Xa Stagiona
+]
+
+ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)                                                          
+specials_re_match = ['(sp|Sp|SP)(ecials?|ECIALS?)?']                                                          # Specials folder
+
+FILTER_CHARS   = "\\/:*?<>|~=._"                                                                              # Windows file naming limitations + "~-,._"
+CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 50072:'O',
+                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z'   }
+
 video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
   'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
   'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
   'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
-translation_table       = maketrans("`", "'")                                                                 # ("`??", "':/") 
-FILTER_CHARS            = "\\/:*?<>|~=." #,    #- 01-02 cleaned otherwise                                    # Windows file naming limitations + "~-;,._"
-CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 50072:'O',
-                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z'   }
-ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)
-ignore_dirs_re_findall  = ['extras?', '!?samples?', 'bonus', '.*bonus disc.*', '!?trailers?', '@eaDir']       # Skipped folders
-
-season_re_match         = [                                                                                   ### Season folder ### 
-  '.*?(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                      # season
-  '.*?(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                      # series
-  '.*?(SAISON|Saison|saison)[ -_]?(?P<season>[0-9]+).*',                                                      # saison
-  '(?P<season>[0-9]{1,2})a? Stagione+.*'                                                                      # Xa Stagiona
-]                                                                                                         
-specials_re_match = ['(sp|Sp|SP)(ecial|ECIAL|ecials|ECIALS)?']                                                # Specials folder
 
 episode_re_search             = [                                                                             ### Episode search ###
   '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ ]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)((-E|-e|-|e|E|ep|.ep|-ep|_ep|_|x)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
@@ -132,9 +138,9 @@ def xint(s):
   return str(s) if s is not None and not s=="" else "None"
 
 ### Convert Roman numerals ##############################################################################
-roman_re_match ="^(L?X{0,3})(IX|IV|V?I{0,3})$"                  # Regex for matching #M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})
-def roman_to_int(string):
-  roman_values=[['X',10],['IX',9],['V',5],['IV',4],['I',1]]     # ['M',1000],['CM',900],['D',500],['CD',400],['C',100],['XC',90],['L',50],['XL',40]
+roman_re_match ="^(L?X{0,3})(IX|IV|V?I{0,3})$"                  
+def roman_to_int(string):                                    # Regex for matching #M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})
+  roman_values=[['X',10],['IX',9],['V',5],['IV',4],['I',1]]  # ['M',1000],['CM',900],['D',500],['CD',400],['C',100],['XC',90],['L',50],['XL',40]
   result = 0
   string = string.upper()
   for letter, value in roman_values: #is you use {} the list will be in the wrong order
@@ -143,10 +149,14 @@ def roman_to_int(string):
       string = string[len(letter):]
   return str(result)
 
-### Allow to display ints even if equal to None at times ################################################
 
-def encodeASCII(text): 
-  string = list( unicodedata.normalize('NFKD',text.decode('utf-8')).encode('ascii', 'replace') ) #crash if no text.decode('utf-8')
+### Allow to display ints even if equal to None at times ################################################
+def encodeASCII(text): #crash if no text.decode('utf-8')
+  try:       string = unicodedata.normalize('NFKD', text.decode(sys.getfilesystemencoding()))  #Try to decode with reported filesystem encoding, then with UTF-8 since some filesystems lie.
+  except:
+    try:     string = unicodedata.normalize('NFKD', text.decode('utf-8'))
+    except:  pass
+  string = list(string.encode('ascii', 'replace')) 
   for index, char in enumerate(string):
      if string[index]=='?': # non  ASCII character got replaced by ascii encoding
        char = (ord(text[index])*256) + ord(text[index+1])
@@ -156,13 +166,12 @@ def encodeASCII(text):
 
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string):
-  #string = encodeASCII( u"%s" % string)
   string = re.sub(r'\(.*?\)', '', string)                                # remove "(xxx)" groups
   string = re.sub(r'\[.*?\]', '', string)                                # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
   string = re.sub(r'\{.*?\}', '', string)                                # remove "{xxx}" groups as Plex cleanup keep inside () but not inside []
   for char in FILTER_CHARS:  string = string.replace(char, ' ')          # replace os forbidden chars with spaces
-  string = string.translate(translation_table)                           # translate some chars
   for group in release_groups:  string = string.replace(group, " ");     # Remove known tags not in '()' or '[]', generally surrounded by '_'
+  string = string.replace("`", "'")                                      # translate anidb apostrophes into normal ones
   words = string.split(" ")
   for word in words:
     if word !="":
@@ -180,7 +189,7 @@ def clean_filename(string):
   if string.endswith(" -"):  string = string[:-len(" -")]
   string=encodeASCII(string)
   return string
-    
+
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, episode_title="", year=None, endEpisode = None):
   if endEpisode is None: endEpisode = episode
@@ -191,25 +200,52 @@ def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, epi
     mediaList.append(tv_show)
   #Stack.Scan(path, files, mediaList, []) #miss path var
 
-### Add files into Plex database ########################################################################
-def explore_path(subdir, file_tree):
+### Add files into array ################################################################################
+def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
   files=[]
-  for item in sorted(os.listdir(subdir)): 
+  if os.path.isfile(os.path.join(subdir, ".plexignore")):  ### .Plexignore skip specified NEW content ###
+    try: 
+      with open( os.path.join(subdir, ".plexignore"), 'r') as plexignore:
+        for pattern in plexignore:
+          pattern = pattern.strip()                                                                    # remove useless spaces at both ends
+          if pattern == '' or pattern[0] == '#': continue                                              # jump to for next iteration
+          if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))                  # Match filenames using regex.
+          elif pattern[0] != '/': plexignore_dirs.append(pattern)                                      # these should always be relative to the .plexignore file.
+    except:  pass
+  
+  ### Loop current folder files and folders ###
+  for item in sorted(os.listdir(subdir)):
     fullpath = os.path.join(subdir, item)
-    if os.path.isdir (fullpath): 
-      for rx in ignore_dirs_re_findall: ### Skip unwanted folders ###
+    if os.path.isdir (fullpath): ### Folder ###
+      for rx in ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall: # Skip unwanted folders
         result = re.findall(rx, item)   
         if len(result):  break
-      else:  explore_path(fullpath, file_tree)     
-    elif os.path.isfile(fullpath):
+      else:  
+        plexignore_recursive_files=[]
+        plexignore_recursive_dirs =[]
+        for rx in plexignore_dirs:
+          pattern = rx.split("/")
+          if pattern[0].lower() == Utils.SplitPath(fullpath)[-1].lower():
+            if len(pattern) == 2: plexignore_recursive_files.append(fnmatch.translate(pattern[1:]))
+            if len(pattern) >= 3: plexignore_recursive_dirs.append( pattern[1:])
+        explore_path(fullpath, file_tree, plexignore_recursive_files, plexignore_recursive_dirs)
+   
+    elif os.path.isfile(fullpath): ###File ####
+      if plexignore_files:  # .plexignore files current folder
+        Log("'%s' matched pattern: '%s'" % (fullpath, str(plexignore_files)))
+      for rx in plexignore_files:                         
+        if re.match(rx, fullpath, re.IGNORECASE):
+          Log("'%s' matched ignore_files_findall: '%s'" % (fullpath, rx) )
+          continue # pass if pattern match current filename
+
       fileName, fileExtension = os.path.splitext(item)
-      if fileExtension[1:] in video_exts:
-        for rx in ignore_files_re_findall:  ### Filter trailers and sample files ###
+      if fileExtension[1:] in video_exts:   # Retain wanted file extensions
+        for rx in ignore_files_re_findall:  # Filter trailers and sample files
           result = re.findall(rx, item)
           if len(result): 
             Log("'%s' ignore_files_findall: match" % item)
             break
-        else:  files.append(fullpath) ### Retain wanted file extensions ###
+        else:  files.append(fullpath)  
   if not files == []:  file_tree[subdir] = files
 
 ### Look for episodes ###################################################################################
@@ -219,15 +255,16 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   Log("=== Scan ================================================================================================================")
   Log("Platform: '%s', Test location: '%s'" % (platform, LOG_PATH))
   Log("Scan: (root: '%s', path='%s', subdirs: '%s', Files: '%s', language: '%s')" % (root if root is not None else "", path, str(subdirs), str(files), language))
-  Log("=========================================================================================================================")
   file_tree = {}                                           # initialize file_tree
+  Log("--- .plexignore ---------------------------------------------------------------------------------------------------------")
   explore_path(root, file_tree)                            # initialize file_tree with files on root
+  Log("=========================================================================================================================")
   for path, files in file_tree.iteritems():                # Loop to add all series while on the root folder Scan call, which allows subfolders to work
     subdirs=[]                                             # Recreate normal scanner coding: subfolders empty
     path   = path.replace(root, "")                        # Recreate normal scanner coding: path is relative to root
     if path.startswith("/"):  path = path[1:]              # Recreate normal scanner coding: path doesn't start with "/"   
     relative_path = path.replace(root, " ")                # Foe exemple /group/serie/season/ep folder
-    reverse_path  = Utils.SplitPath(relative_path)         # Take top two as show/season, but require at least the top one.
+    reverse_path  = Utils.SplitPath(relative_path)         # Take top two as show/season, but require at least the top one, and reverse them
     reverse_path.reverse()                                 # Reverse the order of the folders
    
     ### bluray folder management ###
