@@ -48,11 +48,11 @@ How to name the file ?
 <TR> <TH> Data type </TH> <TH> Source                </TH> <TH>           Comment </TH> </TR>
 </THEAD>
 <TBODY>
-<TR> <TD> fanart    </TD> <TD> title-fanart-1.ext or art/backdrop/background/fanart.ext (same level as Video TS)  </TD>
-<TR> <TD> poster    </TD> <TD> Serie  (Show name-1.jpg folder, poster, show.ext (jpg, jpeg,png,tbn)),  Season          Season-1a.ext in season folder       </TD>           
+<TR> <TD> fanart    </TD> <TD> title-fanart-1.ext or art/backdrop/background/fanart.ext (same level as Video TS)  </TD> </TR>
+<TR> <TD> poster    </TD> <TD> Serie  (Show name-1.jpg folder, poster, show.ext (jpg, jpeg,png,tbn)),  Season          Season-1a.ext in season folder       </TD> <TR>          
 <TR> <TD> Banner    </TD> <TD> Serie Name-bannera.ext or banner.jpg </TD> </TR>
-<TR> <TD> theme song  </TD>
-<TR> <TD> .plexignore </TD>
+<TR> <TD> theme song  </TD><TR>
+<TR> <TD> .plexignore </TD><TR>
 </TBODY>
 </TABLE>
    
