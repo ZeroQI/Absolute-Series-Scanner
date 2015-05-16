@@ -58,6 +58,8 @@ video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', '
   'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
 translation_table       = maketrans("`", "'")                                                                 # ("`??", "':/") 
 FILTER_CHARS            = "\\/:*?<>|~=." #,    #- 01-02 cleaned otherwise                                    # Windows file naming limitations + "~-;,._"
+CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 50072:'O',
+                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z'   }
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)
 ignore_dirs_re_findall  = ['extras?', '!?samples?', 'bonus', '.*bonus disc.*', '!?trailers?', '@eaDir']       # Skipped folders
 
@@ -142,19 +144,14 @@ def roman_to_int(string):
   return str(result)
 
 ### Allow to display ints even if equal to None at times ################################################
-CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z',
-                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',
-                 }
-def encodeASCII(text):
-  i      = 0
-  string = []
-  nrmtxt = unicodedata.normalize('NFC',unicode(text)).encode('ascii', 'ignore')
-  while i < len(nrmtxt):
-     if ord(text[i])<129:  string.append(text[i]) # pure ASCII character
-     else:                                        # non  ASCII character
-       string.append(CHARACTERS_MAP.get( 256*ord(text[i])+ord(text[i+1]) ))
-       i = i+1
-     i = i+1
+
+def encodeASCII(text): 
+  string = list( unicodedata.normalize('NFKD',text.decode('utf-8')).encode('ascii', 'replace') ) #crash if no text.decode('utf-8')
+  for index, char in enumerate(string):
+     if string[index]=='?': # non  ASCII character got replaced by ascii encoding
+       char = (ord(text[index])*256) + ord(text[index+1])
+       if CHARACTERS_MAP.get( char ):  string[index]=CHARACTERS_MAP.get( char )
+       else:                           Log("*Character missing in CHARACTERS_MAP value: '%d', type: '%s'" % (char, unicodedata.category(unichr(char))))
   return ''.join(string)
 
 ### Allow to display ints even if equal to None at times ################################################
@@ -181,7 +178,7 @@ def clean_filename(string):
   string = " ".join(words)
   string = string.replace("  ", " ").strip() # remove duplicates spaces
   if string.endswith(" -"):  string = string[:-len(" -")]
-  #string=encodeASCII(string)
+  string=encodeASCII(string)
   return string
     
 ### Add files into Plex database ########################################################################
@@ -197,7 +194,7 @@ def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, epi
 ### Add files into Plex database ########################################################################
 def explore_path(subdir, file_tree):
   files=[]
-  for item in os.listdir(subdir): 
+  for item in sorted(os.listdir(subdir)): 
     fullpath = os.path.join(subdir, item)
     if os.path.isdir (fullpath): 
       for rx in ignore_dirs_re_findall: ### Skip unwanted folders ###
@@ -249,7 +246,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
               for i in files:  tv_show.parts.append(i)
             mediaList.append(tv_show)
             Log("show: '%s', year: '%s', season: '%2s', ep: %3s found using Bluray convention (bdmv/stream)" % (show, xint(year), str(int(match.group('season'))), xint(episode)) )
-            return
+            break
+      else: Log("*no show found for ep: '%s', folder_show: '%s' using Bluray convention (bdmv/stream)" % (episode, folder_show))
+      continue
 
     ### Check if folder is a season folder and remove it do reduce complexity ###
     folder_season = None
