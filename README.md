@@ -1,3 +1,14 @@
+Fonctionalities
+===============
+  . Logs in Plex Logs folder "Plex Media Scanner (custom ASS).log" with one line per folder, season folder and per file
+  . Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])
+  . Seasons folders with serie name afterwards, including "Series" appelation
+  . AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)
+  . Specials chars handling ("CØDE：BREAKER") and files starting with dors (".Hack")
+  . Movie files in Series accepted if they have the same name as the folder (or 01|ep 01|s01e01)
+  . Episodes from different series in single folder (dump folder) supported
+  . Console output supported if launched from command line
+  
 Naming Conventions Rules by ZeroQI
 ========================
 
