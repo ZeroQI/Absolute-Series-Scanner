@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
 # Modified by ZeroQI from BABS scanner: https://forums.plex.tv/index.php/topic/31081-better-absolute-scanner-babs/
-
 import sys, unicodedata          # titlecase , datetime, Plex (Stack, Filter, PhotoFiles, AudioFiles)
 import os                        # Python       - os.uname, os.listdir
 import os.path                   # Python       - os.path.basename, os.path.splitext, os.path.join, os.path.expandvars, os.path.expanduser, os.path.isdir, os.path.isfile
@@ -9,7 +8,6 @@ import re                        # Python       - re.findall, re.match, re.sub, 
 import string                    # Python       - string
 from string import maketrans     # Python       - string.maketrans
 import time                      # Python       - 
-import logging                   # Python       - logging.basicConfig, logging.debug/info/warning/error/critical('some critical message: %s', 'highest category')
 import Utils                     # Plex library - Utils - Utils.SplitPath
 import Media                     # Plex library - ALL   - Media.Episode, 
 import Filter                    # Plex library - ALL   - IGNORE_DIRS, ROOT_IGNORE_DIRS
@@ -18,9 +16,6 @@ import VideoFiles                # Plex library - VIDEO - VideoFiles.Scan
 import fnmatch                   # Python       - fnmatch used by .plexignore regex
 
 ### Log function ########################################################################################
-# setup logging https://docs.python.org/2/library/logging.html ###
-LOG_FILE   = 'Plex Media Scanner (custom ASS).log'
-LOG_FORMAT = '%(asctime)s| %(levelname)-8s| %(message)s'
 LOG_WIN    = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows 8
                '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]     # ?
 LOG_MAC    = [ '$HOME/Library/Application Support/Plex Media Server/Logs' ]
@@ -33,12 +28,10 @@ LOG_LIN    = [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs', 
                '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              #Synology, Asustor
                '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]             #Synology, if migrated a second raid volume as unique volume in new box         
 LOG_WTF    = [ '$HOME' ]                                                                        #home folder as backup "C:\users\User.Machine" in windows 8, "users\Plex" on synology
-
 try:      platform = sys.platform.lower()                                                       # sys.platform: win32 | darwin | linux2, 
 except:                                                                                         #
   try:    platform = Platform.OS.lower()                                                        # Platform.OS:  Windows, MacOSX, or Linux #  
   except: platform = ""                                                                         #
-
 if   (platform == 'win32'  or platform == 'windows'): LOG_PATHS = LOG_WIN
 elif (platform == 'darwin' or platform == 'macosx'):  LOG_PATHS = LOG_MAC
 elif 'linux' in platform:                             LOG_PATHS = LOG_LIN
@@ -47,11 +40,11 @@ for folder in LOG_PATHS:
   LOG_PATH = os.path.expandvars(folder)
   if os.path.isdir(LOG_PATH):  break
 else: LOG_PATH = os.path.expanduser('~')
-logging.basicConfig(filename=os.path.join(LOG_PATH, LOG_FILE), format=LOG_FORMAT, level=logging.DEBUG)  
 
-def Log(entry, filename='Plex Media Scanner Custom.log'):
-  logging.info(entry + "\n" if (platform == 'win32'  or platform == 'windows') else entry + "\r\n") # allow linux to output windows notepad comp line feeds but windows plex server add additional line feed with this setting
-  print entry                                                                                       # when ran from console
+def Log(entry, filename='Plex Media Scanner (custom ASS).log'):
+  filename=os.path.join(LOG_PATH, filename)
+  with open(filename, 'a') as file:
+    file.write( entry + "\r\n" );  print entry     # when ran from console
 
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
 ignore_dirs_re_findall  = ['[Ee]xtras?', '!?[Ss]amples?', '[Bb]onus', '.*[Bb]onus disc.*', '!?[Tt]railers?']  # Skipped folders
@@ -122,20 +115,19 @@ release_groups = [                                                              
   "5BAnime-Koi_5D", "%5Banime-koi%5D", "Minitheatre.org", "minitheatre.org", "mtHD", "THORA",                 #
   "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh",                  #
   ]
-FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
-CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
-                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',    
-                   50072:'O'  , 38980:'D', 61372:'R', # 'CØDE：BREAKER'
-                   50084:'a'  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
-                   57992:'∀'  , # '∀ Gundam' no need
-                   48416:'1/2', # 'R/Ranma ½ Nettou Hen'
-                   #50079:'ss', # 'Weiß Kreuz'
-}
 video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
   'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
   'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
   'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
-
+FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
+                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',    
+                   17347:'O' , # 'CØDE：BREAKER'
+                   50084:''  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
+                   28130:'∀' , 12770:'∀',# '∀ Gundam' no need
+                   49853:''  , # 'R/Ranma ½ Nettou Hen'
+                   27075:'ss',   # 'Weiß Kreuz'
+}
 
 ### Allow to display ints even if equal to None at times ################################################
 def xint(s): 
@@ -155,17 +147,20 @@ def roman_to_int(string):                                    # Regex for matchin
 
 ### Allow to display ints even if equal to None at times ################################################
 def encodeASCII(text): #crash if no text.decode('utf-8')
+  string = text
+  try:     string = string.encode('latin1')
+  except:  pass
   try:       string = unicodedata.normalize('NFKD',  text.decode(sys.getfilesystemencoding())) #Try to decode with reported filesystem encoding, then with UTF-8 since some filesystems lie.
   except: pass
-  try:     string = unicodedata.normalize('NFKD', text.decode('utf-8'))
+  try:     string = unicodedata.normalize('NFKD', string.decode('utf-8'))
   except:  pass
-  string = list(string.encode('ascii', 'replace')) 
+  try:     string = list(string.encode('ascii', 'replace')) 
+  except:  pass
   for index, char in enumerate(string):
-    if string[index]=='?': # non  ASCII character got replaced by ascii encoding
-      char = (ord(text[index])*256) + ord(text[index+1])
-      if CHARACTERS_MAP.get( char ):
-        string[index]=CHARACTERS_MAP.get( char )
-      else:                           Log("*Character missing in CHARACTERS_MAP value: '%d'" % (char))
+    if string[index]=='?': # non  ASCII character got replaced by ascii encoding but could be second char only
+      char = (ord(text[index-1])*256) + ord(text[index])
+      if char in CHARACTERS_MAP:  string[index]=CHARACTERS_MAP.get( char )
+      else:                       Log("*Character missing in CHARACTERS_MAP value: '%d', char: '%s'" % (char, text[index-1]+text[index]))
   return ''.join(string)
 
 ### Allow to display ints even if equal to None at times ################################################
