@@ -19,7 +19,7 @@ import fnmatch                   # Python       - fnmatch used by .plexignore re
 
 ### Log function ########################################################################################
 # setup logging https://docs.python.org/2/library/logging.html ###
-LOG_FILE   = 'Plex Media Scanner (custom ASS).log'
+LOG_FILE   = 'Plex Media Scanner (custom ASS) beta.log'
 LOG_FORMAT = '%(asctime)s| %(levelname)-8s| %(message)s'
 LOG_WIN    = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows 8
                '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]     # ?
@@ -62,20 +62,10 @@ season_re_match         = [                                                     
   '.*?(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                      # US - Season
   '.*?(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                      # UK - Series
   '.*?(SAISON|Saison|saison)[ -_]?(?P<season>[0-9]+).*',                                                      # FR - Saison
-  '(?P<season>[0-9]{1,2})a? Stagione+.*'                                                                      # IT - Xa Stagiona
-]
+  '(?P<season>[0-9]{1,2})a? Stagione+.*']                                                                     # IT - Xa Stagiona
+specials_re_match = ['(SPECIALS|Specials|specials)']                                                          # Specials
 
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)                                                          
-specials_re_match = ['(sp|Sp|SP)(ecials?|ECIALS?)?']                                                          # Specials folder
-
-FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
-CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 50072:'O',
-                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z'   }
-
-video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
-  'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
-  'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
-  'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
 
 episode_re_search             = [                                                                             ### Episode search ###
   '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ ]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)((-E|-e|-|e|E|ep|.ep|-ep|_ep|_|x)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
@@ -132,6 +122,20 @@ release_groups = [                                                              
   "5BAnime-Koi_5D", "%5Banime-koi%5D", "Minitheatre.org", "minitheatre.org", "mtHD", "THORA",                 #
   "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh",                  #
   ]
+FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
+                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',    
+                   50072:'O'  , 38980:'D', 61372:'R', # 'CØDE：BREAKER'
+                   50084:'a'  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
+                   57992:'∀'  , # '∀ Gundam' no need
+                   48416:'1/2', # 'R/Ranma ½ Nettou Hen'
+                   #50079:'ss', # 'Weiß Kreuz'
+}
+video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
+  'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
+  'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
+  'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
+
 
 ### Allow to display ints even if equal to None at times ################################################
 def xint(s): 
@@ -149,23 +153,24 @@ def roman_to_int(string):                                    # Regex for matchin
       string = string[len(letter):]
   return str(result)
 
-
 ### Allow to display ints even if equal to None at times ################################################
 def encodeASCII(text): #crash if no text.decode('utf-8')
-  try:       string = unicodedata.normalize('NFKD', text.decode(sys.getfilesystemencoding()))  #Try to decode with reported filesystem encoding, then with UTF-8 since some filesystems lie.
-  except:
-    try:     string = unicodedata.normalize('NFKD', text.decode('utf-8'))
-    except:  pass
+  try:       string = unicodedata.normalize('NFKD',  text.decode(sys.getfilesystemencoding())) #Try to decode with reported filesystem encoding, then with UTF-8 since some filesystems lie.
+  except: pass
+  try:     string = unicodedata.normalize('NFKD', text.decode('utf-8'))
+  except:  pass
   string = list(string.encode('ascii', 'replace')) 
   for index, char in enumerate(string):
-     if string[index]=='?': # non  ASCII character got replaced by ascii encoding
-       char = (ord(text[index])*256) + ord(text[index+1])
-       if CHARACTERS_MAP.get( char ):  string[index]=CHARACTERS_MAP.get( char )
-       else:                           Log("*Character missing in CHARACTERS_MAP value: '%d', type: '%s'" % (char, unicodedata.category(unichr(char))))
+    if string[index]=='?': # non  ASCII character got replaced by ascii encoding
+      char = (ord(text[index])*256) + ord(text[index+1])
+      if CHARACTERS_MAP.get( char ):
+        string[index]=CHARACTERS_MAP.get( char )
+      else:                           Log("*Character missing in CHARACTERS_MAP value: '%d'" % (char))
   return ''.join(string)
 
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string):
+  string=encodeASCII(string)
   string = re.sub(r'\(.*?\)', '', string)                                # remove "(xxx)" groups
   string = re.sub(r'\[.*?\]', '', string)                                # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
   string = re.sub(r'\{.*?\}', '', string)                                # remove "{xxx}" groups as Plex cleanup keep inside () but not inside []
@@ -187,7 +192,6 @@ def clean_filename(string):
   string = " ".join(words)
   string = string.replace("  ", " ").strip() # remove duplicates spaces
   if string.endswith(" -"):  string = string[:-len(" -")]
-  string=encodeASCII(string)
   return string
 
 ### Add files into Plex database ########################################################################
@@ -202,49 +206,40 @@ def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, epi
 
 ### Add files into array ################################################################################
 def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
-  files=[]
+
   if os.path.isfile(os.path.join(subdir, ".plexignore")):
     with open( os.path.join(subdir, ".plexignore"), 'r') as plexignore:
       for pattern in plexignore:
-        pattern = pattern.strip()                                                    # remove useless spaces at both ends
-        if pattern == '' or pattern[0] == '#': continue                              # skip comment and emopy lines, go to next for iteration
-        if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))  # patterns for this folder gets converted and added to files.
-        elif pattern[0] != '/': plexignore_dirs.append(pattern)                      # patterns for subfolders added to folders
+        pattern = pattern.strip()                                                                # remove useless spaces at both ends
+        if pattern == '' or pattern[0] == '#': continue                                          # skip comment and emopy lines, go to next for iteration
+        if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))              # patterns for this folder gets converted and added to files.
+        elif pattern[0] != '/': plexignore_dirs.append(pattern)                                  # patterns for subfolders added to folders
   
-  ### Loop current folder files and folders ###
-  for item in sorted(os.listdir(subdir)):
+  files=[]; dirs=[]                                                                              ### Process all files and folders ###
+  for item in os.listdir(subdir):                                                                # Loop current folder files and folders
     fullpath = os.path.join(subdir, item)
-    if os.path.isdir (fullpath):                                                                     ### Folder ###
-      for rx in ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall:                                 # Loop through unwanted folders list
-        if re.findall(rx, item): break                                                               # If folder in list of skipped folder exit this loop  #if len(result):  break
-      else:                                                                                          ### .plexignore subfolder restrictions management
-        plexignore_recursive_files=[]                                                                # Split recursive entries, this one for next folder
-        plexignore_recursive_dirs =[]                                                                # Split recursive entries, this one for next folder's subfolders
-        for rx in plexignore_dirs:                                                                   # On each patter string
-          pattern = rx.split("/")                                                                    # Create array splitting by / so all folders separated and patter last
-          if pattern[0].lower() == Utils.SplitPath(fullpath)[-1].lower():                            # first folder the same
-            if len(pattern) == 2: plexignore_recursive_files.append(fnmatch.translate(pattern[1:]))  # One folder, for next folder current files
-            if len(pattern) >= 3: plexignore_recursive_dirs.append( pattern[1:])                     # 2+ folders, for next folder subfolders
-        explore_path(fullpath, file_tree, plexignore_recursive_files, plexignore_recursive_dirs)     # call next folder and will inherit restrictions
-   
-    elif os.path.isfile(fullpath):                                                                   ###File ####
-
-      if plexignore_files:   # .plexignore files current folder        #Log("'%s' ('%s') processed while pattern present(s) for folder: '%s'" % (fullpath, os.path.basename(fullpath), str(plexignore_files)))
+    if os.path.isdir (fullpath ):                                                                ### dirs
+      for rx in ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall:                             # Loop through unwanted folders list
+        if re.findall(rx, item): break                                                           # If folder in list of skipped folder exit this loop  #if len(result):  break
+      else:  dirs.append(fullpath)                                                               # .plexignore subfolder restrictions management
+    if os.path.isfile(os.path.join(subdir, item)) and item[-3:] in video_exts:                   ### files
+      for rx in ignore_files_re_findall:                                                         # Filter trailers and sample files
+        if re.findall(rx, item): break                                                           #Log("'%s' ignore_files_findall: match" % item)
+      else:
         for rx in plexignore_files:                         
-          match = re.findall(rx, os.path.basename(fullpath))                                         # .plexignore pattern match current file/ plex source use re.match which NEVER matches
-          if match:
-            Log("'%s' matched ignore_files_findall pattern: '%s'" % (fullpath, rx))                  # File log
-            break 
-        if match: continue
- 
-      fileName, fileExtension = os.path.splitext(item)
-      if fileExtension[1:] in video_exts:   # Retain wanted file extensions
-        for rx in ignore_files_re_findall:  # Filter trailers and sample files
-          if re.findall(rx, item): #len(result): ##result =re...
-            Log("'%s' ignore_files_findall: match" % item)
-            break
-        else:  files.append(fullpath)  
-  if not files == []:  file_tree[subdir] = files
+          if re.findall(rx, os.path.basename(item)): break 
+        else:  files.append(os.path.join(subdir, item))
+  dirs.sort(); files.sort(); 
+
+  for item in dirs:
+    plexignore_recursive_files=[]; plexignore_recursive_dirs =[]                                 # Split recursive entries, this one for next folder's subfolders
+    for rx in plexignore_dirs:                                                                   # On each patter string
+      pattern = rx.split("/")                                                                    # Create array splitting by / so all folders separated and patter last
+      if pattern[0].lower() == Utils.SplitPath(item)[-1].lower():                                # first folder the same
+        if len(pattern) == 2: plexignore_recursive_files.append(fnmatch.translate(pattern[1]))   # One folder, for next folder current files
+        if len(pattern) >= 3: plexignore_recursive_dirs.append( "",join(pattern[1:]))            # 2+ folders, for next folder subfolders
+    explore_path(item, file_tree, plexignore_recursive_files, plexignore_recursive_dirs)     # call next folder and will inherit restrictions
+  if not files == []:  file_tree[subdir] = files 
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
