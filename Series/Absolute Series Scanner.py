@@ -19,7 +19,7 @@ import fnmatch                   # Python       - fnmatch used by .plexignore re
 
 ### Log function ########################################################################################
 # setup logging https://docs.python.org/2/library/logging.html ###
-LOG_FILE   = 'Plex Media Scanner (custom ASS) beta.log'
+LOG_FILE   = 'Plex Media Scanner (custom ASS).log'
 LOG_FORMAT = '%(asctime)s| %(levelname)-8s| %(message)s'
 LOG_WIN    = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows 8
                '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]     # ?
@@ -79,10 +79,10 @@ standalone_episode_re_findall = [                                               
 just_episode_re_search        = [                                                                             ### Episode search no show name ###
   '(?P<ep>[0-9]{1,3})[\. -_]of[\. -_]+[0-9]{1,3}([^0-9]|$)',                                                  # 01 of 08 (no stacking for this one ?)
   '^(?P<ep>[0-9]{1,3})([^0-9]|$)',                                                                            # 01
-  '(^|[ \.\-_])e(p? ?|(pisode){0,1})[ \.\-_]*(?P<ep>[0-9]{2,3})([^0-9]|$)',                                   # ep234 or Ep 126
-  '.*?[ \.\-_](?P<ep>[0-9]{2,3})([^0-9]|$)+',                                                                 # Flah - 04 - Blah
-  '.*?[ \.\-_](?P<ep>[0-9]{2,3})$',                                                                           # Flah - 04
-  '.*?[^0-9x](?<!OP)(?<!ED)(?P<ep>\d{2,3})([^0-9]|$)',                                                        # Flah 107 as long as it isn't preceded by op, ed
+  '(^|[ \.\-_])e(p? ?|(pisode){0,1})[ \.\-_]*(?P<ep>[0-9]{1,3})([^0-9]|$)',                                   # ep234 or Ep 126
+  '.*?[ \.\-_](?P<ep>[0-9]{1,3})([^0-9]|$)+',                                                                 # Flah - 04 - Blah
+  '.*?[ \.\-_](?P<ep>[0-9]{1,3})$',                                                                           # Flah - 04
+  '.*?[^0-9x](?<!OP)(?<!ED)(?P<ep>\d{1,3})([^0-9]|$)',                                                        # Flah 107 as long as it isn't preceded by op, ed
   '^[^\-]*\-[ ]*(?P<ep>[0-9]{1,3})[ ]*\-.+$'                                                                  # Byousoku 5 Centimeter - 1 - The Chosen Cherry Blossoms - [RAW](3d312152) ###by TiS
   ]   
 AniDB_re_search   = [                                                                                         ### AniDB Specials numbering ###
