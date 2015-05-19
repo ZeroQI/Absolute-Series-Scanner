@@ -46,7 +46,7 @@ def Log(entry, filename='Plex Media Scanner (custom ASS).log'):
 
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
 ignore_dirs_re_findall  = ['[Ee]xtras?', '!?[Ss]amples?', '[Bb]onus', '.*[Bb]onus disc.*', '!?[Tt]railers?']  # Skipped folders
-IGNORE_DIRS      = ['@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble']          # Filters.py '\..*',
+IGNORE_DIRS      = ['@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble']                  # Filters.py  '\..*', 
 ROOT_IGNORE_DIRS = ['\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder']  # Filters.py 
 
 season_re_match         = [                                                                                   ### Season folder ### 
@@ -214,7 +214,7 @@ def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
     if os.path.isdir (fullpath ):                                                                ### dirs
       for rx in ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall:                             # Loop through unwanted folders list
         if re.findall(rx, item):
-          Log("Folder: '%s' matched ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall regex: '%s', List: '%s'" % (item, rx, str(ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall)))
+          Log("Folder: '%s' matched ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall regex: '%s'" % (item, rx))
           break                                                                                  # If folder in list of skipped folder exit this loop  #if len(result):  break
       else:  dirs.append(fullpath)                                                               # .plexignore subfolder restrictions management
     if os.path.isfile(os.path.join(subdir, item)) and item[-3:] in video_exts:                   ### files
