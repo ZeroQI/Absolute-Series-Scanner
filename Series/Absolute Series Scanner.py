@@ -5,15 +5,13 @@ import sys, unicodedata          # titlecase , datetime, Plex (Stack, Filter, Ph
 import os                        # Python       - os.uname, os.listdir
 import os.path                   # Python       - os.path.basename, os.path.splitext, os.path.join, os.path.expandvars, os.path.expanduser, os.path.isdir, os.path.isfile
 import re                        # Python       - re.findall, re.match, re.sub, re.search
+import fnmatch                   # Python       - fnmatch used by .plexignore regex
 import string                    # Python       - string
-from string import maketrans     # Python       - string.maketrans
 import time                      # Python       - 
 import Utils                     # Plex library - Utils - Utils.SplitPath
 import Media                     # Plex library - ALL   - Media.Episode, 
-import Filter                    # Plex library - ALL   - IGNORE_DIRS, ROOT_IGNORE_DIRS
 import Stack                     # Plex library - VIDEO - Stack
 import VideoFiles                # Plex library - VIDEO - VideoFiles.Scan
-import fnmatch                   # Python       - fnmatch used by .plexignore regex
 
 ### Log function ########################################################################################
 LOG_WIN    = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows 8
@@ -48,7 +46,7 @@ def Log(entry, filename='Plex Media Scanner (custom ASS).log'):
 
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
 ignore_dirs_re_findall  = ['[Ee]xtras?', '!?[Ss]amples?', '[Bb]onus', '.*[Bb]onus disc.*', '!?[Tt]railers?']  # Skipped folders
-IGNORE_DIRS      = ['@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', '\..*', 'lost\+found', '.AppleDouble']          # Filters.py 
+IGNORE_DIRS      = ['@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble']          # Filters.py '\..*',
 ROOT_IGNORE_DIRS = ['\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder']  # Filters.py 
 
 season_re_match         = [                                                                                   ### Season folder ### 
@@ -215,7 +213,9 @@ def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
     fullpath = os.path.join(subdir, item)
     if os.path.isdir (fullpath ):                                                                ### dirs
       for rx in ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall:                             # Loop through unwanted folders list
-        if re.findall(rx, item): break                                                           # If folder in list of skipped folder exit this loop  #if len(result):  break
+        if re.findall(rx, item):
+          Log("Folder: '%s' matched ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall regex: '%s', List: '%s'" % (item, rx, str(ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall)))
+          break                                                                                  # If folder in list of skipped folder exit this loop  #if len(result):  break
       else:  dirs.append(fullpath)                                                               # .plexignore subfolder restrictions management
     if os.path.isfile(os.path.join(subdir, item)) and item[-3:] in video_exts:                   ### files
       for rx in ignore_files_re_findall:                                                         # Filter trailers and sample files
@@ -241,7 +241,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
 
   if not path == "":  return  # Exit every other iteration than the root scan
   Log("=== Scan ================================================================================================================")
-  Log("Platform: '%s', Test location: '%s'" % (platform, LOG_PATH))
+  Log("Platform: '%s', Logs location: '%s'" % (platform, LOG_PATH))
   Log("Scan: (root: '%s', path='%s', subdirs: '%s', Files: '%s', language: '%s')" % (root if root is not None else "", path, str(subdirs), str(files), language))
   file_tree = {}                                           # initialize file_tree
   Log("--- .plexignore ---------------------------------------------------------------------------------------------------------")
@@ -282,7 +282,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         match = re.match(rx, folder, re.IGNORECASE)
         if match:
           folder_season = 0 if rx in specials_re_match else int( match.group('season') )  #use "if var is | is not None:" as it's faster than "==None" and "if var:" is false if the variable is: False, 0, 0.0, "", () , {}, [], set()
-          Log("Season folder: '%s' found using Regex '%s' on folder name '%s'" % (str(folder_season), rx, folder) )
+          Log("Season folder: '%s' found using Regex specials_re_match '%s' on folder name '%s'" % (str(folder_season), rx, folder) )
           reverse_path.remove(folder)  #All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
           break
       if match: break  #Breaking second for loop doesn't exist parent for
@@ -337,8 +337,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           episode    =             int(match.group('ep'))
           endEpisode =             int(match.group('secondEp')) if match.groupdict().has_key('secondEp') and match.group('secondEp') else episode
           add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, endEpisode)
-          if episode==endEpisode:  Log("show: '%s', year: '%s', season: '%s', ep: '%s'      found using regex: '%s' on cleaned string '%s' gotten from filename '%s' also ep_nb: '%s'" % (show, xint(year), xint(season), xint(episode),                   rx, ep, filename, ep_nb))
-          else:                    Log("show: '%s', year: '%s', season: '%s', ep: '%s-%s' found using regex: '%s' on cleaned string '%s' gotten from filename '%s' also ep_nb: '%s'"   % (show, xint(year), xint(season), xint(episode), xint(endEpisode), rx, ep, filename, ep_nb))
+          if episode==endEpisode:  Log("show: '%s', year: '%s', season: '%s', ep: '%s'      found using regex episode_re_search '%s' on cleaned string '%s' gotten from filename '%s' also ep_nb: '%s'" % (show, xint(year), xint(season), xint(episode),                   rx, ep, filename, ep_nb))
+          else:                    Log("show: '%s', year: '%s', season: '%s', ep: '%s-%s' found using regex episode_re_search '%s' on cleaned string '%s' gotten from filename '%s' also ep_nb: '%s'"   % (show, xint(year), xint(season), xint(episode), xint(endEpisode), rx, ep, filename, ep_nb))
           break
       if match: continue
     
@@ -350,7 +350,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           endEpisode = int(episode) if len(endEpisode) == 0 else int(endEpisode)
           episode    = int(episode)
           add_episode_into_plex(mediaList, files, file, folder_show if folder_use or show=="" else show, season, int(episode), episode_title, year, endEpisode)
-          Log("show: '%s', year: '%s', season: '%s', ep: %s found using regex: 's' on cleaned string '%s' gotten from filename '%s'" % (folder_show if folder_use else show, xint(year), xint(season), xint(episode), rx, ep, filename))
+          Log("show: '%s', year: '%s', season: '%s', ep: %s found using regex standalone_episode_re_findall 's' on cleaned string '%s' gotten from filename '%s'" % (folder_show if folder_use else show, xint(year), xint(season), xint(episode), rx, ep, filename))
           break
       if match: continue
 
@@ -367,7 +367,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if show == "" or show.lower() in folder_show.lower(): show = folder_show  # cut down forms of title point to folder anyway
                                                                                     # In case of ep filename "EP 01 title of the episode" fallback to folder name
           add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, None)
-          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex: '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), xint(season), xint(episode), rx, ep, filename))
+          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex just_episode_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), xint(season), xint(episode), rx, ep, filename))
           break
       if match: continue
 
@@ -379,7 +379,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           episode = 1 if match.group('ep') == "" or not match.group('ep').isdigit() else int( match.group('ep') )
           episode = offset + episode
           if not show: show = folder_show
-          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex: '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), "0", xint(episode), rx, ep, filename))
+          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex AniDB_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), "0", xint(episode), rx, ep, filename))
           add_episode_into_plex(mediaList, files, file, show, 0, episode, "", year, None)
           break
       if match: continue
@@ -388,7 +388,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       match = re.match(roman_re_match, ep_nb, re.IGNORECASE)
       if match:
         ep_nb = roman_to_int(ep_nb)
-        Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex: '%s' on cleaned string '%s' gotten from filename '%s'" % (folder_show, xint(year), "1", xint(ep_nb), rx, ep, filename))
+        Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex roman_re_matchroman_re_match '%s' on cleaned string '%s' gotten from filename '%s'" % (folder_show, xint(year), "1", xint(ep_nb), rx, ep, filename))
         add_episode_into_plex(mediaList, files, file, folder_show, 1, int(ep_nb), "", year, None)
         continue
       
