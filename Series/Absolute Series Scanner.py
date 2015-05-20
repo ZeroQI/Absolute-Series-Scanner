@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
 # Modified by ZeroQI from BABS scanner: https://forums.plex.tv/index.php/topic/31081-better-absolute-scanner-babs/
-import sys, unicodedata          # titlecase , datetime, Plex (Stack, Filter, PhotoFiles, AudioFiles)
+
+import sys                       # titlecase , datetime
+import unicodedata               #
 import os                        # Python       - os.uname, os.listdir
 import os.path                   # Python       - os.path.basename, os.path.splitext, os.path.join, os.path.expandvars, os.path.expanduser, os.path.isdir, os.path.isfile
 import re                        # Python       - re.findall, re.match, re.sub, re.search
@@ -12,43 +14,16 @@ import Utils                     # Plex library - Utils - Utils.SplitPath
 import Media                     # Plex library - ALL   - Media.Episode, 
 import Stack                     # Plex library - VIDEO - Stack
 import VideoFiles                # Plex library - VIDEO - VideoFiles.Scan
-
-### Log function ########################################################################################
-LOG_WIN    = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows 8
-               '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]     # ?
-LOG_MAC    = [ '$HOME/Library/Application Support/Plex Media Server/Logs' ]
-LOG_LIN    = [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 #Linux
-               '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs',   #Debian, Fedora, CentOS, Ubuntu
-               '/usr/local/plexdata/Plex Media Server/Logs',                                    #FreeBSD
-               '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                #FreeNAS
-               '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   #ReadyNAS
-               '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          #QNAP
-               '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              #Synology, Asustor
-               '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]             #Synology, if migrated a second raid volume as unique volume in new box         
-LOG_WTF    = [ '$HOME' ]                                                                        #home folder as backup "C:\users\User.Machine" in windows 8, "users\Plex" on synology
-try:      platform = sys.platform.lower()                                                       # sys.platform: win32 | darwin | linux2, 
-except:                                                                                         #
-  try:    platform = Platform.OS.lower()                                                        # Platform.OS:  Windows, MacOSX, or Linux #  
-  except: platform = ""                                                                         #
-if   (platform == 'win32'  or platform == 'windows'): LOG_PATHS = LOG_WIN
-elif (platform == 'darwin' or platform == 'macosx'):  LOG_PATHS = LOG_MAC
-elif 'linux' in platform:                             LOG_PATHS = LOG_LIN
-else:                                                 LOG_PATHS = LOG_WTF
-for folder in LOG_PATHS:
-  LOG_PATH = os.path.expandvars(folder)
-  if os.path.isdir(LOG_PATH):  break
-else: LOG_PATH = os.path.expanduser('~')
-
-def Log(entry, filename='Plex Media Scanner (custom ASS).log'):
-  filename=os.path.join(LOG_PATH, filename)
-  with open(filename, 'a') as file:
-    file.write( entry + "\r\n" );  print entry     # when ran from console
-
+                                                                     
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
-ignore_dirs_re_findall  = ['[Ee]xtras?', '!?[Ss]amples?', '[Bb]onus', '.*[Bb]onus disc.*', '!?[Tt]railers?']  # Skipped folders
-IGNORE_DIRS      = ['@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble']                  # Filters.py  '\..*', 
-ROOT_IGNORE_DIRS = ['\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder']  # Filters.py 
+video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
+  'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
+  'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
+  'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
 
+ignore_dirs_re_findall  = ['[Ee]xtras?', '!?[Ss]amples?', '[Bb]onus', '.*[Bb]onus disc.*', '!?[Tt]railers?',  # Skipped folders
+  '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble',                                    # Filters.py  '\..*', 
+  '\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder']                    # Filters.py 
 season_re_match         = [                                                                                   ### Season folder ### 
   '.*?(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                      # US - Season
   '.*?(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                      # UK - Series
@@ -57,9 +32,8 @@ season_re_match         = [                                                     
 specials_re_match = ['(SPECIALS|Specials|specials)']                                                          # Specials
 
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)                                                          
-
-episode_re_search             = [                                                                             ### Episode search ###
-  '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ ]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)((-E|-e|-|e|E|ep|.ep|-ep|_ep|_|x)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
+episode_re_search = [                                                                             ### Episode search ###
+  '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ -]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
   '(?P<show>.*?)[sS](?P<season>[0-9]{2})[\._\- ]+(?P<ep>[0-9]+)',                                             # S03-03
   '(?P<show>.*?)([^0-9]|^)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]+)(-[0-9]+[Xx](?P<secondEp>[0-9]+))?'         # 3x03
   ]                                                                                                      
@@ -95,14 +69,18 @@ whackRx = [                                                                     
   '([Hh]i10[pP]?)', '10bit', 'Crf ?24'                                                                        #       color depth and encoding
 #  '([^0-9])5\.1[ ]*ch(.)','([^0-9])5\.1([^0-9]?)', '([^0-9])7\.1[ ]((*ch(.))|([^0-9]))'                      #       Channels
 ]
-whack_strings = [                                                                                             ### Tags to remove ###
-  '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                         # Refresh rate, Format
+whackRx = [                                                                                                   ### Tags to remove ###
+  '([hHx][\.]?264)[^0-9]',  'dvxa', 'divx', 'xvid', 'divx ?(5.?1)?',                                          # Video Codecs
   'ogg','ogm', 'vorbis','aac','dts', 'ac3',                                                                   # Audio Codecs
+  '[^[0-9](480|576|720|1080[pPi])', '1920x1080','1280x720',                                                   #       Resolution
+  '([Hh]i10[pP]?)', '10bit', 'Crf ?24'                                                                        #       color depth and encoding
+#  '([^0-9])5\.1[ ]*ch(.)','([^0-9])5\.1([^0-9]?)', '([^0-9])7\.1[ ]((*ch(.))|([^0-9]))'                      #       Channels
+  '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                         # Refresh rate, Format
   'dc','se', 'extended', 'unrated',                                                                           # edition (dc = directors cut, se = special edition)
   'multi','multisubs', 'dubbed','subbed',                                                                     # subs and dubs
   'limited', 'custom', 'internal', 'repack', 'proper', 'rerip', "Raw", "Remastered",                          # format
   'retail', 'webrip','web-dl', 'wp','workprint'                                                               # release type: retail, web, work print
-  'cd1', 'cd2', '1cd', '2cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix',                                  # misc 1
+  'cd1[1234]', '[1234]cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix',                                     # misc 1
   'fragment','ps3avchd','remux','fs','ws', " - Copy",                                                         # misc 2
   'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip',                                            # Source: bluray
   'ddc','dvdrip','dvd','r1','r3','r5',"DVD",'svcd','vcd',                                                     # DVD, VCD, S-VCD
@@ -113,19 +91,47 @@ release_groups = [                                                              
   "5BAnime-Koi_5D", "%5Banime-koi%5D", "Minitheatre.org", "minitheatre.org", "mtHD", "THORA",                 #
   "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh",                  #
   ]
-video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
-  'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
-  'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
-  'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
 FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
                    50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',    
                    17347:'O' , # 'CØDE：BREAKER'
                    50084:''  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
-                   28130:'∀' , 12770:'∀',# '∀ Gundam' no need
+                   28130:'∀' , 12770:'', # '∀ Gundam' no need
                    49853:''  , # 'R/Ranma ½ Nettou Hen'
-                   27075:'ss',   # 'Weiß Kreuz'
+                   27075:'ss', # 'Weiß Kreuz'
 }
+
+### Log function ########################################################################################
+try:      platform = sys.platform.lower()                                                       # sys.platform: win32 | darwin | linux2, 
+except:                                                                                         #
+  try:    platform = Platform.OS.lower()                                                        # Platform.OS:  Windows, MacOSX, or Linux #  
+  except: platform = ""                                                                         #
+if   (platform == 'win32'  or platform == 'windows'):  LOG_PATHS = [ 
+               '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows 8
+               '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]
+elif (platform == 'darwin' or platform == 'macosx'):  LOG_PATHS = [ 
+               '$HOME/Library/Application Support/Plex Media Server/Logs' ]
+elif 'linux' in platform:  LOG_PATHS = [
+               '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 #Linux
+               '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs',   #Debian, Fedora, CentOS, Ubuntu
+               '/usr/local/plexdata/Plex Media Server/Logs',                                    #FreeBSD
+               '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                #FreeNAS
+               '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   #ReadyNAS
+               '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          #QNAP
+               '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              #Synology, Asustor
+               '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]             #Synology, if migrated a second raid volume as unique volume in new box         
+else: LOG_PATHS = [ '$HOME' ]                                                                   #home folder as backup "C:\users\User.Machine" in windows 8, "users\Plex" on synology
+for folder in LOG_PATHS:
+  LOG_PATH = os.path.expandvars(folder)
+  if os.path.isdir(LOG_PATH):  break
+else: LOG_PATH = os.path.expanduser('~')
+
+### Allow to log to the same folder Plex writes its logs in #############################################
+def Log(entry, filename='Plex Media Scanner (custom ASS).log'):
+  filename=os.path.join(LOG_PATH, filename)
+  with open(filename, 'a') as file:
+    file.write( entry + "\r\n" )
+    print entry     # when ran from console
 
 ### Allow to display ints even if equal to None at times ################################################
 def xint(s): 
@@ -167,23 +173,18 @@ def clean_filename(string):
   string = re.sub(r'\(.*?\)', '', string)                                # remove "(xxx)" groups
   string = re.sub(r'\[.*?\]', '', string)                                # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
   string = re.sub(r'\{.*?\}', '', string)                                # remove "{xxx}" groups as Plex cleanup keep inside () but not inside []
-  for char in FILTER_CHARS:  string = string.replace(char, ' ')          # replace os forbidden chars with spaces
+  for char in  FILTER_CHARS:  string = string.replace(char, ' ')          # replace os forbidden chars with spaces
   for group in release_groups:  string = string.replace(group, " ");     # Remove known tags not in '()' or '[]', generally surrounded by '_'
   string = string.replace("`", "'")                                      # translate anidb apostrophes into normal ones
-  words = string.split(" ")
+  words  = string.split(" ")
   for word in words:
     if word !="":
-      for term in whack_strings:
-        if word.lower() == term.lower():
-          try:    words.remove(word)
-          except: Log("word: '%s', words: '%s'" % (word, str(words)))
       for rx in whackRx:
-        if re.sub(rx, "", word)=="" and word in words:
+        if re.sub(rx, "", word.lower())=="":
           try:    words.remove(word)
-          except: Log("word: '%s', words: '%s', rx: '%s'" % (word, str(words), rx))
-
+          except: pass #Log("word: '%s', words: '%s', rx: '%s'" % (word, str(words), rx))
   string = " ".join(words)
-  string = string.replace("  ", " ").strip() # remove duplicates spaces
+  string = string.replace("  ", " ").strip() # remove duplicates spaces, not working:"".join(string.split()) #
   if string.endswith(" -"):  string = string[:-len(" -")]
   return string
 
@@ -199,8 +200,8 @@ def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, epi
 
 ### Add files into array ################################################################################
 def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
-
   if os.path.isfile(os.path.join(subdir, ".plexignore")):
+    #Log(".plexignore")
     with open( os.path.join(subdir, ".plexignore"), 'r') as plexignore:
       for pattern in plexignore:
         pattern = pattern.strip()                                                                # remove useless spaces at both ends
@@ -212,17 +213,21 @@ def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
   for item in os.listdir(subdir):                                                                # Loop current folder files and folders
     fullpath = os.path.join(subdir, item)
     if os.path.isdir (fullpath ):                                                                ### dirs
-      for rx in ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall:                             # Loop through unwanted folders list
+      for rx in ignore_dirs_re_findall:                                                          # Loop through unwanted folders list
         if re.findall(rx, item):
-          Log("Folder: '%s' matched ROOT_IGNORE_DIRS+IGNORE_DIRS+ignore_dirs_re_findall regex: '%s'" % (item, rx))
+          Log("Folder: '%s' matched ignore_dirs_re_findall regex: '%s'" % (item, rx))
           break                                                                                  # If folder in list of skipped folder exit this loop  #if len(result):  break
       else:  dirs.append(fullpath)                                                               # .plexignore subfolder restrictions management
     if os.path.isfile(os.path.join(subdir, item)) and item[-3:] in video_exts:                   ### files
       for rx in ignore_files_re_findall:                                                         # Filter trailers and sample files
-        if re.findall(rx, item): break                                                           #Log("'%s' ignore_files_findall: match" % item)
+        if re.findall(rx, item): 
+          Log("File: '%s' matched ignore_files_re_findall regex: '%s'" % (item, rx))
+          break                                                           #Log("'%s' ignore_files_findall: match" % item)
       else:
         for rx in plexignore_files:                         
-          if re.findall(rx, os.path.basename(item)): break 
+          if re.findall(rx, os.path.basename(item)):
+            Log("File: '%s' matched plexignore_files pattern: '%s'" % (item, rx))
+            break 
         else:  files.append(os.path.join(subdir, item))
   dirs.sort(); files.sort(); 
 
@@ -244,7 +249,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   Log("Platform: '%s', Logs location: '%s'" % (platform, LOG_PATH))
   Log("Scan: (root: '%s', path='%s', subdirs: '%s', Files: '%s', language: '%s')" % (root if root is not None else "", path, str(subdirs), str(files), language))
   file_tree = {}                                           # initialize file_tree
-  Log("--- .plexignore ---------------------------------------------------------------------------------------------------------")
+  Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
   explore_path(root, file_tree)                            # initialize file_tree with files on root
   Log("=========================================================================================================================")
   for path, files in file_tree.iteritems():                # Loop to add all series while on the root folder Scan call, which allows subfolders to work
@@ -350,7 +355,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           endEpisode = int(episode) if len(endEpisode) == 0 else int(endEpisode)
           episode    = int(episode)
           add_episode_into_plex(mediaList, files, file, folder_show if folder_use or show=="" else show, season, int(episode), episode_title, year, endEpisode)
-          Log("show: '%s', year: '%s', season: '%s', ep: %s found using regex standalone_episode_re_findall 's' on cleaned string '%s' gotten from filename '%s'" % (folder_show if folder_use else show, xint(year), xint(season), xint(episode), rx, ep, filename))
+          Log("show: '%s', year: '%s', season: '%s', ep: %s found using regex standalone_episode_re_findall '%s' on cleaned string '%s' gotten from filename '%s'" % (folder_show if folder_use else show, xint(year), xint(season), xint(episode), rx, ep, filename))
           break
       if match: continue
 
@@ -375,10 +380,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       for rx, offset in AniDB_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
-          show    = clean_filename( match.group('show')) if not folder_use else folder_show
-          episode = 1 if match.group('ep') == "" or not match.group('ep').isdigit() else int( match.group('ep') )
-          episode = offset + episode
+          show = clean_filename( match.group('show')) if not folder_use else folder_show
           if not show: show = folder_show
+          episode = offset + 1 if match.group('ep') == "" or not match.group('ep').isdigit() else offset + int( match.group('ep') )
           Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex AniDB_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), "0", xint(episode), rx, ep, filename))
           add_episode_into_plex(mediaList, files, file, show, 0, episode, "", year, None)
           break
