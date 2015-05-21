@@ -2,6 +2,15 @@
 # Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
 # Modified by ZeroQI from BABS scanner: https://forums.plex.tv/index.php/topic/31081-better-absolute-scanner-babs/
 
+__author__     = "Benjamin Brisson (ZeroQI)"
+__maintainer__ = "Benjamin Brisson (ZeroQI)"
+__email__      = "benjamin.brisson@gmail.com"
+__credits__    = ["Benjamin Brisson (ZeroQI)", "Plex original scanner code", "BABS"]
+__copyright__  = "Copyright 2013-2015"
+__license__    = "GPLv2"
+__version__    = "1.0"
+ 
+ 
 import sys                       # titlecase , datetime
 import unicodedata               #
 import os                        # Python       - os.uname, os.listdir
@@ -14,7 +23,8 @@ import Utils                     # Plex library - Utils - Utils.SplitPath
 import Media                     # Plex library - ALL   - Media.Episode, 
 import Stack                     # Plex library - VIDEO - Stack
 import VideoFiles                # Plex library - VIDEO - VideoFiles.Scan
-                                                                     
+from mp4file import mp4file, atomsearch
+ 
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
 video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
   'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
@@ -94,11 +104,12 @@ release_groups = [                                                              
 FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
                    50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',    
-                   17347:'O' , # 'CØDE：BREAKER'
-                   50084:''  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
-                   28130:'∀' , 12770:'', # '∀ Gundam' no need
-                   49853:''  , # 'R/Ranma ½ Nettou Hen'
-                   27075:'ss', # 'Weiß Kreuz'
+                   50072:'O'  , # 'CØDE：BREAKER'
+                12360258:':'  , # 'CØDE：BREAKER'
+                   50084:'a'  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
+                14846080:'∀'  , # 12770:'', # '∀ Gundam' no need
+                   49853:'1-2', # 'R/Ranma ½ Nettou Hen'
+                   50079:'ss' , # 'Weiß Kreuz'
 }
 
 ### Log function ########################################################################################
@@ -149,24 +160,55 @@ def roman_to_int(string):                                    # Regex for matchin
       string = string[len(letter):]
   return str(result)
 
+def unicodeLen (char):
+  for x in range(1,6):  if ord(char) < 256-pow(2, 7-x): return x
+  return 6
+  
 ### Allow to display ints even if equal to None at times ################################################
-def encodeASCII(text): #crash if no text.decode('utf-8')
+def encodeASCII(text, language=None): #from Unicodize and plex scanner and other sources
   string = text
-  try:     string = string.encode('latin1')
+ 
+  ### Decode string back to Unicode ###
+  encoding  = ord(string[0])
+  encodings = ['iso8859-1', 'utf-16', 'utf-16be', 'utf-8']
+  if 0 <= encoding < len(encodings):       # If we're dealing with a particular language, we might want to try another code page.
+    if encoding == 0 and language == 'ko':  string = string[1:].decode('cp949')
+    else:                                   string = string[1:].decode(encodings[encoding])
+  if sys.getdefaultencoding() not in encodings:
+    try:    string = string.decode(sys.getdefaultencoding())
+    except: pass
+  if sys.getfilesystemencoding() not in encodings and not sys.getfilesystemencoding()==sys.getdefaultencoding():
+    try:    string = string.decode(sys.getfilesystemencoding())
+    except: pass
+  if string: string = string.strip('\0')
+ 
+  ### Unicode to ASCII conversion ###
+  try:     string = unicodedata.normalize('NFKD', string)    # Unicode  to ascii conversion to corect most characters automatically
   except:  pass
-  try:       string = unicodedata.normalize('NFKD',  text.decode(sys.getfilesystemencoding())) #Try to decode with reported filesystem encoding, then with UTF-8 since some filesystems lie.
-  except: pass
-  try:     string = unicodedata.normalize('NFKD', string.decode('utf-8'))
+  try:     string = re.sub(RE_UNICODE_CONTROL, '', string)   # Strip control characters.
   except:  pass
-  try:     string = list(string.encode('ascii', 'replace')) 
+  try:     string = string.encode('ascii', 'replace')        # Encode into Ascii
   except:  pass
-  for index, char in enumerate(string):
-    if string[index]=='?': # non  ASCII character got replaced by ascii encoding but could be second char only
-      char = (ord(text[index-1])*256) + ord(text[index])
-      if char in CHARACTERS_MAP:  string[index]=CHARACTERS_MAP.get( char )
-      else:                       Log("*Character missing in CHARACTERS_MAP value: '%d', char: '%s'" % (char, text[index-1]+text[index]))
+ 
+  ### 
+  string = list(string)
+  i = 0 ; delta = 0
+  while i < len(string):
+    if ord(string[i])>127:
+      char = 0; char2 = ""; char3 = []
+      char_len = unicodeLen(string[i])
+      for x in range(0, char_len):
+        char = 256*char + ord(string[i+x+delta])
+        char2 += string[i+x]
+        char3.append(string[i+x])
+        string[i+x]=''
+      if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
+      else:  Log("*Character missing in CHARACTERS_MAP: '%d', char: '%s%s', len: '%d', string: '%s'" % (char, char2, char3, char_len, string))
+      delta   += char_len-1
+      i+=char_len-1
+    i = i+1
   return ''.join(string)
-
+  
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string):
   string=encodeASCII(string)
