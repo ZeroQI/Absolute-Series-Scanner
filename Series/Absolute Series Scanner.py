@@ -167,10 +167,11 @@ def unicodeLen (char):
   
 ### Allow to display ints even if equal to None at times ################################################
 def encodeASCII(text, language=None): #from Unicodize and plex scanner and other sources
+  if text=='': return
   string = text
  
   ### Decode string back to Unicode ###
-  encoding  = ord(string[0])
+  encoding  = ord(text[0])
   encodings = ['iso8859-1', 'utf-16', 'utf-16be', 'utf-8']
   if 0 <= encoding < len(encodings):       # If we're dealing with a particular language, we might want to try another code page.
     if encoding == 0 and language == 'ko':  string = string[1:].decode('cp949')
@@ -212,6 +213,7 @@ def encodeASCII(text, language=None): #from Unicodize and plex scanner and other
   
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string):
+  if not string: return ""
   string=encodeASCII(string)
   #string = re.sub(r'\(.*?\)', '', string)                                # remove "(xxx)" groups
   string = re.sub(r'\[.*?\]', '', string)                                # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
@@ -406,23 +408,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           break
       if match: continue
 
-      ### Check for just_episode_re_search ###
-      for rx in just_episode_re_search:
-        match = re.search(rx, ep, re.IGNORECASE)
-        if match: #          if rx == just_episode_re_search[0]:  shouldStack = False
-          season  = 1 if folder_season is None else folder_season                                                                       
-          episode = int(match.group('ep'))
-          if folder_use:  show = folder_show
-          else:
-            show = ep[:ep.find(match.group('ep'))].rstrip() # remove eveything from the episode number
-            if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
-            if show == "" or show.lower() in folder_show.lower(): show = folder_show  # cut down forms of title point to folder anyway
-                                                                                    # In case of ep filename "EP 01 title of the episode" fallback to folder name
-          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, None)
-          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex just_episode_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), xint(season), xint(episode), rx, ep, filename))
-          break
-      if match: continue
-
       ### Check for AniDB_re_search ###
       for rx, offset in AniDB_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
@@ -435,6 +420,24 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           break
       if match: continue
  
+      ### Check for just_episode_re_search ###
+      for rx in just_episode_re_search:
+        match = re.search(rx, ep, re.IGNORECASE)
+        if match: #          if rx == just_episode_re_search[0]:  shouldStack = False
+          season  = 1 if folder_season is None else folder_season                                                                       
+          episode = int(match.group('ep'))
+          if folder_use:  show = folder_show
+          else:
+            show = ep[:ep.find(match.group('ep'))].rstrip() # remove eveything from the episode number
+            if show.endswith(" -"):  show = show[:-len(" -")]
+            if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
+            if show == "" or show.lower() in folder_show.lower(): show = folder_show  # cut down forms of title point to folder anyway
+                                                                                    # In case of ep filename "EP 01 title of the episode" fallback to folder name
+          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, None)
+          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex just_episode_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), xint(season), xint(episode), rx, ep, filename))
+          break
+      if match: continue
+
       ### Roman numbers ### doesn't work is ep title present
       match = re.match(roman_re_match, ep_nb, re.IGNORECASE)
       if match:
