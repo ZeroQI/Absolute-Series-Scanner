@@ -261,7 +261,7 @@ def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
           Log("Folder: '%s' matched ignore_dirs_re_findall regex: '%s'" % (item, rx))
           break                                                                                  # If folder in list of skipped folder exit this loop  #if len(result):  break
       else:  dirs.append(fullpath)                                                               # .plexignore subfolder restrictions management
-    if os.path.isfile(os.path.join(subdir, item)) and item[-3:] in video_exts:                   ### files
+    if os.path.isfile(fullpath) and item[-3:] in video_exts:                                     ### files
       for rx in ignore_files_re_findall:                                                         # Filter trailers and sample files
         if re.findall(rx, item): 
           Log("File: '%s' matched ignore_files_re_findall regex: '%s'" % (item, rx))
@@ -271,9 +271,10 @@ def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
           if re.findall(rx, os.path.basename(item)):
             Log("File: '%s' matched plexignore_files pattern: '%s'" % (item, rx))
             break 
-        else:  files.append(os.path.join(subdir, item))
-  dirs.sort(); files.sort(); 
-
+        else:  files.append(fullpath)
+  dirs.sort()
+  files.sort()
+  
   for item in dirs:
     plexignore_recursive_files=[]; plexignore_recursive_dirs =[]                                 # Split recursive entries, this one for next folder's subfolders
     for rx in plexignore_dirs:                                                                   # On each patter string
@@ -282,7 +283,8 @@ def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
         if len(pattern) == 2: plexignore_recursive_files.append(fnmatch.translate(pattern[1]))   # One folder, for next folder current files
         if len(pattern) >= 3: plexignore_recursive_dirs.append( "",join(pattern[1:]))            # 2+ folders, for next folder subfolders
     explore_path(item, file_tree, plexignore_recursive_files, plexignore_recursive_dirs)     # call next folder and will inherit restrictions
-  if not files == []:  file_tree[subdir] = files 
+  if not files == []:
+    file_tree[subdir] = files    
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
@@ -295,9 +297,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
   explore_path(root, file_tree)                            # initialize file_tree with files on root
   Log("=========================================================================================================================")
-  for path, files in file_tree.iteritems():                # Loop to add all series while on the root folder Scan call, which allows subfolders to work
-    subdirs=[]                                             # Recreate normal scanner coding: subfolders empty
-    path   = path.replace(root, "")                        # Recreate normal scanner coding: path is relative to root
+  for path in sorted(file_tree):#for path, files in file_tree.iteritems():                # Loop to add all series while on the root folder Scan call, which allows subfolders to work
+    files   = file_tree[path]
+    path    = path.replace(root, "")                        # Recreate normal scanner coding: path is relative to root
+    subdirs = []                                             # Recreate normal scanner coding: subfolders empty
     if path.startswith("/"):  path = path[1:]              # Recreate normal scanner coding: path doesn't start with "/"   
     relative_path = path.replace(root, " ")                # Foe exemple /group/serie/season/ep folder
     reverse_path  = Utils.SplitPath(relative_path)         # Take top two as show/season, but require at least the top one, and reverse them
@@ -337,6 +340,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
 
     ### Clean folder name and get year if present ###
     folder_year = None #misc, folder_year = VideoFiles.CleanName( reverse_path[0] )          # Take folder year
+    
     folder_show = clean_filename( reverse_path[0] )          
     Log("Path: '%s', show: '%s', year: '%s'" % (path, folder_show, xint(folder_year)))  #
 
@@ -344,7 +348,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     for file in files:                                                   # "files" is a list of media files full path, File is one of the entries
       filename        = os.path.basename(file)                           # filename        is the filename of the file
       filename_no_ext = os.path.splitext(filename)[0]                    # filename_no_ext is the filename of the file, albeit with no extension
-      year = None #misc, year      = VideoFiles.CleanName(filename_no_ext)            # Get the year before all '()' are stripped drom the filename without the extension  ### Year? ###  #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]):
+      year=None #misc, year      = VideoFiles.CleanName(filename_no_ext)            # Get the year before all '()' are stripped drom the filename without the extension  ### Year? ###  #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]):
       ep              = clean_filename      (filename_no_ext)            # Strip () [], all, ep contain the serie name and ep number for now
     
       ### Cleanup episode filename If parent Folder contain serie name ###
