@@ -213,7 +213,7 @@ def encodeASCII(text, language=None): #from Unicodize and plex scanner and other
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string):
   string=encodeASCII(string)
-  string = re.sub(r'\(.*?\)', '', string)                                # remove "(xxx)" groups
+  #string = re.sub(r'\(.*?\)', '', string)                                # remove "(xxx)" groups
   string = re.sub(r'\[.*?\]', '', string)                                # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
   string = re.sub(r'\{.*?\}', '', string)                                # remove "{xxx}" groups as Plex cleanup keep inside () but not inside []
   for char in  FILTER_CHARS:  string = string.replace(char, ' ')          # replace os forbidden chars with spaces
@@ -336,7 +336,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       if match: break  #Breaking second for loop doesn't exist parent for
 
     ### Clean folder name and get year if present ###
-    misc, folder_year = VideoFiles.CleanName( reverse_path[0] )          # Take folder year
+    folder_year = None #misc, folder_year = VideoFiles.CleanName( reverse_path[0] )          # Take folder year
     folder_show = clean_filename( reverse_path[0] )          
     Log("Path: '%s', show: '%s', year: '%s'" % (path, folder_show, xint(folder_year)))  #
 
@@ -344,7 +344,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     for file in files:                                                   # "files" is a list of media files full path, File is one of the entries
       filename        = os.path.basename(file)                           # filename        is the filename of the file
       filename_no_ext = os.path.splitext(filename)[0]                    # filename_no_ext is the filename of the file, albeit with no extension
-      misc, year      = VideoFiles.CleanName(filename_no_ext)            # Get the year before all '()' are stripped drom the filename without the extension  ### Year? ###  #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]):
+      year = None #misc, year      = VideoFiles.CleanName(filename_no_ext)            # Get the year before all '()' are stripped drom the filename without the extension  ### Year? ###  #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]):
       ep              = clean_filename      (filename_no_ext)            # Strip () [], all, ep contain the serie name and ep number for now
     
       ### Cleanup episode filename If parent Folder contain serie name ###
