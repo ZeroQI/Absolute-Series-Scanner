@@ -124,7 +124,7 @@ CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',5
 ### Log function ########################################################################################
 global LOG_FILENAME
 LOG_FILENAME     = 'Plex Media Scanner (custom ASS).log'
-PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/?X-Plex-Token=77BNsrsdDgMzepsQkFcv"
+PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/?X-Plex-Token=xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 try:      platform = sys.platform.lower()                                                       # sys.platform: win32 | darwin | linux2, 
 except:                                                                                         #
   try:    platform = Platform.OS.lower()                                                        # Platform.OS:  Windows, MacOSX, or Linux #  
