@@ -33,7 +33,7 @@ import Media                                                       ### ###
 # class Episode       show, season, episode, name, year = year, episodic = True
 # class Track         artist, album, name, index, year, disc, album_artist, title, guid, album_guid, artist_guid, album_thumb_url, artist_thumb_url = artist_thumb_url
 # class Photo         name
-  
+
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
 video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
   'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
@@ -124,7 +124,7 @@ CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',5
 ### Log function ########################################################################################
 global LOG_FILENAME
 LOG_FILENAME     = 'Plex Media Scanner (custom ASS).log'
-PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/?X-Plex-Token=xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/?X-Plex-Token=PUT_YOUR_ACCOUNT_TOKEN_HERE_FOR_LIBRARY_NAME_AT_THE_END_OF_THE_LOG_FILE"      #https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 try:      platform = sys.platform.lower()                                                       # sys.platform: win32 | darwin | linux2, 
 except:                                                                                         #
   try:    platform = Platform.OS.lower()                                                        # Platform.OS:  Windows, MacOSX, or Linux #  
@@ -162,7 +162,9 @@ def Log(entry, filename=""):
   filename=os.path.join(LOG_PATH, filename)
   with open(filename, 'a') as file:
     file.write( entry + LINE_FEED)
-    print entry     # when ran from console
+    print entry     # when ran from consolefor entry in error_log[log]:
+# for entry in error_log[log]:
+#  if entry not in string:  Data.Save(log+".htm", string + entry + "<br />\r\n")
 
 ### Allow to display ints even if equal to None at times ################################################
 def xint(s): 
@@ -252,13 +254,14 @@ def clean_filename(string):
   return string
 
 ### Add files into Plex database ########################################################################
-def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, episode_title="", year=None, endEpisode = None):
+def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, episode_title="", year=None, endEpisode = None, text=""):
   if endEpisode is None: endEpisode = episode
   for epn in range(episode, endEpisode+1):
     tv_show                = Media.Episode(show, season, epn, episode_title, year)
     tv_show.display_offset = (epn-episode)*100/(endEpisode-episode+1)
     tv_show.parts.append(file)
     mediaList.append(tv_show)
+  Log(text)
   #Stack.Scan(path, files, mediaList, []) #miss path var
 
 ### Add files into array ################################################################################
@@ -381,9 +384,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     for file in files:                                                   # "files" is a list of media files full path, File is one of the entries
       filename        = os.path.basename(file)                           # filename        is the filename of the file
       filename_no_ext = os.path.splitext(filename)[0]                    # filename_no_ext is the filename of the file, albeit with no extension
-      year=None                                                          # Get the year before all '()' are stripped drom the filename without the extension  ### Year? ###  #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]): #misc, year      = VideoFiles.CleanName(filename_no_ext)
       ep              = clean_filename      (filename_no_ext)            # Strip () [], all, ep contain the serie name and ep number for now
-    
+      year            = None                                             # Get the year before all '()' are stripped drom the filename without the extension  ### Year? ###  #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]): #misc, year      = VideoFiles.CleanName(filename_no_ext)
+      
       ### Cleanup episode filename If parent Folder contain serie name ###
       folder_use = False                                                 # Bolean to keep track if folder name in case it is included in the filename
       if folder_show is not None and not folder_show == "":              # If containing folder exist or has name different from "_" (scrubed to "")
@@ -406,8 +409,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           year    = int(match.group('year' )); month   = int(match.group('month')); day     = int(match.group('day'  ))
           tv_show = Media.Episode(show, year, None, None, None) # Use the year as the season.
           tv_show.released_at = '%d-%02d-%02d' % (year, month, day)
-          tv_show.parts.append(i)
-          mediaList.append(tv_show)
+          add_episode_into_plex(mediaList, files, file, show, year, None, "", year, None, None, "show: '%s', year: '%s', found using regex date_regexps '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), rx, ep, filename))
           break
       if match: continue
       
@@ -415,13 +417,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       for rx in episode_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
-          show       = clean_filename( match.group('show'    )) if not folder_use and not match.group('show')=="" else folder_show
+        show       = clean_filename( match.group('show'    )) if not folder_use and not match.group('show')=="" else folder_show
           season     =             int(match.group('season'  )) if     folder_season is None else folder_season
           episode    =             int(match.group('ep'))
           endEpisode =             int(match.group('secondEp')) if match.groupdict().has_key('secondEp') and match.group('secondEp') else episode
-          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, endEpisode)
-          if episode==endEpisode:  Log("show: '%s', year: '%s', season: '%s', ep: '%s'      found using regex episode_re_search '%s' on cleaned string '%s' gotten from filename '%s' also ep_nb: '%s'" % (show, xint(year), xint(season), xint(episode),                   rx, ep, filename, ep_nb))
-          else:                    Log("show: '%s', year: '%s', season: '%s', ep: '%s-%s' found using regex episode_re_search '%s' on cleaned string '%s' gotten from filename '%s' also ep_nb: '%s'"   % (show, xint(year), xint(season), xint(episode), xint(endEpisode), rx, ep, filename, ep_nb))
+          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, endEpisode, "show: '%s', year: '%s', season: '%s', ep: '%s-%s' found using regex episode_re_search '%s' on cleaned string '%s' gotten from filename '%s' also ep_nb: '%s'"   % (show, xint(year), xint(season), xint(episode), xint(endEpisode), rx, ep, filename, ep_nb))
           break
       if match: continue
     
@@ -432,8 +432,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           show, misc, year2, season, episode, misc, endEpisode, misc, episode_title = match[0]
           endEpisode = int(episode) if len(endEpisode) == 0 else int(endEpisode)
           episode    = int(episode)
-          add_episode_into_plex(mediaList, files, file, folder_show if folder_use or show=="" else show, season, int(episode), episode_title, year, endEpisode)
-          Log("show: '%s', year: '%s', season: '%s', ep: %s found using regex standalone_episode_re_findall '%s' on cleaned string '%s' gotten from filename '%s'" % (folder_show if folder_use else show, xint(year), xint(season), xint(episode), rx, ep, filename))
+          if folder_use or show=="":  show = folder_show
+          add_episode_into_plex(mediaList, files, file, show, season, int(episode), episode_title, year, endEpisode, "show: '%s', year: '%s', season: '%s', ep: %s found using regex standalone_episode_re_findall '%s' on cleaned string '%s' gotten from filename '%s'" % (folder_show if folder_use else show, xint(year), xint(season), xint(episode), rx, ep, filename))
           break
       if match: continue
 
@@ -441,11 +441,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       for rx, offset in AniDB_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
-          show = clean_filename( match.group('show')) if not folder_use else folder_show
-          if not show: show = folder_show
+          show = folder_show if folder_use or clean_filename( match.group('show'))=="" else clean_filename( match.group('show'))
           episode = offset + 1 if match.group('ep') == "" or not match.group('ep').isdigit() else offset + int( match.group('ep') )
-          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex AniDB_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), "0", xint(episode), rx, ep, filename))
-          add_episode_into_plex(mediaList, files, file, show, 0, episode, "", year, None)
+          add_episode_into_plex(mediaList, files, file, show, 0, episode, "", year, None, "show: '%s', year: '%s', season: '%s', ep: %3s found using regex AniDB_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), "0", xint(episode), rx, ep, filename))
           break
       if match: continue
  
@@ -460,10 +458,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             show = ep[:ep.find(match.group('ep'))].rstrip() # remove eveything from the episode number
             if show.endswith(" -"):  show = show[:-len(" -")]
             if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
-            if show == "" or show.lower() in folder_show.lower(): show = folder_show  # cut down forms of title point to folder anyway
-                                                                                    # In case of ep filename "EP 01 title of the episode" fallback to folder name
-          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, None)
-          Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex just_episode_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), xint(season), xint(episode), rx, ep, filename))
+            if show == "" or show.lower() in folder_show.lower(): show = folder_show  # cut down forms of title point to folder anyway  # In case of ep filename "EP 01 title of the episode" fallback to folder name
+          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, None, "show: '%s', year: '%s', season: '%s', ep: %3s found using regex just_episode_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), xint(season), xint(episode), rx, ep, filename))
           break
       if match: continue
 
@@ -471,8 +467,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       match = re.match(roman_re_match, ep_nb, re.IGNORECASE)
       if match:
         ep_nb = roman_to_int(ep_nb)
-        add_episode_into_plex(mediaList, files, file, folder_show, 1, int(ep_nb), "", year, None)
-        Log("show: '%s', year: '%s', season: '%s', ep: %3s found using regex roman_re_matchroman_re_match '%s' on cleaned string '%s' gotten from filename '%s'" % (folder_show, xint(year), "1", xint(ep_nb), rx, ep, filename))
+        add_episode_into_plex(mediaList, files, file, folder_show, 1, int(ep_nb), "", year, None, "show: '%s', year: '%s', season: '%s', ep: %3s found using regex roman_re_matchroman_re_match '%s' on cleaned string '%s' gotten from filename '%s'" % (folder_show, xint(year), "1", xint(ep_nb), rx, ep, filename))
         continue
       
       ### No regular expression worked ###
