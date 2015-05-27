@@ -417,7 +417,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       for rx in episode_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
-        show       = clean_filename( match.group('show'    )) if not folder_use and not match.group('show')=="" else folder_show
+          show       = clean_filename( match.group('show'    )) if not folder_use and not match.group('show')=="" else folder_show
           season     =             int(match.group('season'  )) if     folder_season is None else folder_season
           episode    =             int(match.group('ep'))
           endEpisode =             int(match.group('secondEp')) if match.groupdict().has_key('secondEp') and match.group('secondEp') else episode
