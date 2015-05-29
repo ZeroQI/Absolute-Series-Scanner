@@ -39,14 +39,13 @@ video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', '
   'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
   'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
   'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
-
-ignore_dirs_re_findall  = ['[Ee]xtras?', '!?[Ss]amples?', '[Bb]onus', '.*[Bb]onus disc.*', '!?[Tt]railers?',  # Skipped folders
+ignore_dirs_re_findall  = ['^[Ee]xtras?', '^[Ss]amples?', '^[Bb]onus', '.*[Bb]onus disc.*', '[Tt]railers?',  # Skipped folders
   '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble',                                    # Filters.py  '\..*', 
   '\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder']                    # Filters.py 
 season_re_match         = [                                                                                   ### Season folder ### 
-  '(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                      # US - Season
-  '(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                      # UK - Series
-  '(SAISON|Saison|saison)[ -_]?(?P<season>[0-9]+).*',                                                      # FR - Saison
+  '(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                         # US - Season
+  '(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                         # UK - Series
+  '(SAISON|Saison|saison)[ -_]?(?P<season>[0-9]+).*',                                                         # FR - Saison
   '(?P<season>[0-9]{1,2})a? Stagione+.*']                                                                     # IT - Xa Stagiona
 specials_re_match = ['(SPECIALS|Specials|specials)']                                                          # Specials
 
@@ -66,15 +65,14 @@ standalone_episode_re_findall = [                                               
   '(.*?)( \(([0-9]+)\))?[Ss]([0-9]+)+[Ee]([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?'                            # standard s00e00
   ]                                                                                                       
 AniDB_re_search   = [                                                                                         ### AniDB Specials numbering ###
-  ["(?P<show>.*?)(^|[ \.-_])(S|SP|SPECIALS?) ?(?P<ep>\d{1,2})(.*)",              0],                                     # 001-099 Specials
-  ["(?P<show>.*?)(^|[ \.-_])(NC ?)?(OP|OPENING) ?(?P<ep>\d{0,2})($|[^a-zA-Z].*)",100],                                     # 100-149 Openings
-  ["(?P<show>.*?)(^|[ \.-_])(NC ?)?(ED|ENDING) ?(?P<ep>\d{0,2})($|[^a-zA-Z].*)", 150],                                     # 150-199 Endings
-  ["(?P<show>.*?)(^|[ \.-_])(TRAILER|PROMO|PV|T|PV) ?(?P<ep>(\d{1,2}|$))",     200],                                     # 200-299 Trailer, Promo with a  number
-  ["(?P<show>.*?)(^|[ \.-_])(TRAILER|PROMO|PV)$",                              200],                                     #         Trailer, Promo without number
-  ["(?P<show>.*?)-trailer$",                              200],                                     #         Trailer, Promo without number
-  ["(?P<show>.*?)(^|[ \.-_])(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})(.*)", 300],                                     # 300-399 Parodies
-  ["(?P<show>.*?)(^|[ \.-_])(O|OTHERS?) ?(?P<ep>\d{1,2})(.*)",                 400]                               # 400-999 Others
-]
+  ["(?P<show>.*?)(^|[ \.-_])(S|SP|SPECIALS?) ?(?P<ep>\d{1,2})(.*)",                     0],                   # 001-099 Specials
+  ["(?P<show>.*?)(^|[ \.-_]{1,3})(OP|NC ?OP|OPENING) ?(?P<ep>\d{0,2}[a-z]?)$",        100],                   # 100-149 Openings
+  ["(?P<show>.*?)(^|[ \.-_]{1,3})(ED|NC ?ED|ENDING) ?(?P<ep>\d{0,2}[a-z]?)$",         150],                   # 150-199 Endings
+  ["(?P<show>.*?)(^|[ \.-_])(TRAILER|PROMO|PV|T|PV) ?(?P<ep>(\d{1,2}|$))",            200],                   # 200-299 Trailer, Promo with a  number
+  ["(?P<show>.*?)(^|[ \.-_])(TRAILER|PROMO|PV)$",                                     200],                   #         Trailer, Promo without number
+  ["(?P<show>.*?)-trailer$",                                                          200],                   #         Trailer, Promo without number
+  ["(?P<show>.*?)(^|[ \.-_])(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})(.*)",               300],                   # 300-399 Parodies
+  ["(?P<show>.*?)(^|[ \.-_])(O|OTHERS?) ?(?P<ep>\d{1,2})(.*)",                        400]]                   # 400-999 Others
 just_episode_re_search        = [                                                                             ### Episode search no show name ###
   '(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
   '.*?(^|[ \.-_]{1,3})(?P<ep>[0-9]{1,3})($|[ \.-_]{1,3}.*)',                                                  # Flah - 04 - Blah
@@ -106,9 +104,7 @@ whackRx = [                                                                     
   'ddc','dvdrip','dvd','r1','r3','r5',"DVD",'svcd','vcd',                                                     # DVD, VCD, S-VCD
   'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','HDTV'                                                      # dtv, stv
   'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync',                       # screener
-  'Complete Movie'
-  ]
-release_groups = [                                                                                            ### Release groups (not in brackets or parenthesis)
+  'Complete Movie',
   "5BAnime-Koi_5D", "%5Banime-koi%5D", "Minitheatre.org", "minitheatre.org", "mtHD", "THORA",                 #
   "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh", "BD"                 #
   ]
@@ -165,8 +161,6 @@ def Log(entry, filename=""):
   with open(filename, 'a') as file:
     file.write( entry + LINE_FEED)
     print entry     # when ran from consolefor entry in error_log[log]:
-# for entry in error_log[log]:
-#  if entry not in string:  Data.Save(log+".htm", string + entry + "<br />\r\n")
 
 ### Allow to display ints even if equal to None at times ################################################
 def xint(s): 
@@ -239,12 +233,11 @@ def encodeASCII(text, language=None): #from Unicodize and plex scanner and other
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string):
   if not string: return ""
+  string = string.replace("`", "'")                                      # translate anidb apostrophes into normal ones
   string=encodeASCII(string)
   string = re.sub(r'\[.*?\]', '', string)                                # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
   string = re.sub(r'\{.*?\}', '', string)                                # remove "{xxx}" groups as Plex cleanup keep inside () but not inside []
   for char in  FILTER_CHARS:  string = string.replace(char, ' ')          # replace os forbidden chars with spaces
-  for group in release_groups:  string = string.replace(group, " ");     # Remove known tags not in '()' or '[]', generally surrounded by '_'
-  string = string.replace("`", "'")                                      # translate anidb apostrophes into normal ones
   words  = string.split(" ")
   for word in words:
     for rx in whackRx:
@@ -332,7 +325,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     LOG_FILENAME = LOG_FILENAME[:-4] + " - " + library_title + LOG_FILENAME[-4:]
   
   Log("=== Scan ================================================================================================================")
-  Log("Platform: '%s', Log File: '%s'" % (platform, LOG_FILENAME))
+  Log("Platform: '%s', Log path: '%s', Log File: '%s'" % (platform, LOG_PATH, LOG_FILENAME))
   Log("Scan: (root: '%s', path='%s', subdirs: '%s', Files: '%s', language: '%s')" % (root if root is not None else "", path, str(subdirs), str(files), language))
   file_tree = {}                                           # initialize file_tree
   Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
@@ -395,10 +388,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       if folder_show is not None and not folder_show=="":                # If containing folder exist or has name different from "_" (scrubed to "")
         misc = ep.replace(folder_show, '')                               # remove cleaned folder name (if exist) from the show name
         junk = ep.replace(" ", "").lower().replace(folder_show.replace(" ", "").lower(), '') # misc = ep.replace(folder_show, "")         # remove cleaned folder name (if exist) from the show name
-        #Log("Folder_show: '%s', ep: '%s', misc: '%s', junk: '%s'"%(folder_show, ep, misc, junk))
         if len(misc+junk) < len(ep+ep.replace(" ", "")):                 # And remove the cleaned folder name from the now cleaned show, just in case the directory is off by things CleanName handles
           folder_use = True                                              # indicate to latter use folder name since it is present in filename
-          ep         = " 01" if misc == "" else misc    # episode string name stripped of the folder name If nothing is left, take the folder (movie)
+          ep         = " 01" if misc == "" or len(files)==1 and 'movie' in ep else misc    # episode string name stripped of the folder name If nothing is left, take the folder (movie)
       ep_nb = ep if ep.rfind(" ") == -1 else ep.rsplit(' ', 1)[1]        # If there is no space (and ep title) / If there is a space ep_nb is the last part hoping there is no episode title
       ep       = re.sub(r'\(.*?\)', '', ep)                              # remove "(xxx)" groups
       ep       = clean_filename(ep)
