@@ -53,12 +53,12 @@ specials_re_match = ['(SPECIALS|Specials|specials)']                            
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)                                                          
 episode_re_search = [                                                                             ### Episode search ###
   '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ -]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
-  '(?P<ep>[0-9]+)[-._x](?P<secondEp>[0-9]+)', # S03E04-E05, S03E04E05, S03e04-05,  
+  '(e|E|ep|Ep|EP)(?P<ep>[0-9]{1,3})(-|E|e|EP|Ep|ep|-E|-e|-EP|-Ep|-ep|_E|_e|_EP|_Ep|_ep| E| e| EP| Ep| ep)(?P<secondEp>[0-9]{1,3})', # S03E04-E05, S03E04E05, S03e04-05,  
   '(?P<show>.*?)[sS](?P<season>[0-9]{2})[\._\- ]+(?P<ep>[0-9]+)',                                             # S03-03
   '(?P<show>.*?)([^0-9]|^)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]+)(-[0-9]+[Xx](?P<secondEp>[0-9]+))?',        # 3x03
-  '(?P<show>.*?) - (?P<ep>[0-9]{1,3}) - .*',                                                                    # Title - 01 - xxx
-  '(?P<show>.*?) - Ep ?(?P<ep>[0-9]{1,3}).*',                                                                    # Title - 01 - xxx
-  ' ?- (?P<ep>[0-9]{1,3}) - .*'                                                                    # Title - 01 - xxx
+  '(?P<show>.*?) - (?P<ep>[0-9]{1,3}) - .*',                                                                  # Title - 01 - xxx
+  '(?P<show>.*?) - Ep ?(?P<ep>[0-9]{1,3}).*',                                                                 # Title - 01 - xxx
+  ' ?- (?P<ep>[0-9]{1,3}) - .*'                                                                               # Title - 01 - xxx
   ]                                                                                                      
 standalone_episode_re_findall = [                                                                             ### Episode Search standalone ###
   '(.*?)( \(([0-9]+)\))? - ([0-9]+)+x([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?',                               # Newzbin style, no _UNPACK_
@@ -90,12 +90,6 @@ date_regexps = [                                                                
   ]
 whackRx = [                                                                                                   ### Tags to remove ###
   '([hHx][\.]?264)[^0-9]',  'dvxa', 'divx', 'xvid', 'divx ?(5.?1)?',                                          # Video Codecs
-  '[^[0-9](480|576|720|1080[pPi])', '1920x1080','1280x720',                                                   #       Resolution
-  '([Hh]i10[pP]?)', '10bit', 'Crf ?24'                                                                        #       color depth and encoding
-#  '([^0-9])5\.1[ ]*ch(.)','([^0-9])5\.1([^0-9]?)', '([^0-9])7\.1[ ]((*ch(.))|([^0-9]))'                      #       Channels
-]
-whackRx = [                                                                                                   ### Tags to remove ###
-  '([hHx][\.]?264)[^0-9]',  'dvxa', 'divx', 'xvid', 'divx ?(5.?1)?',                                          # Video Codecs
   'ogg','ogm', 'vorbis','aac','dts', 'ac3',                                                                   # Audio Codecs
   '[^[0-9](480|576|720|1080[pPi])', '1920x1080','1280x720',                                                   #       Resolution
   '([Hh]i10[pP]?)', '10bit', 'Crf ?24'                                                                        #       color depth and encoding
@@ -110,11 +104,12 @@ whackRx = [                                                                     
   'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip',                                            # Source: bluray
   'ddc','dvdrip','dvd','r1','r3','r5',"DVD",'svcd','vcd',                                                     # DVD, VCD, S-VCD
   'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','HDTV'                                                      # dtv, stv
-  'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync'                       # screener
+  'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync',                       # screener
+  'Complete Movie'
   ]
 release_groups = [                                                                                            ### Release groups (not in brackets or parenthesis)
   "5BAnime-Koi_5D", "%5Banime-koi%5D", "Minitheatre.org", "minitheatre.org", "mtHD", "THORA",                 #
-  "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh",                  #
+  "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh", "BD"                 #
   ]
 FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
@@ -244,7 +239,6 @@ def encodeASCII(text, language=None): #from Unicodize and plex scanner and other
 def clean_filename(string):
   if not string: return ""
   string=encodeASCII(string)
-  # = re.sub(r'\(^([0-9]{4})\)', '', string)                                # remove "(xxx)" groups
   string = re.sub(r'\[.*?\]', '', string)                                # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
   string = re.sub(r'\{.*?\}', '', string)                                # remove "{xxx}" groups as Plex cleanup keep inside () but not inside []
   for char in  FILTER_CHARS:  string = string.replace(char, ' ')          # replace os forbidden chars with spaces
@@ -256,8 +250,11 @@ def clean_filename(string):
       if word !="" and re.sub(rx, "", word.lower())=="":  words.remove(word)  #Log("word: '%s', words: '%s', rx: '%s'" % (word, str(words), rx))
   string = " ".join(words)
   string = string.replace("  ", " ").strip() # remove duplicates spaces, not working:"".join(string.split()) #
-  if string.endswith(" -"):  string = string[:-len(" -")]
-  return string
+  if string.startswith("- "):  string = string[2:]
+  if string.endswith  (" -"):  string = string[:-2]
+  if ", The" in string:  string = "The " + ''.join( string.split(", The", 1) )
+  #s = s.replace('&', 'and')
+  return string.strip()
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, episode_title="", year=None, endEpisode = None, text=""):
@@ -394,15 +391,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       
       ### Cleanup episode filename If parent Folder contain serie name ###
       folder_use = False                                                 # Bolean to keep track if folder name in case it is included in the filename
-      if folder_show is not None and not folder_show == "":              # If containing folder exist or has name different from "_" (scrubed to "")
-        misc = re.sub(folder_show,                          '', ep, flags=re.IGNORECASE).lstrip() # misc = ep.replace(folder_show, "")         # remove cleaned folder name (if exist) from the show name
-        junk = re.sub(folder_show.replace(" ", "").lower(), '', ep, flags=re.IGNORECASE).lstrip() # misc = ep.replace(folder_show, "")         # remove cleaned folder name (if exist) from the show name
-        if len(misc) < len(ep) or len(junk)< len(ep) :                   # And remove the cleaned folder name from the now cleaned show, just in case the directory is off by things CleanName handles
+      if folder_show is not None and not folder_show=="":                # If containing folder exist or has name different from "_" (scrubed to "")
+        misc = ep.replace(folder_show, '')                               # remove cleaned folder name (if exist) from the show name
+        junk = ep.replace(" ", "").lower().replace(folder_show.replace(" ", "").lower(), '') # misc = ep.replace(folder_show, "")         # remove cleaned folder name (if exist) from the show name
+        #Log("Folder_show: '%s', ep: '%s', misc: '%s', junk: '%s'"%(folder_show, ep, misc, junk))
+        if len(misc+junk) < len(ep+ep.replace(" ", "")):                 # And remove the cleaned folder name from the now cleaned show, just in case the directory is off by things CleanName handles
           folder_use = True                                              # indicate to latter use folder name since it is present in filename
-          ep         = folder_show + " 01" if misc == "" else misc       # episode string name stripped of the folder name If nothing is left, take the folder (movie)
+          ep         = " 01" if misc == "" else misc    # episode string name stripped of the folder name If nothing is left, take the folder (movie)
       ep_nb = ep if ep.rfind(" ") == -1 else ep.rsplit(' ', 1)[1]        # If there is no space (and ep title) / If there is a space ep_nb is the last part hoping there is no episode title
-      #show, ep, title = ep.partition(match.group('ep'))                 # split keeping the separator, spare a line and keep the title
-    
+      ep       = re.sub(r'\(.*?\)', '', ep)                              # remove "(xxx)" groups
+      ep       = clean_filename(ep)
+      
       ### Check for date-based regexps first. ###
       for rx in date_regexps:
         match = re.search(rx, ep)
