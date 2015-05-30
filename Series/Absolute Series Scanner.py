@@ -112,7 +112,7 @@ FILTER_CHARS   = "\\/:*?<>|~=._;"                                               
 CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
                    50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',    
                    50072:'O'  , # 'CØDE：BREAKER'
-                12360258:':'  , # 'CØDE：BREAKER'
+                15711386:':'  , # 'CØDE：BREAKER'
                    50084:'a'  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
                 14846080:'∀'  , # 12770:'', # '∀ Gundam' no need
                    49853:'1-2', # 'R/Ranma ½ Nettou Hen'
@@ -180,10 +180,11 @@ def roman_to_int(string):                                    # Regex for matchin
 
 ### Return number of bytes of Unicode characters ########################################################
 def unicodeLen (char):
-  for x in range(1,6):
-    if ord(char) < 256-pow(2, 7-x): return x
-  return 6
-  
+  for x in range(0,5):                         #start at 0, 5 times 
+    if ord(char) < 256-pow(2, 6-x): return x+1 #count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
+  return 6                                     #2pow(x) with x(7->0) = 128 064 032 016 008 004 002 001
+                                               #256-2pow(x) with x(7->0) = 128 192 224 240 248 252 254 255 = 1 to 8 bits at 1 from the left, 256-2pow(7-x) starts form left
+
 ### Allow to display ints even if equal to None at times ################################################
 def encodeASCII(text, language=None): #from Unicodize and plex scanner and other sources
   if text=='': return
@@ -213,21 +214,18 @@ def encodeASCII(text, language=None): #from Unicodize and plex scanner and other
  
   ### loop through unicode and replace special chars with spaces then map if found ###
   string = list(string)
-  i = 0 ; delta = 0
+  i = 0
   while i < len(string):
-    if ord(string[i])>127:
+    if ord(string[i])<128:  i = i+1
+    else: #non ascii char
       char = 0; char2 = ""; char3 = []
       char_len = unicodeLen(string[i])
       for x in range(0, char_len):
-        char = 256*char + ord(string[i+x+delta])
-        char2 += string[i+x]
-        char3.append(string[i+x])
+        char = 256*char + ord(string[i+x]); char2 += string[i+x]; char3.append(string[i+x])
         string[i+x]=''
       if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
-      else:  Log("*Character missing in CHARACTERS_MAP: '%d', char: '%s%s', len: '%d', string: '%s'" % (char, char2, char3, char_len, string))
-      delta   += char_len-1
-      i+=char_len-1
-    i = i+1
+      else:                       Log("*Character missing in CHARACTERS_MAP: '%d', char: '%s' %s, len: '%d', string: '%s'" % (char, char2, char3, char_len, string))
+      i += char_len
   return ''.join(string)
   
 ### Allow to display ints even if equal to None at times ################################################
