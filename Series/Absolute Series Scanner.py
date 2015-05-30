@@ -91,19 +91,19 @@ whackRx = [                                                                     
   '([hHx][\.]?264)[^0-9]',  'dvxa', 'divx', 'xvid', 'divx ?(5.?1)?',                                          # Video Codecs
   'ogg','ogm', 'vorbis','aac','dts', 'ac3',                                                                   # Audio Codecs
   '[^[0-9](480|576|720|1080[pPi])', '1920x1080','1280x720',                                                   #       Resolution
-  '([Hh]i10[pP]?)', '10bit', 'Crf ?24'                                                                        #       color depth and encoding
-#  '([^0-9])5\.1[ ]*ch(.)','([^0-9])5\.1([^0-9]?)', '([^0-9])7\.1[ ]((*ch(.))|([^0-9]))'                      #       Channels
+  '([Hh]i10[pP]?)', '10bit', 'Crf ?24',                                                                       #       color depth and encoding
+  #'([^0-9])5\.1[ ]*ch(.)','([^0-9])5\.1([^0-9]?)', '([^0-9])7\.1[ ]((*ch(.))|([^0-9]))',                      #       Channels
   '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                         # Refresh rate, Format
   'dc','se', 'extended', 'unrated',                                                                           # edition (dc = directors cut, se = special edition)
   'multi','multisubs', 'dubbed','subbed',                                                                     # subs and dubs
   'limited', 'custom', 'internal', 'repack', 'proper', 'rerip', "Raw", "Remastered",                          # format
-  'retail', 'webrip','web-dl', 'wp','workprint'                                                               # release type: retail, web, work print
+  'retail', 'webrip','web-dl', 'wp','workprint',                                                              # release type: retail, web, work print
   'cd1[1234]', '[1234]cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix',                                     # misc 1
   'fragment','ps3avchd','remux','fs','ws', " - Copy",                                                         # misc 2
   'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip',                                            # Source: bluray
   'ddc','dvdrip','dvd','r1','r3','r5',"DVD",'svcd','vcd',                                                     # DVD, VCD, S-VCD
-  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','HDTV'                                                      # dtv, stv
-  'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync',                       # screener
+  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','HDTV',                                                     # dtv, stv
+  'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync',                      # screener
   'Complete Movie',
   "5BAnime-Koi_5D", "%5Banime-koi%5D", "Minitheatre.org", "minitheatre.org", "mtHD", "THORA",                 #
   "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh", "BD"                 #
@@ -325,7 +325,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     LOG_FILENAME = LOG_FILENAME[:-4] + " - " + library_title + LOG_FILENAME[-4:]
   
   Log("=== Scan ================================================================================================================")
-  Log("Platform: '%s', Log path: '%s', Log File: '%s'" % (platform, LOG_PATH, LOG_FILENAME))
+  Log("Platform: '%s', Log path: '%s/%s'" % (platform, LOG_PATH, LOG_FILENAME))
   Log("Scan: (root: '%s', path='%s', subdirs: '%s', Files: '%s', language: '%s')" % (root if root is not None else "", path, str(subdirs), str(files), language))
   file_tree = {}                                           # initialize file_tree
   Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
@@ -419,7 +419,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           else:                                                             season = 1
           episode    =             int(match.group('ep'))
           endEpisode =             int(match.group('secondEp')) if match.groupdict().has_key('secondEp') and match.group('secondEp') else episode
-          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, endEpisode, "show: '%s', year: '%s', season: '%s', ep: '%3s' found using regex episode_re_search '%s' on cleaned string '%s' gotten from filename '%s' also ep_nb: '%s'"   % (show, xint(year), xint(season), xint(episode), rx, ep, filename, ep_nb))
+          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, endEpisode, "show: '%s' (%s) s%02de%03d episode_re_search '%s' on '%s' from '%s' also ep_nb: '%s'"   % (show, xint(year), int(season), int(episode), rx, ep, filename, ep_nb))
           break
       if match: continue
     
@@ -431,7 +431,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           endEpisode = int(episode) if len(endEpisode) == 0 else int(endEpisode)
           episode    = int(episode)
           if folder_use or show=="":  show = folder_show
-          add_episode_into_plex(mediaList, files, file, show, season, int(episode), episode_title, year, endEpisode, "show: '%s', year: '%s', season: '%s', ep: %3s found using regex standalone_episode_re_findall '%s' on cleaned string '%s' gotten from filename '%s'" % (folder_show if folder_use else show, xint(year), xint(season), xint(episode), rx, ep, filename))
+          add_episode_into_plex(mediaList, files, file, show, season, int(episode), episode_title, year, endEpisode, "show: '%s' (%s) s%02de%03d regex standalone_episode_re_findall '%s' on '%s' from '%s'" % (folder_show if folder_use else show, xint(year), int(season), int(episode), rx, ep, filename))
           break
       if match: continue
 
@@ -441,7 +441,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if match:
           show = folder_show if folder_use or clean_filename( match.group('show'))=="" else clean_filename( match.group('show'))
           episode = offset + 1 if not match.groupdict().has_key('ep') or match.group('ep') == "" or not match.group('ep').isdigit() else offset + int( match.group('ep') )
-          add_episode_into_plex(mediaList, files, file, show, 0, episode, "", year, None, "show: '%s', year: '%s', season: '%s', ep: '%3s' found using regex AniDB_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), "0", xint(episode), rx, ep, filename))
+          add_episode_into_plex(mediaList, files, file, show, 0, episode, "", year, None, "show: '%s' (%s) s%02de%03d' AniDB_re_search '%s' on '%s' from '%s'" % (show, xint(year), 0, int(episode), rx, ep, filename))
           break
       if match: continue
  
@@ -457,7 +457,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if show.endswith(" -"):  show = show[:-len(" -")]
             if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
             if show == "" or show.lower() in folder_show.lower(): show = folder_show  # cut down forms of title point to folder anyway  # In case of ep filename "EP 01 title of the episode" fallback to folder name
-          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, None, "show: '%s', year: '%s', season: '%s', ep: %3s found using regex just_episode_re_search '%s' on cleaned string '%s' gotten from filename '%s'" % (show, xint(year), xint(season), xint(episode), rx, ep, filename))
+          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, None, "show: '%s' (%s) s%02de%03d just_episode_re_search '%s' on '%s' from '%s'" % (show, xint(year), int(season), int(episode), rx, ep, filename))
           break
       if match: continue
 
