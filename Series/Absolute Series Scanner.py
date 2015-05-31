@@ -50,7 +50,7 @@ season_re_match         = [                                                     
 specials_re_match = ['(SPECIALS|Specials|specials)']                                                          # Specials
 
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)                                                          
-episode_re_search = [                                                                             ### Episode search ###
+episode_re_search = [                                                                                         ### Episode search ###
   '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ -]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
   '(e|E|ep|Ep|EP)(?P<ep>[0-9]{1,3})(-|E|e|EP|Ep|ep|-E|-e|-EP|-Ep|-ep|_E|_e|_EP|_Ep|_ep| E| e| EP| Ep| ep)(?P<secondEp>[0-9]{1,3})', # E04-E05, E04E05, e04-05,  
   '(?P<ep>[0-9]{1,3})-(?P<secondEp>[0-9]{1,3})',                                                              # 01-02  
@@ -260,35 +260,33 @@ def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, epi
   #Stack.Scan(path, files, mediaList, []) #miss path var
 
 ### Add files into array ################################################################################
-def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
-  if os.path.isfile(os.path.join(subdir, ".plexignore")):
-    with open( os.path.join(subdir, ".plexignore"), 'r') as plexignore:                          #Log(".plexignore")
-      for pattern in plexignore:
+def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
+  fullpath=os.path.join(subdir, ".plexignore")
+  if os.path.isfile(fullpath):
+    with open( fullpath, 'r') as plexignore:                                                     # Log(".plexignore")
+      for pattern in plexignore:                                                                 #
         pattern = pattern.strip()                                                                # remove useless spaces at both ends
         if pattern == '' or pattern[0] == '#': continue                                          # skip comment and emopy lines, go to next for iteration
         if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))              # patterns for this folder gets converted and added to files.
         elif pattern[0] != '/': plexignore_dirs.append(pattern)                                  # patterns for subfolders added to folders
-  
+    Log("Plexignore: '%s', files: '%s', dir: '%s' (include inherited ones)" % (fullpath[len(root):], plexignore_files, plexignore_dirs))  
   files=[]; dirs=[]                                                                              ### Process all files and folders ###
   for item in os.listdir(subdir):                                                                # Loop current folder files and folders
-    fullpath = os.path.join(subdir, item)
+    fullpath     = os.path.join(subdir, item)
     if os.path.isdir (fullpath ):                                                                ### dirs
       for rx in ignore_dirs_re_findall:                                                          # Loop through unwanted folders list
         if re.findall(rx, item):
-          Log("Folder: '%s' matched ignore_dirs_re_findall regex: '%s'" % (item, rx))
+          Log("Folder:     '%s' match ignore_dirs_re_findall '%s'" % (fullpath[len(root):], rx))
           break                                                                                  # If folder in list of skipped folder exit this loop  #if len(result):  break
       else:  dirs.append(fullpath)                                                               # .plexignore subfolder restrictions management
-    if os.path.isfile(fullpath) and item[-3:] in video_exts:                                     ### files
-      for rx in ignore_files_re_findall:                                                         # Filter trailers and sample files
+    elif item[-3:] in video_exts:                                                                ### item is a file
+      for rx in ignore_files_re_findall+plexignore_files:                                                         # Filter trailers and sample files
         if re.findall(rx, item): 
-          Log("File: '%s' matched ignore_files_re_findall regex: '%s'" % (item, rx))
+          if rx in ignore_files_re_findall: Log("File:       '%s' match ignore_files_re_findall: '%s'" % (fullpath[len(root):], rx))
+          else:                             Log("File:       '%s' match plexignore_files: '%s'"        % (fullpath[len(root):], rx))
           break                                                                                  #Log("'%s' ignore_files_findall: match" % item)
-      else:
-        for rx in plexignore_files:                         
-          if re.findall(rx, os.path.basename(item)):
-            Log("File: '%s' matched plexignore_files pattern: '%s'" % (item, rx))
-            break 
-        else:  files.append(fullpath)
+      else:  files.append(fullpath)
+    elif not item==".plexignore":  Log("File: '%s' extension not in video_exts" %(fullpath[len(root):]))                                        ### files
   dirs.sort(); files.sort()
   
   for item in dirs:
@@ -298,7 +296,7 @@ def explore_path(subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
       if pattern[0].lower() == Utils.SplitPath(item)[-1].lower():                                # first folder the same
         if len(pattern) == 2: plexignore_recursive_files.append(fnmatch.translate(pattern[1]))   # One folder, for next folder current files
         if len(pattern) >= 3: plexignore_recursive_dirs.append( "",join(pattern[1:]))            # 2+ folders, for next folder subfolders
-    explore_path(item, file_tree, plexignore_recursive_files, plexignore_recursive_dirs)     # call next folder and will inherit restrictions
+    explore_path(root, item, file_tree, plexignore_recursive_files, plexignore_recursive_dirs)   # call next folder and will inherit restrictions
   if not files == []:
     file_tree[subdir] = files    
 
@@ -311,23 +309,26 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   try:
     result = urllib2.urlopen(PLEX_LIBRARY_URL)  #if result is not None: Log(str(result.getcode()))
     string = result.read()
-  except:  Log("except http library xml " + PLEX_LIBRARY_URL)
+  except:  Log("except http library xml - No token replaced in source code probably, xml: '%s' " % PLEX_LIBRARY_URL)
   else:
     library_xml = etree.fromstring(string)
     for library in library_xml.iterchildren('Directory'):
-      library_title = library.get("title")
       for library_root in library.iterchildren('Location'):
-        if library_root == root:  break
-      else: continue
-      break
-    LOG_FILENAME = LOG_FILENAME[:-4] + " - " + library_title + LOG_FILENAME[-4:]
-  
+        if library_root.get("path") == root:  #if root path match the scanner, we have the libray name for which the scanner is ran
+          LOG_FILENAME = LOG_FILENAME[:-4] + " - " + library.get("title") + LOG_FILENAME[-4:]
+          break #found, break second loop, do not execute else therefore also breaking first loop
+      else: continue #next iteration or first loop, if seconf far wasn't broken
+      break #break first loop
+    else: Log("except http library xml - No library name to append at end of log filename despite access to file. Please forward to developer xml: '%s' " % PLEX_LIBRARY_URL)
+
   Log("=== Scan ================================================================================================================")
-  Log("Platform: '%s', Log path: '%s/%s'" % (platform, LOG_PATH, LOG_FILENAME))
-  Log("Scan: (root: '%s', path='%s', subdirs: '%s', Files: '%s', language: '%s')" % (root if root is not None else "", path, str(subdirs), str(files), language))
+  Log("Platform: '%s'" % platform)
+  Log("Log path: '%s/%s'" % (LOG_PATH, LOG_FILENAME))
+  Log("Root:     '%s'" % root)
+  for folder in sorted(subdirs):  Log("'%s'" % folder[len(root):]) 
   file_tree = {}                                           # initialize file_tree
   Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
-  explore_path(root, file_tree)                            # initialize file_tree with files on root
+  explore_path(root, root, file_tree)                      # initialize file_tree with files on root
   Log("=========================================================================================================================")
   for path in sorted(file_tree):                           # Loop to add all series while on the root folder Scan call, which allows subfolders to work
     files   = file_tree[path]                              #
