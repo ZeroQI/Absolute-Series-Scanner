@@ -35,15 +35,15 @@ import Media                                                       ### Plex Medi
 # class Photo         name
 
 ### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
+ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.']                                      # Skipped files (samples, trailers)                                                          
+ignore_ext_no_warning = ['plexignore', 'jpg', 'png', 'db', 'nfo', 'DS_Store', 'ssa', 'srt']                   # extensions dropped no warning (useless or list would be too long)
 video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', 'bup', 'divx', 'dv' , 'dvr-ms',#
   'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
   'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
-  'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
+  'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'divx', 'webm']     #
 ignore_dirs_re_findall  = ['^[Ee]xtras?', '^[Ss]amples?', '^[Bb]onus', '.*[Bb]onus disc.*', '[Tt]railers?',   ### Skipped folders
   '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble',                                    # Filters.py  removed '\..*', 
   '\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder']                    # Filters.py 
-ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)                                                          
-
 season_re_match         = [                                                                                   ### Season folder ### 
   '(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                         # US - Season
   '(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                         # UK - Series
@@ -75,7 +75,7 @@ AniDB_re_search   = [                                                           
   ["(?P<show>.*?)(^|[ \.-_])(O|OTHERS?) ?(?P<ep>\d{1,2})(.*)",                        400]]                   # 400-999 Others
 just_episode_re_search        = [                                                                             ### Episode search no show name ###
   '(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?',                                         # S03E04-E05, S03E04E05, S03e04-05,  
-  '(e|E|EP)[ _-]?(?P<ep>[0-9]{1,3})',                                                                         # Ep xxx
+  '(e|E|EP)?[ _-]?(?P<ep>[0-9]{1,3}).*',                                                                         # Ep xxx
   '^(?P<ep>[0-9]{1,3})$',                                                                                     # xxx
   '(^|[ \.-_]{1,3})(?P<ep>[0-9]{1,3})($|[ \.-_]{1,3}.*)',                                                     # Flah - 04 - Blah
   '(?P<ep>[0-9]{1,3})[\. -_]of[\. -_]+[0-9]{1,3}([^0-9]|$)',                                                  # 01 of 08 (no stacking for this one ?)
@@ -113,9 +113,12 @@ FILTER_CHARS   = "\\/:*?<>|~=._;"                                               
 CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
                    50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',
                 14844057:"'"  , #'’' ['\xe2', '\x80', '\x99']
+                   49835:'«'  , #'«' ['\xc2', '\xab']
+                   49851:'»'  , #'»' ['\xc2', '\xbb']
                    50048:'A'  , #'À' ['\xc3', '\x80'] FR
                    50050:'A'  , #'Â' ['\xc3', '\x82'] FR
                    50055:'C'  , #'Ç' ['\xc3', '\x87'] FR
+                   50057:'E'  , #'É' ['\xc3', '\x89'] FR
                    50080:'a'  , #'à' ['\xc3', '\xa0'] FR
                    50082:'a'  , #'â' ['\xc3', '\xa2'] FR
                    50087:'c'  , #'ç' ['\xc3', '\xa7'] FR
@@ -127,9 +130,12 @@ CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',5
                    50095:'i'  , #'ï' ['\xc3', '\xaf'] FR
                    50100:'o'  , #'ô' ['\xc3', '\xb4'] FR
                    50105:'u'  , #'ù' ['\xc3', '\xb9'] FR
-                   50107:'u'  , #'û' ['\xc3', '\xbb']
-                   50579:'oe' ,#'œ' ['\xc5', '\x93']
+                   50107:'u'  , #'û' ['\xc3', '\xbb'] FR
+                   50578:'OE' , #'Œ' ['\xc5', '\x92'] FR
+                   50579:'oe' , #'œ' ['\xc5', '\x93'] FR
                    50072:'O'  , # 'CØDE：BREAKER'
+                14844051:'-'  , #'–' ['\xe2', '\x80', '\x93']
+                14844070:''   , #'…' ['\xe2', '\x80', '\xa6']
                 15711386:':'  , # 'CØDE：BREAKER'
                    50084:'a'  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
                 14846080:'∀'  , # 12770:'', # '∀ Gundam' no need
@@ -299,14 +305,15 @@ def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[
           Log("Folder:     '%s' match ignore_dirs_re_findall '%s'" % (fullpath[len(root):], rx))
           break                                                                                  # If folder in list of skipped folder exit this loop  #if len(result):  break
       else:  dirs.append(fullpath)                                                               # .plexignore subfolder restrictions management
-    elif item[-3:] in video_exts:                                                                ### item is a file
+    else:
       for rx in ignore_files_re_findall+plexignore_files:                                                         # Filter trailers and sample files
         if re.findall(rx, item): 
           if rx in ignore_files_re_findall: Log("File:       '%s' match ignore_files_re_findall: '%s'" % (fullpath[len(root):], rx))
           else:                             Log("File:       '%s' match plexignore_files: '%s'"        % (fullpath[len(root):], rx))
           break                                                                                  #Log("'%s' ignore_files_findall: match" % item)
-      else:  files.append(fullpath)
-    elif not item==".plexignore":  Log("File: '%s' extension not in video_exts" %(fullpath[len(root):]))                                        ### files
+      else: #ignore_ext_no_warning
+        if   item.lower().rsplit('.', 1)[1] in video_exts:  files.append(fullpath)                              ### item is a file   
+        elif item.lower().rsplit('.', 1)[1] not in ignore_ext_no_warning:  Log("File:       '%s' extension not in video_exts, test: '%s'" %(fullpath[len(root):], item.lower().rsplit('.', 1)))                                        ### files
   dirs.sort(); files.sort()
   
   for item in dirs:
@@ -336,9 +343,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       for library_root in library.iterchildren('Location'):
         if library_root.get("path") == root:  #if root path match the scanner, we have the libray name for which the scanner is ran
           LOG_FILENAME = LOG_FILENAME[:-4] + " - " + library.get("title") + LOG_FILENAME[-4:]
-          break #found, break second loop, do not execute else therefore also breaking first loop
-      else: continue #next iteration or first loop, if seconf far wasn't broken
-      break #break first loop
+          break       # found, break second loop
+      else: continue  # next iteration of first loop, if second loop wasn't broken, therefound found nothing
+      break           # break first loop if second loop was broken, #cascade-break
     else: Log("except http library xml - No library name to append at end of log filename despite access to file. Please forward to developer xml: '%s' " % PLEX_LIBRARY_URL)
 
   Log("=== Scan ================================================================================================================")
@@ -351,12 +358,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   explore_path(root, root, file_tree)                      # initialize file_tree with files on root
   Log("=========================================================================================================================")
   for path in sorted(file_tree):                           # Loop to add all series while on the root folder Scan call, which allows subfolders to work
-    files   = file_tree[path]                              #
-    path    = path.replace(root, "")                       # Recreate normal scanner coding: path is relative to root
-    subdirs = []                                           # Recreate normal scanner coding: subfolders empty
+    subdirs      = []                                      # Recreate normal scanner coding: subfolders empty
+    files        = file_tree[path]                         #
+    path         = path.replace(root, "")                  # Recreate normal scanner coding: path is relative to root
     if path.startswith("/"):  path = path[1:]              # Recreate normal scanner coding: path doesn't start with "/"   
-    relative_path = path.replace(root, " ")                # Foe exemple /group/serie/season/ep folder
-    reverse_path  = Utils.SplitPath(relative_path)         # Take top two as show/season, but require at least the top one, and reverse them
+    reverse_path  = Utils.SplitPath(path)                  # Take top two as show/season, but require at least the top one, and reverse them
     reverse_path.reverse()                                 # Reverse the order of the folders
    
     ### bluray folder management ###
@@ -386,10 +392,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         match = re.match(rx, folder, re.IGNORECASE)
         if match:
           folder_season = 0 if rx in specials_re_match else int( match.group('season') )  #use "if var is | is not None:" as it's faster than "==None" and "if var:" is false if the variable is: False, 0, 0.0, "", () , {}, [], set()
-          reverse_path.remove(folder)  #All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
+          reverse_path.remove(folder)                                                     #All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
           Log("Season folder: '%s' found using Regex specials_re_match '%s' on folder name '%s'" % (str(folder_season), rx, folder) )
           break
-      if match: break  #Breaking second for loop doesn't exist parent for
+      if match: break  #Breaking second for loop doesn't exist parent for / else: continue then break nex line would also work
 
     ### Clean folder name and get year if present ###
     folder_year = None #misc, folder_year = VideoFiles.CleanName( reverse_path[0] )          # Take folder year
