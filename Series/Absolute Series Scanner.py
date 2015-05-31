@@ -342,10 +342,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     else: Log("except http library xml - No library name to append at end of log filename despite access to file. Please forward to developer xml: '%s' " % PLEX_LIBRARY_URL)
 
   Log("=== Scan ================================================================================================================")
-  Log("Platform: '%s'" % platform)
-  Log("Log path: '%s/%s'" % (LOG_PATH, LOG_FILENAME))
-  Log("Root:     '%s'" % root)
-  for folder in sorted(subdirs):  Log("'%s'" % folder[len(root):]) 
+  Log("Platform: \"%s\"" % platform)
+  Log("Log path: \"%s\"" % os.path.join(LOG_PATH, LOG_FILENAME))
+  Log("Root:     \"%s'\"" % root)
+  for folder in sorted(subdirs):  Log("\"%s\"" % folder[len(root):]) 
   file_tree = {}                                           # initialize file_tree
   Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
   explore_path(root, root, file_tree)                      # initialize file_tree with files on root
