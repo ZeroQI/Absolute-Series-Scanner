@@ -65,7 +65,7 @@ standalone_episode_re_findall = [                                               
   '(.*?)( \(([0-9]+)\))?[Ss]([0-9]+)+[Ee]([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?'                            # standard s00e00
   ]                                                                                                       
 AniDB_re_search   = [                                                                                         ### AniDB Specials numbering ###
-  ["(?P<show>.*?)(^|[ \.-_])(S|SP|SPECIALS?) ?(?P<ep>\d{1,2})(.*)",                     0],                   # 001-099 Specials
+  ["(?P<show>.*?)(^|[ \.-_])(S|SP|SPECIALS?) ?(?P<ep>\d{1,3})(.*)",                     0],                   # 001-099 Specials
   ["(?P<show>.*?)(^|[ \.-_]{1,3})(OP|NC ?OP|OPENING) ?(?P<ep>\d{0,2}[a-z]?)$",        100],                   # 100-149 Openings
   ["(?P<show>.*?)(^|[ \.-_]{1,3})(ED|NC ?ED|ENDING) ?(?P<ep>\d{0,2}[a-z]?)$",         150],                   # 150-199 Endings
   ["(?P<show>.*?)(^|[ \.-_])(TRAILER|PROMO|PV|T|PV) ?(?P<ep>(\d{1,2}|$))",            200],                   # 200-299 Trailer, Promo with a  number
@@ -74,13 +74,15 @@ AniDB_re_search   = [                                                           
   ["(?P<show>.*?)(^|[ \.-_])(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})(.*)",               300],                   # 300-399 Parodies
   ["(?P<show>.*?)(^|[ \.-_])(O|OTHERS?) ?(?P<ep>\d{1,2})(.*)",                        400]]                   # 400-999 Others
 just_episode_re_search        = [                                                                             ### Episode search no show name ###
-  '(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
-  '.*?(^|[ \.-_]{1,3})(?P<ep>[0-9]{1,3})($|[ \.-_]{1,3}.*)',                                                  # Flah - 04 - Blah
+  '(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?',                                         # S03E04-E05, S03E04E05, S03e04-05,  
+  '(e|E|EP)[ _-]?(?P<ep>[0-9]{1,3})',                                                                         # Ep xxx
+  '^(?P<ep>[0-9]{1,3})$',                                                                                     # xxx
+  '(^|[ \.-_]{1,3})(?P<ep>[0-9]{1,3})($|[ \.-_]{1,3}.*)',                                                     # Flah - 04 - Blah
   '(?P<ep>[0-9]{1,3})[\. -_]of[\. -_]+[0-9]{1,3}([^0-9]|$)',                                                  # 01 of 08 (no stacking for this one ?)
   '^(?P<ep>[0-9]{1,3})([^0-9]|$)',                                                                            # 01
   '(^|[ \.\-_])e(p? ?|(pisode){0,1})[ \.\-_]*(?P<ep>[0-9]{1,3})([^0-9]|$)',                                   # ep234 or Ep 126
-  '.*?[ \.\-_](?P<ep>[0-9]{1,3})$',                                                                           # Flah - 04
-  '.*?[^0-9x](?<!OP)(?<!ED)(?P<ep>\d{1,3})([^0-9]|$)',                                                        # Flah 107 as long as it isn't preceded by op, ed
+  '[ \.\-_](?P<ep>[0-9]{1,3})$',                                                                              # Flah - 04
+  '[^0-9x](?<!OP)(?<!ED)(?P<ep>\d{1,3})([^0-9]|$)',                                                           # Flah 107 as long as it isn't preceded by op, ed
   '^[^\-]*\-[ ]*(?P<ep>[0-9]{1,3})[ ]*\-.+$'                                                                  # Byousoku 5 Centimeter - 1 - The Chosen Cherry Blossoms - [RAW](3d312152) ###by TiS
   ]   
 date_regexps = [                                                                                              ### Date format ###
