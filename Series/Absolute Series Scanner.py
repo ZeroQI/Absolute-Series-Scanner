@@ -241,7 +241,9 @@ def clean_filename(string):
   words  = string.split(" ")
   for word in words:
     for rx in whackRx:
-      if word !="" and re.sub(rx, "", word.lower())=="":  words.remove(word)  #Log("word: '%s', words: '%s', rx: '%s'" % (word, str(words), rx))
+      if word !="" and re.sub(rx.lower(), "", word.lower())=="":
+        words.remove(word)  #Log("word: '%s', words: '%s', rx: '%s'" % (word, str(words), rx))
+        break
   string = " ".join(words)
   string = string.replace("  ", " ").strip() # remove duplicates spaces, not working:"".join(string.split()) #
   if string.startswith("- "):  string = string[2:]
