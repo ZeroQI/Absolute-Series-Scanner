@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-# Most code here is copyright (c) 2010 Plex Development Team. All rights reserved.
-# Modified by ZeroQI from BABS scanner: https://forums.plex.tv/index.php/topic/31081-better-absolute-scanner-babs
-import sys            # sys.getdefaultencoding, titlecase , datetime
-import os             # os.uname, os.listdir, os.path.basename, os.path.splitext, os.path.join, os.path.expandvars, os.path.expanduser, os.path.isdir, os.path.isfile
-import re             # re.findall, re.match, re.sub, re.search
-import fnmatch        # fnmatch used by .plexignore regex
-import unicodedata    # unicodedata.normalize
-import urllib2        # urllib
-from lxml import etree#
+# Most code here is copyright (c) 2010 Plex Development Team. All rights reserved. Babs modified it, and i modified BABS so...
+# Written by ZeroQI
+import sys             # sys.getdefaultencoding, titlecase , datetime
+import os              # os.uname, os.listdir, os.path.basename, os.path.splitext, os.path.join, os.path.expandvars, os.path.expanduser, os.path.isdir, os.path.isfile
+import re              # re.findall, re.match, re.sub, re.search
+import fnmatch         # fnmatch used by .plexignore regex
+import unicodedata     # unicodedata.normalize
+import urllib2         # urllib
+from lxml import etree #
 import Utils                                                       ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###          
 # SplitPath           (path, maxdepth=20)                          # Platform-safe function to split a path into a list of path elements.
 # ContainsFile        (files, file)                                # Check for a given filename in a list of full paths.
@@ -17,17 +17,17 @@ import Utils                                                       ### Plex Medi
 # LevenshteinDistance (first, second)                              # Compute Levenshtein distance.
 # LevenshteinRatio    (first, second)                              # Levenshtein ratio.
 import Stack                                                       ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
-# compareFilenames    (elem)                                       #
-# Scan                (dir, files, mediaList, subdirs)             #
+# compareFilenames    (elem)                                       # ???
+# Scan                (dir, files, mediaList, subdirs)             # Scan for stacked files
 import VideoFiles                                                  ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 # def CleanName       (name)                                       # Cleanup folder / filenames
 # def Scan            (path, files, mediaList, subdirs, root=None) # Remove files that aren't videos.
-# def RetrieveSource  (name)                                       #
+# def RetrieveSource  (name)                                       # ???
 # def FindYear        (words)                                      # Find the first occurance of a year.
-from mp4file import mp4file, atomsearch
-# def getFileSize      (file)                                      #
-# class Mp4File        file, atoms, AtomWithChildren               #
-import Media                                                       ### ###
+from mp4file import mp4file, atomsearch                            ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common\mp4file ###
+# def getFileSize      (file)                                      # return the filesize of a file
+# class Mp4File        file, atoms, AtomWithChildren               # mp4 class
+import Media                                                       ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common\Media.py ###
 # class MediaRoot     name, year, type, released_at, display_offset, source, parts, subtitles, thumbs, arts, trailers, themes              
 # class Movie         name, year, guid
 # class Episode       show, season, episode, name, year = year, episodic = True
@@ -39,17 +39,18 @@ video_exts = ['3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs' , 'bin', 'bivx', '
   'evo' , 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v' , 'mkv', 'mov' , 'mp4', 'mpeg'  ,    #
   'mpg' , 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp'  , 'pva', 'qt'  , 'rm' , 'rmvb', 'sdp', 'svq3'  ,    #
   'strm', 'ts' , 'ty' , 'vdr', 'viv', 'vob', 'vp3', 'wmv' , 'wpl', 'wtv' , 'xsp', 'xvid', 'webm']             #
-ignore_dirs_re_findall  = ['^[Ee]xtras?', '^[Ss]amples?', '^[Bb]onus', '.*[Bb]onus disc.*', '[Tt]railers?',  # Skipped folders
-  '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble',                                    # Filters.py  '\..*', 
+ignore_dirs_re_findall  = ['^[Ee]xtras?', '^[Ss]amples?', '^[Bb]onus', '.*[Bb]onus disc.*', '[Tt]railers?',   ### Skipped folders
+  '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', 'lost\+found', '.AppleDouble',                                    # Filters.py  removed '\..*', 
   '\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder']                    # Filters.py 
+ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)                                                          
+
 season_re_match         = [                                                                                   ### Season folder ### 
   '(SEASON|Season|season)[ -_]?(?P<season>[0-9]+).*',                                                         # US - Season
   '(SERIES|Series|series)[ -_]?(?P<season>[0-9]+).*',                                                         # UK - Series
   '(SAISON|Saison|saison)[ -_]?(?P<season>[0-9]+).*',                                                         # FR - Saison
   '(?P<season>[0-9]{1,2})a? Stagione+.*']                                                                     # IT - Xa Stagiona
-specials_re_match = ['(SPECIALS|Specials|specials)']                                                          # Specials
+specials_re_match = ['(SPECIALS|Specials|specials)']                                                          # Season 0 / specials folder
 
-ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', '.DS_Store', 'Thumbs.db']            # Skipped files (samples, trailers)                                                          
 episode_re_search = [                                                                                         ### Episode search ###
   '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ -]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
   '(e|E|ep|Ep|EP)(?P<ep>[0-9]{1,3})(-|E|e|EP|Ep|ep|-E|-e|-EP|-Ep|-ep|_E|_e|_EP|_Ep|_ep| E| e| EP| Ep| ep)(?P<secondEp>[0-9]{1,3})', # E04-E05, E04E05, e04-05,  
@@ -62,8 +63,7 @@ episode_re_search = [                                                           
   ]                                                                                                      
 standalone_episode_re_findall = [                                                                             ### Episode Search standalone ###
   '(.*?)( \(([0-9]+)\))? - ([0-9]+)+x([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?',                               # Newzbin style, no _UNPACK_
-  '(.*?)( \(([0-9]+)\))?[Ss]([0-9]+)+[Ee]([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?'                            # standard s00e00
-  ]                                                                                                       
+  '(.*?)( \(([0-9]+)\))?[Ss]([0-9]+)+[Ee]([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?']                           # standard s00e00                                                                                                       
 AniDB_re_search   = [                                                                                         ### AniDB Specials numbering ###
   ["(?P<show>.*?)(^|[ \.-_])(S|SP|SPECIALS?) ?(?P<ep>\d{1,3})(.*)",                     0],                   # 001-099 Specials
   ["(?P<show>.*?)(^|[ \.-_]{1,3})(OP|NC ?OP|OPENING) ?(?P<ep>\d{0,2}[a-z]?)$",        100],                   # 100-149 Openings
@@ -83,12 +83,11 @@ just_episode_re_search        = [                                               
   '(^|[ \.\-_])e(p? ?|(pisode){0,1})[ \.\-_]*(?P<ep>[0-9]{1,3})([^0-9]|$)',                                   # ep234 or Ep 126
   '[ \.\-_](?P<ep>[0-9]{1,3})$',                                                                              # Flah - 04
   '[^0-9x](?<!OP)(?<!ED)(?P<ep>\d{1,3})([^0-9]|$)',                                                           # Flah 107 as long as it isn't preceded by op, ed
-  '^[^\-]*\-[ ]*(?P<ep>[0-9]{1,3})[ ]*\-.+$'                                                                  # Byousoku 5 Centimeter - 1 - The Chosen Cherry Blossoms - [RAW](3d312152) ###by TiS
-  ]   
+  '^[^\-]*\-[ ]*(?P<ep>[0-9]{1,3})[ ]*\-.+$']                                                                 # Byousoku 5 Centimeter - 1 - The Chosen Cherry Blossoms - [RAW](3d312152) ###by TiS   
 date_regexps = [                                                                                              ### Date format ###
   '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',               # 2009-02-10
-  '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',        # 02-10-2009
-  ]
+  '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)']        # 02-10-2009
+  
 whackRx = [                                                                                                   ### Tags to remove ###
   '([hHx][\.]?264)[^0-9]',  'dvxa', 'divx', 'xvid', 'divx ?(5.?1)?',                                          # Video Codecs
   'ogg','ogm', 'vorbis','aac','dts', 'ac3',                                                                   # Audio Codecs
@@ -106,13 +105,30 @@ whackRx = [                                                                     
   'ddc','dvdrip','dvd','r1','r3','r5',"DVD",'svcd','vcd',                                                     # DVD, VCD, S-VCD
   'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','HDTV',                                                     # dtv, stv
   'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync',                      # screener
-  'Complete Movie',
+  'Complete Movie',                                                                                           #
   "5BAnime-Koi_5D", "%5Banime-koi%5D", "Minitheatre.org", "minitheatre.org", "mtHD", "THORA",                 #
-  "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh", "BD"                 #
-  ]
+  "(Vivid)", "Dn92", "kris1986k_vs_htt91", "Mthd", "mtHD BD Dual","Elysium", "encodebyjosh", "BD"]            #
+
 FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 CHARACTERS_MAP = { 50309:'a',50311:'c',50329:'e',50562:'l',50564:'n',50099:'o',50587:'s',50618:'z',50620:'z', 
-                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',    
+                   50308:'A',50310:'C',50328:'E',50561:'L',50563:'N',50067:'O',50586:'S',50617:'Z',50619:'Z',
+                14844057:"'"  , #'’' ['\xe2', '\x80', '\x99']
+                   50048:'A'  , #'À' ['\xc3', '\x80'] FR
+                   50050:'A'  , #'Â' ['\xc3', '\x82'] FR
+                   50055:'C'  , #'Ç' ['\xc3', '\x87'] FR
+                   50080:'a'  , #'à' ['\xc3', '\xa0'] FR
+                   50082:'a'  , #'â' ['\xc3', '\xa2'] FR
+                   50087:'c'  , #'ç' ['\xc3', '\xa7'] FR
+                   50088:'e'  , #'è' ['\xc3', '\xa8'] FR
+                   50089:'e'  , #'é' ['\xc3', '\xa9'] FR
+                   50090:'e'  , #'ê' ['\xc3', '\xaa'] FR
+                   50091:'e'  , #'ë' ['\xc3', '\xab'] FR
+                   50094:'i'  , #'î' ['\xc3', '\xae'] FR
+                   50095:'i'  , #'ï' ['\xc3', '\xaf'] FR
+                   50100:'o'  , #'ô' ['\xc3', '\xb4'] FR
+                   50105:'u'  , #'ù' ['\xc3', '\xb9'] FR
+                   50107:'u'  , #'û' ['\xc3', '\xbb']
+                   50579:'oe' ,#'œ' ['\xc5', '\x93']
                    50072:'O'  , # 'CØDE：BREAKER'
                 15711386:':'  , # 'CØDE：BREAKER'
                    50084:'a'  , # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
@@ -226,7 +242,7 @@ def encodeASCII(text, language=None): #from Unicodize and plex scanner and other
         char = 256*char + ord(string[i+x]); char2 += string[i+x]; char3.append(string[i+x])
         string[i+x]=''
       if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
-      else:                       Log("*Character missing in CHARACTERS_MAP: '%d', char: '%s' %s, len: '%d', string: '%s'" % (char, char2, char3, char_len, string))
+      else:                       Log("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char3, string))
       i += char_len
   return ''.join(string)
   
