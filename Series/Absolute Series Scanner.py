@@ -53,17 +53,19 @@ specials_re_match = ['(SPECIALS|Specials|specials)']                            
 
 episode_re_search = [                                                                                         ### Episode search ###
   '(?P<show>.*?)[sS](?P<season>[0-9]+)[\._ -]*(e|E|ep|Ep|x)(?P<ep>[0-9]+)[-._x]((E|e|ep)(?P<secondEp>[0-9]+))?', # S03E04-E05, S03E04E05, S03e04-05,  
-  '(e|E|ep|Ep|EP)(?P<ep>[0-9]{1,3})(-|E|e|EP|Ep|ep|-E|-e|-EP|-Ep|-ep|_E|_e|_EP|_Ep|_ep| E| e| EP| Ep| ep)(?P<secondEp>[0-9]{1,3})', # E04-E05, E04E05, e04-05,  
+  '(?P<show>.*?) ?(e|E|ep|Ep|EP)(?P<ep>[0-9]{1,3})(-|E|e|EP|Ep|ep|-E|-e|-EP|-Ep|-ep|_E|_e|_EP|_Ep|_ep| E| e| EP| Ep| ep)(?P<secondEp>[0-9]{1,3})', # E04-E05, E04E05, e04-05,  
   '(?P<ep>[0-9]{1,3})-(?P<secondEp>[0-9]{1,3})',                                                              # 01-02  
-  '(?P<show>.*?)[sS](?P<season>[0-9]{2})[\._\- ]+(?P<ep>[0-9]+)',                                             # S03-03
+  '(?P<show>.*?)[sS](?P<season>[0-9]{1,2})[\._\- Xx]*[Ee]?(?P<ep>[0-9]{1,3}).*',                              # S03-03
   '(?P<show>.*?)([^0-9]|^)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]+)(-[0-9]+[Xx](?P<secondEp>[0-9]+))?',        # 3x03
-  '(?P<show>.*?) - (?P<ep>[0-9]{1,3}) - .*',                                                                  # Title - 01 - xxx
-  '(?P<show>.*?) - Ep ?(?P<ep>[0-9]{1,3}).*',                                                                 # Title - 01 - xxx
-  ' ?- (?P<ep>[0-9]{1,3}) - .*'                                                                               # Title - 01 - xxx
-  ]                                                                                                      
+  '(?P<show>.*?) - (?P<ep>[0-9]{1,3})($| .*)',                                                                # Title - 01
+  '(?P<ep>[0-9]{1,3})($| .*)',                                                                                # 001 - xxx
+  '(?P<show>.*?) - [Ee]?(?P<ep>[0-9]{1,3}) - .*',                                                             # Title - E01 - xxx
+  '(?P<show>.*?) - Ep ?(?P<ep>[0-9]{1,3}) - .*',                                                              # Title - EP 01 - xxx
+  ' ?- (?P<ep>[0-9]{1,3})( - .*|$)']                                                                          # - Ep 01 - title                                                                                                      
 standalone_episode_re_findall = [                                                                             ### Episode Search standalone ###
-  '(.*?)( \(([0-9]+)\))? - ([0-9]+)+x([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?',                               # Newzbin style, no _UNPACK_
-  '(.*?)( \(([0-9]+)\))?[Ss]([0-9]+)+[Ee]([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?']                           # standard s00e00                                                                                                       
+  '(.*?)( \(([0-9]+)\))? - ([0-9]+)+x([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?'#,                               # Newzbin style, no _UNPACK_
+  #'(.*?)( \(([0-9]+)\))?[Ss]([0-9]+)+[Ee]([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?'
+  ]                           # standard s00e00                                                                                                       
 AniDB_re_search   = [                                                                                         ### AniDB Specials numbering ###
   ["(?P<show>.*?)(^|[ \.-_])(S|SP|SPECIALS?) ?(?P<ep>\d{1,3})(.*)",                     0],                   # 001-099 Specials
   ["(?P<show>.*?)(^|[ \.-_]{1,3})(OP|NC ?OP|OPENING) ?(?P<ep>\d{0,2}[a-z]?)$",        100],                   # 100-149 Openings
@@ -86,8 +88,7 @@ just_episode_re_search        = [                                               
   '^[^\-]*\-[ ]*(?P<ep>[0-9]{1,3})[ ]*\-.+$']                                                                 # Byousoku 5 Centimeter - 1 - The Chosen Cherry Blossoms - [RAW](3d312152) ###by TiS   
 date_regexps = [                                                                                              ### Date format ###
   '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',               # 2009-02-10
-  '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)']        # 02-10-2009
-  
+  '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)']        # 02-10-2009 
 whackRx = [                                                                                                   ### Tags to remove ###
   '([hHx][\.]?264)[^0-9]',  'dvxa', 'divx', 'xvid', 'divx ?(5.?1)?',                                          # Video Codecs
   'ogg','ogm', 'vorbis','aac','dts', 'ac3',                                                                   # Audio Codecs
@@ -272,6 +273,10 @@ def clean_filename(string):
   if string.endswith  (" -"):  string = string[:-2]
   if ", The" in string:  string = "The " + ''.join( string.split(", The", 1) )
   #s = s.replace('&', 'and')
+  for rx in ("Ep ", "EP ", "ep ", "E ", "e ", " - ", "- " ):
+    if string.startswith(rx):  string=string[len(rx):]
+  for rx in (" v2", " V2", "V2", "v2", " - ", " -" ):
+    if string.endswith(rx):    string=string[:-len(rx)]
   return string.strip()
 
 ### Add files into Plex database ########################################################################
@@ -419,7 +424,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       ep_nb = ep if ep.rfind(" ") == -1 else ep.rsplit(' ', 1)[1]        # If there is no space (and ep title) / If there is a space ep_nb is the last part hoping there is no episode title
       ep       = re.sub(r'\(.*?\)', '', ep)                              # remove "(xxx)" groups
       ep       = clean_filename(ep)
-      
+              
       ### Check for date-based regexps first. ###
       for rx in date_regexps:
         match = re.search(rx, ep)
@@ -438,13 +443,15 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       ### Check for episode_re_search ###
       for rx in episode_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
-        if match:
+        if match and not ep.startswith(("Special", "special")):
           show       = clean_filename( match.group('show'    )) if not folder_use and match.groupdict().has_key('show') and not match.group('show')=="" else folder_show
-          if match.groupdict().has_key('season') and match.group('season'): season = int(match.group('season')) if folder_season is None else folder_season
-          else:                                                             season = 1
+          #if match.groupdict().has_key('season') and match.group('season'): season = int(match.group('season')) if folder_season is None else folder_season
+          #else:                                                             season = 1
+          if match.groupdict().has_key('season') and match.group('season'): season = int(match.group('season')) 
+          else:                                                             season = 1 if folder_season is None else folder_season
           episode    =             int(match.group('ep'))
           endEpisode =             int(match.group('secondEp')) if match.groupdict().has_key('secondEp') and match.group('secondEp') else episode
-          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, endEpisode, "show: '%s' (%s) s%02de%03d episode_re_search '%s' on '%s' from '%s' also ep_nb: '%s'"   % (show, xint(year), int(season), int(episode), rx, ep, filename, ep_nb))
+          add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, endEpisode, "show: '%s' (%s) s%02de%03d episode_re_search '%s' on '%s' from '%s'"   % (show, xint(year), int(season), int(episode), rx, ep, filename))
           break
       if match: continue
     
