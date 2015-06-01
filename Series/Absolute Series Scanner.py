@@ -58,9 +58,9 @@ episode_re_search = [                                                           
   '(?P<show>.*?)[sS](?P<season>[0-9]{1,2})[\._\- Xx]*[Ee]?(?P<ep>[0-9]{1,3}).*',                              # S03-03
   '(?P<show>.*?)([^0-9]|^)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]+)(-[0-9]+[Xx](?P<secondEp>[0-9]+))?',        # 3x03
   '(?P<show>.*?) - (?P<ep>[0-9]{1,3})($| .*)',                                                                # Title - 01
-  '(?P<ep>[0-9]{1,3})($| .*)',                                                                                # 001 - xxx
   '(?P<show>.*?) - [Ee]?(?P<ep>[0-9]{1,3}) - .*',                                                             # Title - E01 - xxx
   '(?P<show>.*?) - Ep ?(?P<ep>[0-9]{1,3}) - .*',                                                              # Title - EP 01 - xxx
+  '(?P<ep>[0-9]{1,3})($| .*)',                                                                                # 001 - xxx
   ' ?- (?P<ep>[0-9]{1,3})( - .*|$)']                                                                          # - Ep 01 - title                                                                                                      
 standalone_episode_re_findall = [                                                                             ### Episode Search standalone ###
   '(.*?)( \(([0-9]+)\))? - ([0-9]+)+x([0-9]+)(-[0-9]+[Xx]([0-9]+))?( - (.*))?'#,                               # Newzbin style, no _UNPACK_
@@ -445,8 +445,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         match = re.search(rx, ep, re.IGNORECASE)
         if match and not ep.startswith(("Special", "special")):
           show       = clean_filename( match.group('show'    )) if not folder_use and match.groupdict().has_key('show') and not match.group('show')=="" else folder_show
-          #if match.groupdict().has_key('season') and match.group('season'): season = int(match.group('season')) if folder_season is None else folder_season
-          #else:                                                             season = 1
           if match.groupdict().has_key('season') and match.group('season'): season = int(match.group('season')) 
           else:                                                             season = 1 if folder_season is None else folder_season
           episode    =             int(match.group('ep'))
