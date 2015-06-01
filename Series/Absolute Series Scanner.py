@@ -486,7 +486,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             show = ep[:ep.find(match.group('ep'))].rstrip() # remove eveything from the episode number
             if show.endswith(" -"):  show = show[:-len(" -")]
             if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
-            if show == "" or show.lower() in folder_show.lower(): show = folder_show  # cut down forms of title point to folder anyway  # In case of ep filename "EP 01 title of the episode" fallback to folder name
+            if show == "" or show.lower() in folder_show.lower() or "movie" in show.lower() and len(files)==1:
+              show = folder_show   # cut down forms of title point to folder anyway  # In case of ep filename "EP 01 title of the episode" fallback to folder name
+              if "movie" in show.lower() and len(files)==1:
+                season = 1;
+                episode=1; #moronic movie naming convention
           add_episode_into_plex(mediaList, files, file, show, season, episode, "", year, None, "show: '%s' (%s) s%02de%03d just_episode_re_search '%s' on '%s' from '%s'" % (show, xint(year), int(season), int(episode), rx, ep, filename))
           break
       if match: continue
