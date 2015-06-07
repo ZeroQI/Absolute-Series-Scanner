@@ -62,7 +62,7 @@ roman_re_match ="(L?X{0,3})(IX|IV|V?I{0,3})$"
 ignore_dirs_re_findall  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items',     # Filters.py  removed '\..*',        
 'Network Trash Folder', 'Extras', 'Samples?', '^bonus', '.*bonus disc.*', 'trailers?', '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*']# Filters.py 
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.']                                                      # Skipped files (samples, trailers)                                                          
-ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'jpg', 'png', 'mp3', 'pdf', 'db', 'nfo', 'ds_store' ]                  # extensions dropped no warning (useless or list would be too long)
+ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store']           # extensions dropped no warning (useless or list would be too long)
 video_exts = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'bup', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v',
   'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob',
   'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'divx', 'webm']                         #
@@ -158,6 +158,20 @@ def unicodeLen (char):                         # count consecutive 1 bits since 
 
 ### Decode string back to Unicode ###   #Unicodize in utils?? #fixEncoding in unicodehelper
 def encodeASCII(string, language=None): #from Unicodize and plex scanner and other sources
+  ranges = [
+    {"from": ord(u"\u3300"),     "to": ord(u"\u33ff")},     # compatibility ideographs
+    {"from": ord(u"\ufe30"),     "to": ord(u"\ufe4f")},     # compatibility ideographs
+    {"from": ord(u"\uf900"),     "to": ord(u"\ufaff")},     # compatibility ideographs
+    {"from": ord(u"\u30a0"),     "to": ord(u"\u30ff")},     # Japanese Kana
+    {"from": ord(u"\u2e80"),     "to": ord(u"\u2eff")},     # cjk radicals supplement
+    {"from": ord(u"\u4e00"),     "to": ord(u"\u9fff")},
+    {"from": ord(u"\u3400"),     "to": ord(u"\u4dbf")},
+    {"from": ord(u"\U00020000"), "to": ord(u"\U0002a6df")},
+    {"from": ord(u"\U0002a700"), "to": ord(u"\U0002b73f")},
+    {"from": ord(u"\U0002b740"), "to": ord(u"\U0002b81f")},
+    {"from": ord(u"\U0002b820"), "to": ord(u"\U0002ceaf")}, # included as of Unicode 8.0
+    {"from": ord(u"\U0002F800"), "to": ord(u"\U0002fa1f")}  # compatibility ideographs
+  ] #def is_cjk(char):  return any([range["from"] <= ord(char) <= range["to"] for range in ranges])
   if string=='': return ""
   encoding  = ord(string[0])
   encodings = ['iso8859-1', 'utf-16', 'utf-16be', 'utf-8']
@@ -187,12 +201,12 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
       char_len = unicodeLen(string[i])
       for x in range(0, char_len):
         char = 256*char + ord(string[i+x]); char2 += string[i+x]; char3.append(string[i+x])
-        string[i+x]=''
+        if not x==0: string[i] += string[i+x]; string[i+x]='' #string[i+x] = ''
       if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
-      else:                       Log("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char3, string))
+      elif not any([mapping["from"] <= ord("".join(char3).decode('utf8')) <= mapping["to"] for mapping in ranges]):  Log("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char3, string))
       i += char_len
   return ''.join(string)
-
+  
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string):
   if not string: return ""
@@ -224,14 +238,15 @@ def clean_filename(string):
   return string.strip()
 
 ### Add files into Plex database ########################################################################
-def add_episode_into_plex(mediaList, files, file, show, season=1, episode=1, episode_title="", year=None, ep2 = None, text=""):
+def add_episode_into_plex(mediaList, files, file, path, show, season=1, episode=1, episode_title="", year=None, ep2 = None, text=""):
   if ep2 is None: ep2 = episode
   for epn in range(episode, ep2+1):
     tv_show                = Media.Episode(show, season, epn, episode_title, year)
     tv_show.display_offset = (epn-episode)*100/(ep2-episode+1)
     tv_show.parts.append(file)
     mediaList.append(tv_show)
-  Log(text)  #Stack.Scan(path, files, mediaList, []) #miss path var
+  Log(text)
+  Stack.Scan(path, files, mediaList, [])
 
 ### Add files into array ################################################################################
 def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
@@ -275,7 +290,10 @@ def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
-  if not path == "":  return  # Exit every other iteration than the root scan
+  if not path == "":
+    #Log("=== Scan called: ========================================================================")
+    #Log("Root: \"%s\", Path: \"%s\", subdirs: \"%s\", mediaList: \"%s\"" % (root, path, subdirs, str(mediaList)))
+    return 0# Exit every other iteration than the root scan
 
   ### Rename log file with library name if XML file can be accessed ###
   global LOG_FILENAME
@@ -311,6 +329,35 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     reverse_path  = Utils.SplitPath(path)                  # Take top two as show/season, but require at least the top one, and reverse them
     reverse_path.reverse()                                 # Reverse the order of the folders
    
+    ### bluray folder management ###
+    # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
+    if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv':
+      for rx in episode_re_search[0:-1]:
+        match = re.search(rx, reverse_path[2], re.IGNORECASE)
+        if match:
+          episode    = int(match.group('ep'))
+          endEpisode = int(match.group('secondEp')) if match.groupdict().has_key('secondEp') and match.group('secondEp') else episode
+          show, year = VideoFiles.CleanName( match.group('show') )
+          if len(show) > 0:
+            for ep in range(episode, endEpisode+1):
+              tv_show                = Media.Episode(show, int(match.group('season')), ep, '', year)
+              tv_show.display_offset = (ep-episode)*100/(endEpisode-episode+1)
+              for i in files:  tv_show.parts.append(i)
+            mediaList.append(tv_show)
+            Log("show: '%s', year: '%s', season: '%2s', ep: %3s found using Bluray convention (bdmv/stream)" % (show, xint(year), str(int(match.group('season'))), xint(episode)) )
+            break
+      else: Log("*no show found for ep: '%s', folder_show: '%s' using Bluray convention (bdmv/stream)" % (episode, folder_show))
+      continue
+      
+    ### preliminary DVD image support  
+    # if   'video_ts.ifo' in files: video_ts = os.path.join(subdir, 'video_ts.ifo')
+    # elif 'video_ts.bup' in files: video_ts = os.path.join(subdir, 'video_ts.bup')
+    # if len(paths) >= 1 and len(paths[0]) > 0 and video_ts is not None:
+    #   dvd_name = paths[len(path...
+    # tv_show.display_offset = (ep_nr-ep_start)*100/div
+    # tv_show.parts.append(video_ts)
+    # mediaList.append(tv_show)
+    
     ### Check if folder is a season folder and remove it do reduce complexity ###
     folder_year   = None
     folder_season = None
@@ -363,7 +410,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if ep=="":  ep="01"
       if ep.isdigit():
         if season==1 and int(ep)==0:  episode="01"; season=0
-        add_episode_into_plex(mediaList, files, file, show, season, int(ep), "", year, int(ep2), "show: \"%s\" s%02de%03d \"%s\" \"%s\"" % (show, int(season), int(ep), ep, filename))
+        add_episode_into_plex(mediaList, files, file, path, show, season, int(ep), "", year, int(ep2), "show: \"%s\" s%02de%03d \"%s\" \"%s\"" % (show, int(season), int(ep), ep, filename))
         continue
         
       ### Check for Series_re_search + AniDB_re_search ###
@@ -387,7 +434,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if not (show=="" or "special" in show.lower()): 
               if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
             if season==1 and int(ep)==0:  episode="01"; season=0          
-          add_episode_into_plex(mediaList, files, file, show, season, int(ep), "", year, int(ep2), "show: \"%s\" s%02de%03d%s \"%s\" \"%s\", rx: \"%s\"" % (show, int(season), int(ep), "" if ep==ep2 else "-%03d" % int(ep2), old_ep, filename, rx))          #add_episode_into_plex(mediaList, files, file, show, season, ep, "", year, ep2, "show: '%s' (%s) s%02de%03d%s on '%s' from '%s'" % (show, xint(year), int(season), ep, "" if ep==ep2 else "-"+str(ep2), rx, filename))
+          add_episode_into_plex(mediaList, files, file, path, show, season, int(ep), "", year, int(ep2), "show: \"%s\" s%02de%03d%s \"%s\" \"%s\", rx: \"%s\"" % (show, int(season), int(ep), "" if ep==ep2 else "-%03d" % int(ep2), old_ep, filename, rx))          #add_episode_into_plex(mediaList, files, file, show, season, ep, "", year, ep2, "show: '%s' (%s) s%02de%03d%s on '%s' from '%s'" % (show, xint(year), int(season), ep, "" if ep==ep2 else "-"+str(ep2), rx, filename))
           break
       if match: continue
      
@@ -401,7 +448,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       
       Log("*no show found for ep: \"%s\", filename: \"%s\"" % (ep, filename))
     Log("-------------------------------------------------------------------------------------------------------------------------")
-    #Stack.Scan(path, files, mediaList, subdirs)
+    Stack.Scan(path, files, mediaList, subdirs)
   Log("")  #  time.strftime("%H:%M:%S")   # VideoFiles.Scan(path, files, mediaList, subdirs, root) # Filter out bad stuff and duplicates.
 if __name__ == '__main__':
   print "Absolute Series Scanner command line execution"
