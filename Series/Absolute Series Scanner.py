@@ -17,7 +17,7 @@ import Utils                                                       ### Plex Medi
 # CleanUpString       (s)                                          # Cleanup string.
 # LevenshteinDistance (first, second)                              # Compute Levenshtein distance.
 # LevenshteinRatio    (first, second)                              # Levenshtein ratio.
-#import Stack                                                       ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
+import Stack                                                       ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 # compareFilenames    (elem)                                       # ???
 # Scan                (dir, files, mediaList, subdirs)             # Scan for stacked files
 import VideoFiles                                                  ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
@@ -60,9 +60,9 @@ roman_re_match ="(L?X{0,3})(IX|IV|V?I{0,3})$"
 #character sets and alternations:  ^([^t]|t($|[^b]|b($|[^d]|d($|[^_])))).*
 
 ignore_dirs_re_findall  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items',     # Filters.py  removed '\..*',        
-'Network Trash Folder''Extras', 'Samples?', '^bonus', '.*bonus disc.*', 'trailers?', '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*']# Filters.py 
+'Network Trash Folder', 'Extras', 'Samples?', '^bonus', '.*bonus disc.*', 'trailers?', '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*']# Filters.py 
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.']                                                      # Skipped files (samples, trailers)                                                          
-ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'jpg', 'png', 'mp3', 'pdf', 'db', 'nfo', 'DS_Store' ]                  # extensions dropped no warning (useless or list would be too long)
+ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'jpg', 'png', 'mp3', 'pdf', 'db', 'nfo', 'ds_store' ]                  # extensions dropped no warning (useless or list would be too long)
 video_exts = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'bup', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v',
   'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob',
   'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'divx', 'webm']                         #
@@ -280,7 +280,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   ### Rename log file with library name if XML file can be accessed ###
   global LOG_FILENAME
   try:
-    result = urllib2.urlopen(PLEX_LIBRARY_URL)  #if result is not None: Log(str(result.getcode()))
+    result = urllib2.urlopen(PLEX_LIBRARY_URL)
+    if result is not None: Log(str(result.getcode()))
     string = result.read()
   except:
     if "ACCOUNT_TOKEN_HERE" not in PLEX_LIBRARY_URL:  Log("except http library xml - Token replaced in source code but still fails")
@@ -296,11 +297,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     else: Log("except http library xml - No library name to append at end of log filename despite access to file. Please forward to developer xml: '%s' " % PLEX_LIBRARY_URL)
 
   Log("=== Scan ================================================================================================================")
-  Log("Log path: \"%s\"" % os.path.join(LOG_PATH, LOG_FILENAME))
-  Log("Root:     \"%s\", Platform: \"%s\", Token in PLEX_LIBRARY_URL: '%s'" % (root, platform, str("ACCOUNT_TOKEN_HERE" not in PLEX_LIBRARY_URL)))  # for folder in sorted(subdirs):  Log("\"%s\"" % folder[len(root):]) 
+  Log("Log path: \"%s\"" % LOG_PATH)
+  Log("Root:     \"%s\", Platform: \"%s\", Token in PLEX_LIBRARY_URL: '%s'" % (root, platform, str("ACCOUNT_TOKEN_HERE" not in PLEX_LIBRARY_URL)))  
   Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
   file_tree = {}                                           # initialize file_tree
-  explore_path(root, root, file_tree)                      # initialize file_tree with files on root
+  explore_path(root, root, file_tree)                      # initialize file_tree with files on root  #for path in sorted(file_tree):  Log("\"%s\"" % file_tree[path]) 
   Log("=========================================================================================================================")
   for path in sorted(file_tree):                           # Loop to add all series while on the root folder Scan call, which allows subfolders to work
     subdirs      = []                                      # Recreate normal scanner coding: subfolders empty
@@ -323,8 +324,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       if match: break  #Breaking second for loop doesn't exist parent for / else: continue then break nex line would also work
     folder_show = clean_filename( reverse_path[0] )
     Log("Path: \"%s\", show: \"%s\"%s" % (path, folder_show, ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
-    
+     
     ### Main File loop to start adding files now ###
+    AniDB_op = {}
     for file in files:                                                   # "files" is a list of media files full path, File is one of the entries
       filename = os.path.basename(file)                                  # strip the folders
       show     = folder_show                                             #
@@ -346,42 +348,45 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         ep = ep2 = clean_filename(ep)                                      #misc = ep.rsplit(' ', 1) #if misc in folder_show: folder_use = True, if len(misc)>1,  ep.rsplit(' ', 1)[1] 
         
         ### if format "Serie - 001 - Episode Title .ext" or serie name in filename and only ep number left ###
+        if ep.lower().startswith("special") or ep.lower().startswith("picture drama") or ep.lower().startswith("omake"):  season = 0
         words=ep.split(' - ',3)
         if len(words)==1: words=ep.split(' ')
         if len(words)>1: #2 or 3, if using naming convention, will have removed serie name
-          for word in words: # if len(words)==2 else words[:-1]:
+          misc = " ".join( [clean_filename(os.path.basename(file)) for file in files])
+          for word in words:
             word2 = clean_filename(word)
             if word2.isdigit() or len(word2)>1 and word2[1:].isdigit() or len(word2)>2 and word2[2:].isdigit(): 
-              if " ".join(files).count(word2)>1: continue 
-              #if len(string)>1 and string[0].lower()== in ('e', 's') and string[1].isdigit(): string = string[1:]
+              if misc.count(word2)>3:  continue #number part of filename
               if words.index(word) ==1 and not folder_use and words[0].lower() not in ("special", "oav", "movie"):  show   = words[0]  # Use local name if folder name NOT contained in finename
-              if ep.lower().startswith("special") or ep.lower().startswith("picture drama"):                        season = 0
               ep = ep2 = word2
-              if season==1 and int(ep)==0:
-                episode="01"; season=0          
               break
+        if ep=="":  ep="01"
       if ep.isdigit():
+        if season==1 and int(ep)==0:  episode="01"; season=0
         add_episode_into_plex(mediaList, files, file, show, season, int(ep), "", year, int(ep2), "show: \"%s\" s%02de%03d \"%s\" \"%s\"" % (show, int(season), int(ep), ep, filename))
         continue
-      
+        
       ### Check for Series_re_search + AniDB_re_search ###
       old_ep = ep
       for rx in Series_re_search + AniDB_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
+          ep = ep2 = match.group('ep') if match.groupdict().has_key('ep') and match.group('ep') is not None else "01"
           if rx in AniDB_re_search:
-            ep = ep2 = str(AniDBOffset[AniDB_re_search.index(rx)] + (int( match.group('ep')) if match.groupdict().has_key('ep') and match.group('ep') and match.group('ep').isdigit() else 1) )
-            season  = 0 # AniDB Specials are season 0
-          else: #if not ep.startswith(("Special", "special")):
-            ep = ep2 = match.group('ep')
+            season = 0 # AniDB Specials are season 0
+            offset = AniDBOffset [ AniDB_re_search.index(rx) ]                        # 100 for OP, 150 for ED
+            if not ep.isdigit():                                                      ### OP/ED with letter version Example: op2a
+              AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')  # {100: 0 for a/1 for b} ...  #Log("AniDB Opening?, ep: '%d', '%d', '%d', '%s'" % (int( match.group('ep')[:-1] ), int(match.group('ep')[-1:]) , str(AniDB_op)))
+              offset                            += sum( AniDB_op.values() )           # sum( AniDB_op.vlaues())[key] for key in AniDB_op )
+            ep = ep2 = str( offset + int( ep[:-1] ) )                                 # "if xxx isdigit() else 1" implied since OP1a for example...
+          else: #rx in Series_re_search:
             if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ) and match.group('ep2'   ).isdigit():  ep2    = match.group('ep2') 
             if match.groupdict().has_key('season') and match.group('season') and match.group('season').isdigit():  season = int(match.group('season'))
             if match.groupdict().has_key('show'  ) and match.group('show'  ) and not folder_use:                   show   = clean_filename( match.group('show'))
             elif not folder_use and not ep[:ep.find(match.group('ep'))].rstrip()=="":                              show   = clean_filename( ep[:ep.find(match.group('ep'))].rstrip() ) # remove eveything from the episode number
             if not (show=="" or "special" in show.lower()): 
               if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
-          if season==1 and int(ep)==0:
-            episode="01"; season=0          
+            if season==1 and int(ep)==0:  episode="01"; season=0          
           add_episode_into_plex(mediaList, files, file, show, season, int(ep), "", year, int(ep2), "show: \"%s\" s%02de%03d%s \"%s\" \"%s\", rx: \"%s\"" % (show, int(season), int(ep), "" if ep==ep2 else "-%03d" % int(ep2), old_ep, filename, rx))          #add_episode_into_plex(mediaList, files, file, show, season, ep, "", year, ep2, "show: '%s' (%s) s%02de%03d%s on '%s' from '%s'" % (show, xint(year), int(season), ep, "" if ep==ep2 else "-"+str(ep2), rx, filename))
           break
       if match: continue
@@ -391,13 +396,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       match = re.match(roman_re_match, ep_nb, re.IGNORECASE)
       if match:
         ep_nb = roman_to_int(ep_nb)
-        add_episode_into_plex(mediaList, files, file, folder_show, 1, int(ep_nb), "", year, None, "show: \"%s\" s%2de%3d \"%s\" \"%s\" rx: \"%s\"" % (folder_show, 1, int(ep_nb), ep, filename, roman_re_match))
+        add_episode_into_plex(mediaList, files, file, folder_show, 1, int(ep_nb), "", year, None, "show: \"%s\" s%02de%03d \"%s\" \"%s\" rx: \"%s\"" % (folder_show, 1, int(ep_nb), ep, filename, roman_re_match))
         continue
       
       Log("*no show found for ep: \"%s\", filename: \"%s\"" % (ep, filename))
     Log("-------------------------------------------------------------------------------------------------------------------------")
+    #Stack.Scan(path, files, mediaList, subdirs)
   Log("")  #  time.strftime("%H:%M:%S")   # VideoFiles.Scan(path, files, mediaList, subdirs, root) # Filter out bad stuff and duplicates.
-
 if __name__ == '__main__':
   print "Absolute Series Scanner command line execution"
   path  = sys.argv[1]; files = [os.path.join(path, file) for file in os.listdir(path)]; media = []
