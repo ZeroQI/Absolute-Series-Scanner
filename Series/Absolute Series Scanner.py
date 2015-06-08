@@ -248,7 +248,13 @@ def add_episode_into_plex(mediaList, files, file, path, show, season=1, episode=
   Log(text)
   Stack.Scan(path, files, mediaList, [])
 
-### Add files into array ################################################################################
+### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] ###############################################################################
+#def natural_keys(s):
+# return [ try int(c) for c in re.split('([0-9]+)', s) ]
+def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
+  return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
+  
+    ### Add files into array ################################################################################
 def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
   fullpath=os.path.join(subdir, ".plexignore")
   if os.path.isfile(fullpath):
@@ -277,7 +283,7 @@ def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[
       else: #ignore_ext_no_warning
         if   '.' in item and item.lower().rsplit('.', 1)[1] in video_exts:                 files.append(fullpath)                              ### item is a file   
         elif '.' in item and item.lower().rsplit('.', 1)[1] not in ignore_ext_no_warning:  Log("File:       '%s' extension not in video_exts" %(fullpath[len(root):]))                                        ### files
-  dirs.sort(); files.sort()
+  dirs.sort(); files.sort(key=natural_sort_key)
   for item in dirs:
     plexignore_recursive_files=[]; plexignore_recursive_dirs =[]                                 # Split recursive entries, this one for next folder's subfolders
     for rx in plexignore_dirs:                                                                   # On each patter string
@@ -316,7 +322,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
 
   Log("=== Scan ================================================================================================================")
   Log("Log path: \"%s\"" % LOG_PATH)
-  Log("Root:     \"%s\", Platform: \"%s\", Token in PLEX_LIBRARY_URL: '%s'" % (root, platform, str("ACCOUNT_TOKEN_HERE" not in PLEX_LIBRARY_URL)))  
+  Log("Root:     \"%s\", Platform: \"%s\"" % (root, platform))  
   Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
   file_tree = {}                                           # initialize file_tree
   explore_path(root, root, file_tree)                      # initialize file_tree with files on root  #for path in sorted(file_tree):  Log("\"%s\"" % file_tree[path]) 
@@ -418,14 +424,14 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       for rx in Series_re_search + AniDB_re_search:
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
-          ep = ep2 = match.group('ep') if match.groupdict().has_key('ep') and match.group('ep') is not None else "01"
+          ep = ep2 = match.group('ep') if match.groupdict().has_key('ep') and match.group('ep') is not None and not match.group('ep')=="" else "01"
           if rx in AniDB_re_search:
             season = 0 # AniDB Specials are season 0
             offset = AniDBOffset [ AniDB_re_search.index(rx) ]                        # 100 for OP, 150 for ED
-            if not ep.isdigit():                                                      ### OP/ED with letter version Example: op2a
+            if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                  ### OP/ED with letter version Example: op2a
               AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')  # {100: 0 for a/1 for b} ...  #Log("AniDB Opening?, ep: '%d', '%d', '%d', '%s'" % (int( match.group('ep')[:-1] ), int(match.group('ep')[-1:]) , str(AniDB_op)))
               offset                            += sum( AniDB_op.values() )           # sum( AniDB_op.vlaues())[key] for key in AniDB_op )
-            ep = ep2 = str( offset + int( ep[:-1] ) )                                 # "if xxx isdigit() else 1" implied since OP1a for example...
+              ep = ep2 = str( offset + int( ep[:-1] ) )                                 # "if xxx isdigit() else 1" implied since OP1a for example...
           else: #rx in Series_re_search:
             if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ) and match.group('ep2'   ).isdigit():  ep2    = match.group('ep2') 
             if match.groupdict().has_key('season') and match.group('season') and match.group('season').isdigit():  season = int(match.group('season'))
