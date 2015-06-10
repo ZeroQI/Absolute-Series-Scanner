@@ -241,14 +241,14 @@ def clean_filename(string):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, files, file, path, show, season=1, episode=1, episode_title="", year=None, ep2 = None, text=""):
-  if ep2 is None: ep2 = episode
+  if not ep2: ep2 = episode
   for epn in range(episode, ep2+1):
     tv_show                = Media.Episode(show, season, epn, episode_title, year)
     tv_show.display_offset = (epn-episode)*100/(ep2-episode+1)
-    tv_show.parts.append(file)
-    mediaList.append(tv_show)
-  Log(text)
-  Stack.Scan(path, files, mediaList, [])
+  tv_show.parts.append(file)
+  mediaList.append(tv_show)
+  Log(text) #Log("show: \"%s\", s%02de%03d file: \"%s\", ep2: \"%s\"" % (show, season, episode, file, ep2 )) 
+  #Stack.Scan(path, files, mediaList, [])
 
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] ###############################################################################
 #def natural_keys(s):
@@ -298,10 +298,7 @@ def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
-  if not path == "":
-    #Log("=== Scan called: ========================================================================")
-    #Log("Root: \"%s\", Path: \"%s\", subdirs: \"%s\", mediaList: \"%s\"" % (root, path, subdirs, str(mediaList)))
-    return 0# Exit every other iteration than the root scan
+  if not path == "":  return 0# Exit every other iteration than the root scan
 
   ### Rename log file with library name if XML file can be accessed ###
   global LOG_FILENAME
@@ -328,6 +325,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   Log("--- Skipped mediums -----------------------------------------------------------------------------------------------------")
   file_tree = {}                                           # initialize file_tree
   explore_path(root, root, file_tree)                      # initialize file_tree with files on root  #for path in sorted(file_tree):  Log("\"%s\"" % file_tree[path]) 
+  with open(os.path.join(LOG_PATH, LOG_FILENAME[:-4] + " - filelist" + LOG_FILENAME[-4:]), 'w') as file:
+    for folder in sorted(file_tree):
+      for filename in file_tree[folder]:  file.write( filename.replace(root, "")[1:] + "\r\n") #LINE_FEED 
   Log("=========================================================================================================================")
   for path in sorted(file_tree):                           # Loop to add all series while on the root folder Scan call, which allows subfolders to work
     subdirs      = []                                      # Recreate normal scanner coding: subfolders empty
@@ -340,7 +340,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     ### bluray folder management ###
     # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
     if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv':
-      for rx in episode_re_search[0:-1]:
+      for rx in Series_re_search[0:-1]:
         match = re.search(rx, reverse_path[2], re.IGNORECASE)
         if match:
           episode    = int(match.group('ep'))
@@ -394,8 +394,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if folder_season and ep.startswith("s%2d "  % folder_season):  ep =  ep.replace("s%2d "  % folder_season, "")
         if folder_season and ep.startswith("s%02d " % folder_season):  ep =  ep.replace("s%02d " % folder_season, "")
           
-        folder_use = False                                                 # Bolean to keep track if folder name in case it is included in the filename
-        if folder_show is not None and not folder_show=="":                # If containing folder exist or has name different from "_" (scrubed to "")
+        folder_use = False                                                   # Bolean to keep track if folder name in case it is included in the filename
+        if folder_show is not None and not folder_show=="":                  # If containing folder exist or has name different from "_" (scrubed to "")
           if folder_show.lower() in ep.lower() or ep.replace(" ", "").lower() in folder_show.replace(" ", "").lower():
             misc = ep.lower().replace(folder_show.lower(), '')               # remove cleaned folder name (if exist) from the show name
             if len(misc)==len(ep):  junk = ep.replace(" ", "").lower().replace(folder_show.replace(" ", "").lower(), '') # misc = ep.replace(folder_show, "")         # remove cleaned folder name (if exist) from the show name
@@ -403,15 +403,15 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if len(misc) < len(ep) or len(junk)<len(ep.replace(" ", "").lower()):                 # And remove the cleaned folder name from the now cleaned show, just in case the directory is off by things CleanName handles
               ep         = misc                                              # Removed folder serie name from episode filename
               folder_use = True                                              # indicate to latter use folder name since it is present in filename
-        if "(" in ep:  ep = re.sub(r'\(.*?\)', '', ep)                     # remove "(xxx)" groups, not in clean as i want to keep (year) in some titles
-        ep = ep2 = clean_filename(ep)                                      #misc = ep.rsplit(' ', 1) #if misc in folder_show: folder_use = True, if len(misc)>1,  ep.rsplit(' ', 1)[1] 
+        if "(" in ep:  ep = re.sub(r'\(.*?\)', '', ep)                       # remove "(xxx)" groups, not in clean as i want to keep (year) in some titles
+        ep = ep2 = clean_filename(ep)                                        #misc = ep.rsplit(' ', 1) #if misc in folder_show: folder_use = True, if len(misc)>1,  ep.rsplit(' ', 1)[1] 
         
         ### if format "Serie - 001 - Episode Title .ext" or serie name in filename and only ep number left ###
         if ep.lower().startswith("special") or ep.lower().startswith("picture drama") or ep.lower().startswith("omake"):  season = 0
         words=ep.split(' - ',3)
         if len(words)==1: words=ep.split(' ')
         if len(words)>1: #2 or 3, if using naming convention, will have removed serie name
-          misc = " ".join( [clean_filename(os.path.basename(file)) for file in files])
+          misc = " ".join( [clean_filename(os.path.basename(filename)) for filename in files])
           for word in words:
             word2 = clean_filename(word)
             if word2.isdigit() or len(word2)>1 and word2[1:].isdigit() or len(word2)>2 and word2[2:].isdigit(): 
@@ -452,7 +452,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       if match: continue
      
       ### Roman numbers ### doesn't work is ep title present
-      ep_nb = clean_filename(ep if ' ' in ep else ep.rsplit(' ', 1)[1]) # If there is no space (and ep title) / If there is a space ep_nb is the last part hoping there is no episode title
+      ep_nb = clean_filename(ep.rsplit(' ', 1)[1] if ' ' in ep else ep) # If there is no space (and ep title) / If there is a space ep_nb is the last part hoping there is no episode title
       match = re.match(roman_re_match, ep_nb, re.IGNORECASE)
       if match:
         ep_nb = roman_to_int(ep_nb)
@@ -461,7 +461,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       
       Log("*no show found for ep: \"%s\", filename: \"%s\"" % (ep, filename))
     Log("-------------------------------------------------------------------------------------------------------------------------")
-    Stack.Scan(path, files, mediaList, subdirs)
+    #.Scan(path, files, mediaList, subdirs)
   Log("")  #  time.strftime("%H:%M:%S")   # VideoFiles.Scan(path, files, mediaList, subdirs, root) # Filter out bad stuff and duplicates.
 if __name__ == '__main__':
   print "Absolute Series Scanner command line execution"
