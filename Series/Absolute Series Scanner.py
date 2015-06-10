@@ -44,7 +44,7 @@ season_re_match = [                                                             
   '(?P<season>[0-9]{1,2})a? Stagione+.*']                                                                                     # IT - Xa Stagiona
 Series_re_search = [                                                                                                          ### Series Numbering ###
   '(^|(?P<show>.*?) )(?P<season>[0-9]{1,2})x(?P<ep>[0-9]{1-3})((x|_[0-9]{1,2}x)(?P<ep2>[0-9]{1,3}))?',                        #   1x01 | 1x01x02 | 1x01_1x02               - title ### # '1x01' # 'x02', '_1x02' # Episode title
-  '(^|(?P<show>.*?) )s(?P<season>[0-9]{1,2})(e|ep|-)(?P<ep>[0-9]{1,3})(([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))?',   # s01e01 | s01 e01 | s01-02 | s01ep02        - title ### (?P<show>.*?) # Show title # ([sS](?P<season>[0-9]{1,2})[\._ ]?) 's01', 's01.', 's01_', 's01 ' # (e|ep|-)(?P<ep>[0-9]+) # 'e01', 'ep01', '-01' # (([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))? # optional: '-02', 'e02', 'ep02', '-e02', '-ep02'
+  '(^|(?P<show>.*?) )s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))?',   # s01e01 | s01 e01 | s01-02 | s01ep02        - title ### (?P<show>.*?) # Show title # ([sS](?P<season>[0-9]{1,2})[\._ ]?) 's01', 's01.', 's01_', 's01 ' # (e|ep|-)(?P<ep>[0-9]+) # 'e01', 'ep01', '-01' # (([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))? # optional: '-02', 'e02', 'ep02', '-e02', '-ep02'
   '(^|(?P<show>.*?) )(?!Special|S)((e|ep) ?)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-| - )(?P<ep2>[0-9]{1,3})|$| .*)',               #    E01 | E01-E02 | E01-02 | E01E02        - title
   '(^|(?P<show>.*?) )(?P<ep>[0-9]{1,3})[\. -_]of[\. -_]+[0-9]{1,3}([^0-9a-zA-Z]|$)']                                          # 01 of 08 (no stacking for this one ?)
 AniDB_re_search  = [                                                                                                          ### AniDB Specials numbering ###
@@ -61,11 +61,11 @@ roman_re_match ="(L?X{0,3})(IX|IV|V?I{0,3})$"
 
 ignore_dirs_re_findall  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items',     # Filters.py  removed '\..*',        
 'Network Trash Folder', 'Extras', 'Samples?', '^bonus', '.*bonus disc.*', 'trailers?', '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*']# Filters.py 
-ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.']                                                      # Skipped files (samples, trailers)                                                          
-ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store']           # extensions dropped no warning (useless or list would be too long)
+ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack']                                                      # Skipped files (samples, trailers)                                                          
+ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini']           # extensions dropped no warning (useless or list would be too long)
 video_exts = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'bup', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v',
   'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob',
-  'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'divx', 'webm']                         #
+  'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'divx', 'webm', 'swf']                         #
 
 FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 CHARACTERS_MAP = {
@@ -355,15 +355,15 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       else: Log("*no show found for ep: '%s', folder_show: '%s' using Bluray convention (bdmv/stream)" % (episode, folder_show))
       continue
       
-    ### preliminary DVD image support  
-    # if   'video_ts.ifo' in files: video_ts = os.path.join(subdir, 'video_ts.ifo')
-    # elif 'video_ts.bup' in files: video_ts = os.path.join(subdir, 'video_ts.bup')
-    # if len(paths) >= 1 and len(paths[0]) > 0 and video_ts is not None:
-    #   dvd_name = paths[len(path...
-    # tv_show.display_offset = (ep_nr-ep_start)*100/div
-    # tv_show.parts.append(video_ts)
-    # mediaList.append(tv_show)
-    
+    ### DVD folder support ###
+    if   'video_ts.ifo' in files:  video_ts = os.path.join(subdir, 'video_ts.ifo')
+    elif 'video_ts.bup' in files:  video_ts = os.path.join(subdir, 'video_ts.bup')
+    else:                          video_ts = None
+    if len(reverse_path) >= 1 and len(reverse_path[0]) > 0 and video_ts is not None:
+      ep = reverse_path[0]
+      if len(reverse_path)>1:  reverse_path.remove(ep)
+      Log("DVD folder detected - ep: '%s', video_ts: '%s', reverse_path: '%s'" % (ep, video_ts, reverse_path[0]))
+      
     ### Check if folder is a season folder and remove it do reduce complexity ###
     folder_year   = None
     folder_season = None
@@ -387,16 +387,20 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       season   = 1 if folder_season is None else folder_season           #
       ep = ep2 = clean_filename(os.path.splitext(filename)[0])           # Strip [], all, ep contain the serie name and ep number for now
       
-      ### Movies ###
-      if len(files)==1 and (ep==folder_show or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep = ep2 = "01"
+      if len(files)==1 and (ep==folder_show or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep = ep2 = "01" ### Movies ###
       else:  ### Cleanup episode filename If parent Folder contain serie name ###
+        if folder_season and ep.startswith("s%2d "  % folder_season):  ep =  ep.replace("s%2d "  % folder_season, "")
+        if folder_season and ep.startswith("s%02d " % folder_season):  ep =  ep.replace("s%02d " % folder_season, "")
+          
         folder_use = False                                                 # Bolean to keep track if folder name in case it is included in the filename
         if folder_show is not None and not folder_show=="":                # If containing folder exist or has name different from "_" (scrubed to "")
-          misc = ep.lower().replace(folder_show.lower(), '')               # remove cleaned folder name (if exist) from the show name
-          junk = ep.replace(" ", "").lower().replace(folder_show.replace(" ", "").lower(), '') # misc = ep.replace(folder_show, "")         # remove cleaned folder name (if exist) from the show name
-          if len(misc+junk) < len(ep+ep.replace(" ", "")):                 # And remove the cleaned folder name from the now cleaned show, just in case the directory is off by things CleanName handles
-            ep         = misc                                              # Removed folder serie name from episode filename
-            folder_use = True                                              # indicate to latter use folder name since it is present in filename
+          if folder_show.lower() in ep.lower() or ep.replace(" ", "").lower() in folder_show.replace(" ", "").lower():
+            misc = ep.lower().replace(folder_show.lower(), '')               # remove cleaned folder name (if exist) from the show name
+            if len(misc)==len(ep):  junk = ep.replace(" ", "").lower().replace(folder_show.replace(" ", "").lower(), '') # misc = ep.replace(folder_show, "")         # remove cleaned folder name (if exist) from the show name
+            if len(misc)>2 and misc.lower().startswith('s '):  misc = misc[2:]
+            if len(misc) < len(ep) or len(junk)<len(ep.replace(" ", "").lower()):                 # And remove the cleaned folder name from the now cleaned show, just in case the directory is off by things CleanName handles
+              ep         = misc                                              # Removed folder serie name from episode filename
+              folder_use = True                                              # indicate to latter use folder name since it is present in filename
         if "(" in ep:  ep = re.sub(r'\(.*?\)', '', ep)                     # remove "(xxx)" groups, not in clean as i want to keep (year) in some titles
         ep = ep2 = clean_filename(ep)                                      #misc = ep.rsplit(' ', 1) #if misc in folder_show: folder_use = True, if len(misc)>1,  ep.rsplit(' ', 1)[1] 
         
@@ -413,7 +417,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
               if words.index(word) ==1 and not folder_use and words[0].lower() not in ("special", "oav", "movie"):  show   = words[0]  # Use local name if folder name NOT contained in finename
               ep = ep2 = word2
               break
-        if ep=="":  ep="01"
+        if ep=="":  ep=ep2="01"
       if ep.isdigit():
         if season==1 and int(ep)==0:  episode="01"; season=0
         add_episode_into_plex(mediaList, files, file, path, show, season, int(ep), "", year, int(ep2), "show: \"%s\" s%02de%03d \"%s\" \"%s\"" % (show, int(season), int(ep), ep, filename))
@@ -431,7 +435,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                  ### OP/ED with letter version Example: op2a
               AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')  # {100: 0 for a/1 for b} ...  #Log("AniDB Opening?, ep: '%d', '%d', '%d', '%s'" % (int( match.group('ep')[:-1] ), int(match.group('ep')[-1:]) , str(AniDB_op)))
               offset                            += sum( AniDB_op.values() )           # sum( AniDB_op.vlaues())[key] for key in AniDB_op )
-              ep = ep2 = str( offset + int( ep[:-1] ) )                                 # "if xxx isdigit() else 1" implied since OP1a for example...
+              ep = ep2 = str( int( ep[:-1] ) )                               # "if xxx isdigit() else 1" implied since OP1a for example...
+            ep = ep2 = str( offset + int(ep))
           else: #rx in Series_re_search:
             if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ) and match.group('ep2'   ).isdigit():  ep2    = match.group('ep2') 
             if match.groupdict().has_key('season') and match.group('season') and match.group('season').isdigit():  season = int(match.group('season'))
@@ -439,13 +444,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             elif not folder_use and not ep[:ep.find(match.group('ep'))].rstrip()=="":                              show   = clean_filename( ep[:ep.find(match.group('ep'))].rstrip() ) # remove eveything from the episode number
             if not (show=="" or "special" in show.lower()): 
               if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
-            if season==1 and int(ep)==0:  episode="01"; season=0          
+            if int(ep)==0:  episode="01"; season=0          
           add_episode_into_plex(mediaList, files, file, path, show, season, int(ep), "", year, int(ep2), "show: \"%s\" s%02de%03d%s \"%s\" \"%s\", rx: \"%s\"" % (show, int(season), int(ep), "" if ep==ep2 else "-%03d" % int(ep2), old_ep, filename, rx))          #add_episode_into_plex(mediaList, files, file, show, season, ep, "", year, ep2, "show: '%s' (%s) s%02de%03d%s on '%s' from '%s'" % (show, xint(year), int(season), ep, "" if ep==ep2 else "-"+str(ep2), rx, filename))
           break
       if match: continue
      
       ### Roman numbers ### doesn't work is ep title present
-      ep_nb = clean_filename(ep if ep.rfind(" ") == -1 else ep.rsplit(' ', 1)[1]) # If there is no space (and ep title) / If there is a space ep_nb is the last part hoping there is no episode title
+      ep_nb = clean_filename(ep if ' ' in ep else ep.rsplit(' ', 1)[1]) # If there is no space (and ep title) / If there is a space ep_nb is the last part hoping there is no episode title
       match = re.match(roman_re_match, ep_nb, re.IGNORECASE)
       if match:
         ep_nb = roman_to_int(ep_nb)
