@@ -69,12 +69,12 @@ video_exts = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', '
 
 FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 CHARACTERS_MAP = {
-  50048:'A'  , 50050:'A'  , 50080:'a'  , 50082:'a'  , 50084:'a'  , 50308:'A'  , 50309:'a'  ,                  #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
+  50048:'A'  , 50050:'A'  , 50080:'a'  , 50082:'a'  , 50084:'a'  , 50305:'a'  , 50308:'A'  , 50309:'a'  ,     #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
   50055:'C'  , 50087:'c'  , 50310:'C'  , 50311:'c'  ,                                                         #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
-  50057:'E'  , 50088:'e'  , 50089:'e'  , 50090:'e'  , 50091:'e'  , 50328:'E'  , 50329:'e'  ,                  #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
-  50094:'i'  , 50095:'i'  , 50561:'L'  , 50562:'l'  , 50563:'N'  , 50564:'n'  , 50097:'n'  ,                  #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ñ' ['\xc3', '\xb1']
-  50067:'O'  , 50072:'O'  , 50100:'o'  , 50099:'o'  , 50578:'OE' , 50579:'oe' ,                               # 'Ø' ['', '']        #'ô' ['\xc3', '\xb4'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
-  50586:'S'  , 50587:'s'  , 50079:'ss' , 50105:'u'  , 50107:'u'  , 49842:'²'  , 49843:'³'  ,                  # 'ß' []              #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
+  50057:'E'  , 50088:'e'  , 50089:'e'  , 50090:'e'  , 50091:'e'  , 50323:'e'  , 50328:'E'  , 50329:'e'  ,     #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
+  50094:'i'  , 50095:'i'  , 50347:'i'  , 50561:'L'  , 50562:'l'  , 50563:'N'  , 50564:'n'  , 50097:'n'  ,     #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
+  50067:'O'  , 50072:'O'  , 50100:'o'  , 50099:'o'  , 50573:'o'  , 50578:'OE' , 50579:'oe' ,                  # 'Ø' ['', '']        #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
+  50586:'S'  , 50587:'s'  , 50079:'ss' , 50105:'u'  , 50107:'u'  , 50108:'u'  , 49842:'²'  , 49843:'³'  ,     # 'ß' []              #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
   50617:'Z'  , 50618:'z'  , 50619:'Z'  , 50620:'z'  , 49835:'«'  , 49851:'»'  , 49853:'1-2',                  #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen' 
   14844057:"'"  , 14844051:'-'  , 14844070:''   , 15711386:':'  , 14846080:'∀'}                              #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need
 
@@ -202,8 +202,10 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
       for x in range(0, char_len):
         char = 256*char + ord(string[i+x]); char2 += string[i+x]; char3.append(string[i+x])
         if not x==0: string[i] += string[i+x]; string[i+x]='' #string[i+x] = ''
+      try:    asian_language = any([mapping["from"] <= ord("".join(char3).decode('utf8')) <= mapping["to"] for mapping in ranges])
+      except: asian_language = False
       if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
-      elif not any([mapping["from"] <= ord("".join(char3).decode('utf8')) <= mapping["to"] for mapping in ranges]):  Log("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char3, string))
+      elif not asian_language:  Log("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char3, string))
       i += char_len
   return ''.join(string)
   
