@@ -266,6 +266,7 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
   elif ep > ep2:
     Log("Warning - show: '%s', s%02de%03d-%03d, file: '%s' has ep1 > ep2, making them equal" % (show, season, ep, ep2, file))
     ep2 = ep
+
   for epn in range(ep, ep2+1):
     tv_show                = Media.Episode(show, season, epn, title, year)
     tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
@@ -493,7 +494,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       match = re.match(roman_re_match, ep_nb, re.IGNORECASE)
       if match:
         ep_nb = roman_to_int(ep_nb)
-        add_episode_into_plex(mediaList, files, file, root, folder_show, 1, int(ep_nb), title, year, None, roman_re_match)
+        add_episode_into_plex(mediaList, files, file, root, folder, show, 1, int(ep_nb), title, year, None, roman_re_match)
         if video_ts: break 
         else:        continue
       
