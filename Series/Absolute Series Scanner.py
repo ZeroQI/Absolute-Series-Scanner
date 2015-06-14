@@ -43,10 +43,10 @@ season_re_match = [                                                             
   'saison[ -_]?(?P<season>[0-9]{1,2}).*',                                                                                     # FR - Saison
   '(?P<season>[0-9]{1,2})a? Stagione+.*']                                                                                     # IT - Xa Stagiona
 Series_re_search = [ ### Series Naming conventions ###                                                                        # "Serie - xxx - episode_title" supported without regex
-  '(^|(?P<show>.*?)( | - ))(?P<season>[0-9]{1,2})x(?P<ep>[0-9]{1-3})((x|_[0-9]{1,2}x)(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*))',                      #   1x01 | 1x01x02 | 1x01_1x02               - title ### # '1x01' # 'x02', '_1x02' # Episode title
-  '(^|(?P<show>.*?) )s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*))',  # s01e01 | s01 e01 | s01-02 | s01ep02        - title ### (?P<show>.*?) # Show title # ([sS](?P<season>[0-9]{1,2})[\._ ]?) 's01', 's01.', 's01_', 's01 ' # (e|ep|-)(?P<ep>[0-9]+) # 'e01', 'ep01', '-01' # (([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))? # optional: '-02', 'e02', 'ep02', '-e02', '-ep02'
-  '(^|(?P<show>.*?) )(?!Special|S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*))',                              #    E01 | E01-E02 | E01-02 | E01E02        - title
-  '(^|(?P<show>.*?) )(?P<ep>[0-9]{1,3})[\. -_]of[\. -_]+[0-9]{1,3}([^0-9a-zA-Z]|$)($|( | - )(?P<title>.*))',                                                # 01 of 08 (no stacking for this one ?)
+  '(^|(?P<show>.*?)( | - ))(?P<season>[0-9]{1,2})x(?P<ep>[0-9]{1-3})((x|_[0-9]{1,2}x)(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*?)$)',                      #   1x01 | 1x01x02 | 1x01_1x02               - title ### # '1x01' # 'x02', '_1x02' # Episode title
+  '(^|(?P<show>.*?) )s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*?)$)',  # s01e01 | s01 e01 | s01-02 | s01ep02        - title ### (?P<show>.*?) # Show title # ([sS](?P<season>[0-9]{1,2})[\._ ]?) 's01', 's01.', 's01_', 's01 ' # (e|ep|-)(?P<ep>[0-9]+) # 'e01', 'ep01', '-01' # (([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))? # optional: '-02', 'e02', 'ep02', '-e02', '-ep02'
+  '(^|(?P<show>.*?) )(?!Special|S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*?)$)',                              #    E01 | E01-E02 | E01-02 | E01E02        - title
+  '(^|(?P<show>.*?) )(?P<ep>[0-9]{1,3})[\. -_]of[\. -_]+[0-9]{1,3}([^0-9a-zA-Z]|$)($|( | - )(?P<title>.*?)$)',                                                # 01 of 08 (no stacking for this one ?)
 #  '(^|(?P<show>.*?)( | - ))(?P<ep>(19[0-9]{2}|20[0-1][0-9])) x (?P<ep>[0-9]{1,3})($|( | - )(?P<title>.*))'                                         # xxxx episode title like betty boop 1934 - title
 ]
 AniDB_re_search  = [                                                                                                          ### AniDB Specials numbering ###
@@ -56,6 +56,7 @@ AniDB_re_search  = [                                                            
   '(^|(?P<show>.*?) )(TRAILER|PROMO|PV|T)($| ?(?P<ep>\d{1,2}))',                                                              # 200-299 Trailer, Promo with a  number
   '(^|(?P<show>.*?) )(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})(.*)',                                                              # 300-399 Parodies
   '(^|(?P<show>.*?) )(O|OTHERS?) ?(?P<ep>\d{1,2})(.*)']; AniDBOffset = [0, 100, 150, 200, 300, 400]                           # 400-999 Others
+roman_re_match =[".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]  
 #negative look-ahead assertion:    ^(?!tbd_).+
 #negative look-behind assertion:  (^.{1,3}$|^.{4}(?<!tbd_).*) fixed width patters
 #character sets and alternations:  ^([^t]|t($|[^b]|b($|[^d]|d($|[^_])))).*
@@ -68,7 +69,7 @@ video_exts = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', '
   'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob',
   'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'divx', 'webm', 'swf']                         #
 
-FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+FILTER_CHARS   = "\\/:*?<>|~=.;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 CHARACTERS_MAP = {
   50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' , #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
   50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,                                                             #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
@@ -155,7 +156,6 @@ def xint(s):
   return str(s) if s is not None and not s=="" else "None"
 
 ### Convert Roman numerals ##############################################################################
-roman_re_match ="(L?X{0,3})(IX|IV|V?I{0,3})$"  
 def roman_to_int(string):                                    # Regex for matching #M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})
   roman_values=[['X',10],['IX',9],['V',5],['IV',4],['I',1]]  # ['M',1000],['CM',900],['D',500],['CD',400],['C',100],['XC',90],['L',50],['XL',40]
   result = 0
@@ -400,7 +400,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           break
       if match: break  #Breaking second for loop doesn't exist parent for / else: continue then break nex line would also work
     folder_show = clean_filename( reverse_path[0] )
-    Log("\"%s\" path%s%s" % (path[1:], " cleansed into: \"%s\"" % folder_show if not path[1:]==folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
+    Log("\"%s\" path%s%s" % (path, " cleansed into: \"%s\"" % folder_show if not path[1:]==folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
     
     ### Main File loop to start adding files now ###
     AniDB_op = {}
@@ -461,7 +461,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         
       ### Check for Series_re_search + AniDB_re_search ###
       old_ep = ep
-      for rx in Series_re_search + AniDB_re_search:
+      for rx in Series_re_search + AniDB_re_search+roman_re_match:
+        if rx in roman_re_match:  ep = clean_filename(ep.rsplit(' ', 1)[1] if ' ' in ep else ep)
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
           ep = ep2 = match.group('ep') if match.groupdict().has_key('ep') and match.group('ep') is not None and not match.group('ep')=="" else "01"
@@ -473,7 +474,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
               offset                            += sum( AniDB_op.values() )           # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
               ep = ep2 = str( int( ep[:-1] ) )                                        # "if xxx isdigit() else 1" implied since OP1a for example...
             ep = ep2 = str( offset + int(ep))                                         # Add episode number to the offset, 01 by default from the match group above
-          else: #rx in Series_re_search:
+          elif rx in Series_re_search:
             if match.groupdict().has_key('show'  ) and match.group('show'  ) and not folder_use:                   show   = clean_filename( match.group('show'))
             if match.groupdict().has_key('season') and match.group('season') and match.group('season').isdigit():  season = int(match.group('season'))
             if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ) and match.group('ep2'   ).isdigit():  ep2    = match.group('ep2') 
@@ -482,24 +483,16 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if not (show=="" or "special" in show.lower()): 
               if show.rfind(" ") != -1 and show.rsplit(' ', 1)[1] in ["ep", "Ep", "EP", "eP", "e", "E"]:  show = show.rsplit(' ', 1)[0] # remove ep at the end
             if int(ep)==0:  episode="01"; season=0          
+          elif rx in roman_re_match:  ### Roman numbers ### doesn't work is ep title present
+            ep = ep2 = roman_to_int(ep)
           add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2), rx)          #add_episode_into_plex(mediaList, files, file, show, season, ep, "", year, ep2, "show: '%s' (%s) s%02de%03d%s on '%s' from '%s'" % (show, xint(year), int(season), ep, "" if ep==ep2 else "-"+str(ep2), rx, filename))
           break
-      if match:
-        if video_ts:  break    #if dvd folder exit else continue for next file
-        else:         continue #next file iteration
-     
-      ### Roman numbers ### doesn't work is ep title present
-      ep_nb = clean_filename(ep.rsplit(' ', 1)[1] if ' ' in ep else ep) # If there is no space (and ep title) / If there is a space ep_nb is the last part hoping there is no episode title
-      match = re.match(roman_re_match, ep_nb, re.IGNORECASE)
-      if match:
-        ep_nb = roman_to_int(ep_nb)
-        add_episode_into_plex(mediaList, files, file, root, folder_show, 1, int(ep_nb), title, year, None, roman_re_match)
-        if video_ts: break 
-        else:        continue
-      
+      if match and video_ts:  break     # if dvd folder exit else continue for next file
+      elif match:             continue  # next file iteration
+        
       Log("*no show found for ep: \"%s\", filename: \"%s\"" % (ep, filename))
     Log("-------------------------------------------------------------------------------------------------------------------------")
-    #.Scan(path, files, mediaList, subdirs)
+    #Scan(path, files, mediaList, subdirs)
   Log("")  #  time.strftime("%H:%M:%S")   # VideoFiles.Scan(path, files, mediaList, subdirs, root) # Filter out bad stuff and duplicates.
 if __name__ == '__main__':
   print "Absolute Series Scanner command line execution"
