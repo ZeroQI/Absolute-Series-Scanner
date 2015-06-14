@@ -45,7 +45,7 @@ season_re_match = [                                                             
 Series_re_search = [ ### Series Naming conventions ###                                                                        # "Serie - xxx - episode_title" supported without regex
   '(^|(?P<show>.*?)( | - ))(?P<season>[0-9]{1,2})x(?P<ep>[0-9]{1-3})((x|_[0-9]{1,2}x)(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*))',                      #   1x01 | 1x01x02 | 1x01_1x02               - title ### # '1x01' # 'x02', '_1x02' # Episode title
   '(^|(?P<show>.*?) )s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*))',  # s01e01 | s01 e01 | s01-02 | s01ep02        - title ### (?P<show>.*?) # Show title # ([sS](?P<season>[0-9]{1,2})[\._ ]?) 's01', 's01.', 's01_', 's01 ' # (e|ep|-)(?P<ep>[0-9]+) # 'e01', 'ep01', '-01' # (([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))? # optional: '-02', 'e02', 'ep02', '-e02', '-ep02'
-  '(^|(?P<show>.*?) )(?!Special|S)((e|ep) ?)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*))',                              #    E01 | E01-E02 | E01-02 | E01E02        - title
+  '(^|(?P<show>.*?) )(?!Special|S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?($|( | - )(?P<title>.*))',                              #    E01 | E01-E02 | E01-02 | E01E02        - title
   '(^|(?P<show>.*?) )(?P<ep>[0-9]{1,3})[\. -_]of[\. -_]+[0-9]{1,3}([^0-9a-zA-Z]|$)($|( | - )(?P<title>.*))',                                                # 01 of 08 (no stacking for this one ?)
 #  '(^|(?P<show>.*?)( | - ))(?P<ep>(19[0-9]{2}|20[0-1][0-9])) x (?P<ep>[0-9]{1,3})($|( | - )(?P<title>.*))'                                         # xxxx episode title like betty boop 1934 - title
 ]
@@ -63,39 +63,40 @@ AniDB_re_search  = [                                                            
 ignore_dirs_re_findall  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items',     # Filters.py  removed '\..*',        
 'Network Trash Folder', 'Extras', 'Samples?', '^bonus', '.*bonus disc.*', 'trailers?', '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*']# Filters.py 
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack']                                                      # Skipped files (samples, trailers)                                                          
-ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia"]           # extensions dropped no warning (useless or list would be too long)
+ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat"]           # extensions dropped no warning (useless or list would be too long)
 video_exts = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'bup', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'ifo', 'img', 'iso', 'm2t', 'm2ts', 'm2v',
   'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vob',
   'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'divx', 'webm', 'swf']                         #
 
 FILTER_CHARS   = "\\/:*?<>|~=._;"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 CHARACTERS_MAP = {
-  50048:'A'  , 50050:'A'  , 50080:'a'  , 50082:'a'  , 50084:'a'  , 50305:'a'  , 50308:'A'  , 50309:'a'  ,     #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
-  50055:'C'  , 50087:'c'  , 50310:'C'  , 50311:'c'  ,                                                         #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
-  50057:'E'  , 50088:'e'  , 50089:'e'  , 50090:'e'  , 50091:'e'  , 50323:'e'  , 50328:'E'  , 50329:'e'  ,     #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
-  50094:'i'  , 50095:'i'  , 50347:'i'  , 50561:'L'  , 50562:'l'  , 50563:'N'  , 50564:'n'  , 50097:'n'  ,     #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
-  50067:'O'  , 50072:'O'  , 50100:'o'  , 50099:'o'  , 50573:'o'  , 50578:'OE' , 50579:'oe' ,                  # 'Ø' ['', '']        #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
-  50586:'S'  , 50587:'s'  , 50079:'ss' , 50105:'u'  , 50107:'u'  , 50108:'u'  , 49842:'²'  , 49843:'³'  ,     # 'ß' []              #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
-  50617:'Z'  , 50618:'z'  , 50619:'Z'  , 50620:'z'  , 49835:'«'  , 49851:'»'  , 49853:'1-2',                  #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen' 
-  14844057:"'"  , 14844051:'-'  , 14844070:''   , 15711386:':'  , 14846080:'∀'}                              #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need
-
+  50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' , #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
+  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,                                                             #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
+  50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,             #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
+  50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,             #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
+  50067:'O' , 50068:'Ô' , 50072:'O' , 50100:'o' , 50099:'o' , 50573:'o' , 50578:'OE', 50579:'oe',             #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
+  50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' ,                                     #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
+  50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                                                             #
+  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49848:'¸',  49851:'»' , 49853:'1-2',                        #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'                                                                                                 #'¸' ['\xc2', '\xb8']  
+  14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀'                                      #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
+  }
 whack = [                                                                                                     ### Tags to remove ###
   'x264', 'h264', 'h.264',  'dvxa', 'divx', 'xvid', 'divx', 'divx51', 'divx5.1', 'mp4',                       # Video Codecs
   'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',                                           # Audio Codecs, channels
   '480p', '576p', '720p', '1080p', '1080i', '1920x1080','1280x720',                                           #       Resolution
   'hi10', 'hi10p', '10bit', 'crf24',  'crf 24',                                                               #       color depth and encoding
   '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                         # Refresh rate, Format
-  'dc','se', 'extended', 'unrated', 'multi','multisubs', 'dubbed','subbed',                                   # edition (dc = directors cut, se = special edition), subs and dubs
-  'limited', 'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered",                          # format
+  'dc','se', 'extended', 'unrated', 'multi','multisubs', 'dubbed','subbed',  "dvd-jap", "french", "fr", "dub",# edition (dc = directors cut, se = special edition), subs and dubs
+  'limited', 'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored",            # format
   'retail', 'webrip','web-dl', 'wp','workprint',                                                              # release type: retail, web, work print
   'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix',      # misc 1
   'fragment','ps3avchd','remux','fs','ws', "- Copy",                                                          # misc 2
   'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip',                                            # Source: bluray
-  'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'tv', 'sd', 'hd',                                   # DVD, VCD, S-VCD
-  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',                                           # dtv, stv
+  'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'tv', 'sd', 'hd', 'dvb',                            # DVD, VCD, S-VCD
+  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis",                                        # dtv, stv
   'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync',                      # screener
-  "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd", "thora", 'sickrage',                #
-  "nn92", "kris1986k_vs_htt91", "mthd", "mthd bd dual","elysium", "encodebyjosh", "bd"]            #
+  "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd", "thora", 'sickrage', 'xvid-killer',         #
+  "nn92", "kris1986k_vs_htt91", "mthd", "mthd bd dual","elysium", "encodebyjosh", "bd", "krissy", 'rikou']             #
 
 source_dict = {'bluray'  : ['bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip'],
                'cam'     : ['cam'],'dvd':['ddc','dvdrip','dvd','r1','r3','r5'],
@@ -108,7 +109,7 @@ source_dict = {'bluray'  : ['bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd'
                'telecine': ['tc','telecine'],
                'telesync': ['ts','telesync'],
                'web'     : ['webrip','web-dl'],
-               'workprint':['wp','workprint']} #for source in source_dict:  #  for keywork in source_dict[source]:  #    if word ==keyword: source.append(source)
+               'workprint':['wp','workprint']}
 
 ### Log function ########################################################################################
 global LOG_FILENAME
@@ -119,7 +120,7 @@ except:                                                                         
   try:    platform = Platform.OS.lower()                                                        # Platform.OS:  Windows, MacOSX, or Linux #  
   except: platform = ""                                                                         #
 if   (platform == 'win32'  or platform == 'windows'):
-  LINE_FEED = "\r\n"; 
+  LINE_FEED = "\n"; #CR \r seem added to LF (\N) on windows 
   LOG_PATHS = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                      # Windows 8
                 '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]
 elif (platform == 'darwin' or platform == 'macosx'):
@@ -181,12 +182,12 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
     {"from": ord(u"\u2e80"),     "to": ord(u"\u2eff")},     # cjk radicals supplement
     {"from": ord(u"\u4e00"),     "to": ord(u"\u9fff")},
     {"from": ord(u"\u3400"),     "to": ord(u"\u4dbf")},
-    {"from": ord(u"\U00020000"), "to": ord(u"\U0002a6df")},
-    {"from": ord(u"\U0002a700"), "to": ord(u"\U0002b73f")},
-    {"from": ord(u"\U0002b740"), "to": ord(u"\U0002b81f")},
-    {"from": ord(u"\U0002b820"), "to": ord(u"\U0002ceaf")}, # included as of Unicode 8.0
-    {"from": ord(u"\U0002F800"), "to": ord(u"\U0002fa1f")}  # compatibility ideographs
-  ] #def is_cjk(char):  return any([range["from"] <= ord(char) <= range["to"] for range in ranges])
+    #{"from": ord(u"\U00020000"), "to": ord(u"\U0002a6df")},
+    #{"from": ord(u"\U0002a700"), "to": ord(u"\U0002b73f")},
+    #{"from": ord(u"\U0002b740"), "to": ord(u"\U0002b81f")},
+    #{"from": ord(u"\U0002b820"), "to": ord(u"\U0002ceaf")}, # included as of Unicode 8.0
+    #{"from": ord(u"\U0002F800"), "to": ord(u"\U0002fa1f")}  # compatibility ideographs
+  ] #windows: TypeError: ord() expected a character, but string of length 2 found #def is_cjk(char):  return any([range["from"] <= ord(char) <= range["to"] for range in ranges])
   if string=='': return ""
   encoding  = ord(string[0])
   encodings = ['iso8859-1', 'utf-16', 'utf-16be', 'utf-8']
@@ -207,7 +208,8 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
   except:  pass
  
   ### loop through unicode and replace special chars with spaces then map if found ###
-  string = list(string)
+  original_string = string
+  string          = list(string)
   i = 0
   while i < len(string):
     if ord(string[i])<128:  i = i+1
@@ -220,7 +222,7 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
       try:    asian_language = any([mapping["from"] <= ord("".join(char3).decode('utf8')) <= mapping["to"] for mapping in ranges])
       except: asian_language = False
       if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
-      elif not asian_language:  Log("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char3, string))
+      elif not asian_language:  Log("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char3, original_string))
       i += char_len
   return ''.join(string)
   
@@ -249,7 +251,7 @@ def clean_filename(string, delete_parenthesis=False):
       string=string[len(rx):]
       break
   string = string.strip()
-  for rx in ("v2", "v3", " - copy"):
+  for rx in ("v2", "v3", " - copy", "-"):
     if string.lower().endswith(rx):
       string=string[:-len(rx)]
       break
@@ -268,6 +270,15 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
     tv_show                = Media.Episode(show, season, epn, title, year)
     tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
     tv_show.parts.append(file)
+
+  ### Source ###
+  #for source in source_dict:
+  #  for keywork in source_dict[source]:
+  #    if keyword in os.path.splitext(os.path.basename(file))[0]):
+  #      tv_show.source.append(source)
+  #      break
+  #  else: continue
+  #  break
   mediaList.append(tv_show)
   index = str(Series_re_search.index(rx)) if rx in Series_re_search else str(AniDB_re_search.index(rx)+len(Series_re_search)) if rx in AniDB_re_search else "" #rank of the regex used from 0
   Log("\"%s\" s%02de%03d%s \"%-80s '%2s' \"%s\"" % (show, season, ep, "    " if ep==ep2 else "-%03d" % ep2, title+"\"", index, os.path.basename(file))) 
@@ -349,7 +360,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   explore_path(root, root, file_tree)                                                                    # initialize file_tree with files on root  #for path in sorted(file_tree):  Log("\"%s\"" % file_tree[path]) 
   with open(os.path.join(LOG_PATH, LOG_FILENAME[:-4] + " - filelist" + LOG_FILENAME[-4:]), 'w') as file: ### Create relative path file listing in logs folder
     for folder in sorted(file_tree):                                                                     # for each folder
-      for filename in file_tree[folder]:  file.write( filename.replace(root, "")[1:] + "\r\n")           # for each file fullpath write the relativepath with windows line ending 
+      for filename in file_tree[folder]:  file.write( filename.replace(root, "")[1:] + "\n")           # for each file fullpath write the relativepath with windows line ending 
   Log("=========================================================================================================================")
   for path in sorted(file_tree):                                                                         # Loop to add all series while on the root folder Scan call, which allows subfolders to work
     subdirs      = []                                                                                    # Recreate normal scanner coding: subfolders empty
@@ -389,8 +400,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           break
       if match: break  #Breaking second for loop doesn't exist parent for / else: continue then break nex line would also work
     folder_show = clean_filename( reverse_path[0] )
-    Log("Path: \"%s\", show: \"%s\"%s" % (path, folder_show, ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
-     
+    Log("\"%s\" path%s%s" % (path[1:], " cleansed into: \"%s\"" % folder_show if not path[1:]==folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
+    
     ### Main File loop to start adding files now ###
     AniDB_op = {}
     for file in files:                                                   # "files" is a list of media files full path, File is one of the entries
@@ -400,6 +411,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       season   = 1 if folder_season is None else folder_season           # use "if var is | is not None:" as it's faster than "==None" and "if var:" is false if the variable is: False, 0, 0.0, "", () , {}, [], set()
       ep = ep2 = clean_filename(os.path.splitext(filename)[0])           # Strip extension, [], all, ep contain the serie name and ep number for now
       title    = ""
+         
       if len(files)!=1 or (ep!=folder_show and "movie" not in ep.lower()+folder_show.lower() and "gekijouban" not in folder_show.lower()):  ### Cleanup episode filename If parent Folder contain serie name ###
     
         ### If is a season folder remove season reference in serie name ###
@@ -428,22 +440,18 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           
         ### handles " Serie - 001 - title" or serie 01 without regex ###
         words=ep.split(' - ')
-        if len(words)==1:
-          words=ep.split(' ')
-        #if len(words)==2 and words[0].isdigit(): ## Japanese Media Manager mode " Serie - 001 - title"  and serie name already removed
-        #  ep    = words[0]
-        #  title = words[1]
+        if len(words)==1:  words=ep.split(' ')
         if len(words)>1: #2 or 3, if using naming convention, will have removed serie name
           misc = " ".join( [clean_filename(os.path.basename(x)) for x in files]) #put all filenames in folder in a string to count if ep number valid or present in multiple files
           for word in words:
             word2 = clean_filename(word)
             if not word2: continue
-            if word2.isdigit() or len(word2)>1 and word2[1:].isdigit() or len(word2)>2 and word2[2:].isdigit(): 
+            if word2.isdigit() or len(word2)>1 and word2[1:].isdigit() or len(word2)>2 and word2[2:].isdigit() or len(word2)>2 and word2.lower().startswith("ep") and word2[2:].isdigit() or len(word2)>3 and word2.lower().startswith("ep-")and word2[3:].isdigit(): 
               if misc.count(word2)>3:  continue # number is part of the filename (and foldername not in filename otherwise would have been removed)
               if words.index(word) ==1 and not folder_use and words[0].lower() not in ("special", "oav", "movie"):  show   = words[0]  # Use local name if folder name NOT contained in finename
               ep    = ep2 = word2
               title = clean_filename( " ".join(words[ words.index(word)+1:]), True)  #take everything after supposed episode number
-              break        #if ep=="":        #  ep=ep2="01" #??? to test when triggers        #  Log("xxx triggered ep 1 due to empty string")
+              break
       else: ep = ep2 = "01" ### Movies ###
       if ep.isdigit():
         if season==1 and int(ep)==0:  episode="01"; season=0
