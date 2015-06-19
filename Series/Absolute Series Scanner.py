@@ -185,11 +185,12 @@ def clean_filename(string, delete_parenthesis=False):
   if delete_parenthesis and "(" in string and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE):  string = re.sub(r'\(.*?\)', '', string)  
   if "[" in string or "{" in string:  string = re.sub(r'[\[\{].*?[\]\}]', '', string)                                # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
   if ", The" in string:               string = "The " + ''.join( string.split(", The", 1) )
+  if ", A"   in string:               string = "A "   + ''.join( string.split(", A", 1) )
   if "`"     in string:               string = string.replace("`", "'")                                      # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
   for word in whack_pre_clean:
     if word.lower() in string.lower():  string = replace_insensitive(string, word)
   for char in  FILTER_CHARS:
-    if char in string: string = string.replace(char, ' ')                                # replace os forbidden chars with spaces
+    if char in string: string = string.replace(char, ' ')                                       # replace os forbidden chars with spaces
   try:   string.decode('ascii')                                                                 # If string have non-ASCII characters
   except UnicodeDecodeError:  string=encodeASCII(string)                                        # Translate them
   words  = string.split(" ")                                                                    # Split in words
@@ -226,7 +227,7 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
       tv_show.parts.append(file)
       mediaList.append(tv_show) #otherwise only one episode per multi-episode is showing despite log below correct
     index = str(Series_re_search.index(rx)) if rx in Series_re_search else str(AniDB_re_search.index(rx)+len(Series_re_search)) if rx in AniDB_re_search else "" #rank of the regex used from 0
-    Log("\"%s\" s%02de%03d%s '%2s' \"%s\"  \"%s\"" % (show, season, ep, "    " if ep==ep2 else "-%03d" % ep2, index, title, os.path.basename(file)))  #Stack.Scan(path, files, mediaList, [])
+    Log("\"%s\" s%02de%03d%s '%2s' \"%s\"  \"%s\"" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, index, title, os.path.basename(file)))  #Stack.Scan(path, files, mediaList, [])
 
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] ###############################################################################
 def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
