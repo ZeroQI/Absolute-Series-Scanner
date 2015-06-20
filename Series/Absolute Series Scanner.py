@@ -68,7 +68,8 @@ CHARACTERS_MAP = {
   49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49848:'¸',  49851:'»' , 49853:'1-2',                        #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'                                                                                                 #'¸' ['\xc2', '\xb8']  
   14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀'}                                    #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
 
-import sys, os, time, re, fnmatch, unicodedata, urllib2, lxml.etree # from lxml import etree
+import sys, os, time, re, fnmatch, unicodedata, urllib2
+from lxml import etree
 import Utils, VideoFiles, Media  ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ### #import Stack           ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 
 ### Log Path ############################################################################################
