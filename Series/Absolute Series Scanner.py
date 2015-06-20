@@ -166,7 +166,7 @@ def clean_filename(string, delete_parenthesis=False):
   if not string: return ""
   try:   string.decode('ascii')                                                                 # If string have non-ASCII characters
   except UnicodeDecodeError:  string=encodeASCII(string)                                        # Translate them
-  if delete_parenthesis and "(" in string and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE):  string = re.sub(r'\(.*?\)', '', string)  
+  if "(" in string and (delete_parenthesis or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) ):  string = re.sub(r'\(.*?\)', '', string)  
   if "[" in string or "{" in string:  string = re.sub(r'[\[\{].*?[\]\}]', '', string)           # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
   if ", The" in string:               string = "The " + ''.join( string.split(", The", 1) )     # ", The" is rellocated in front
   if ", A"   in string:               string = "A "   + ''.join( string.split(", A"  , 1) )     # ", A"   is rellocated in front
@@ -299,8 +299,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     AniDB_op      = {}
     for file in files:                                                                                                                        # "files" is a list of media files full path, File is one of the entries
       filename = os.path.basename(file)
-      show, year, ep, ep2, title, folder_use = folder_show, folder_year, clean_filename(os.path.splitext(filename)[0]), None, "", False       #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]): #misc, year      = VideoFiles.CleanName(filename_no_ext)
-      if len(files)==1 and (ep==folder_show or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep = "01"  ### Movies ### 
+      show, year, ep, ep2, title, folder_use = folder_show, folder_year, clean_filename(os.path.splitext(filename)[0], True), None, "", False       #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]): #misc, year      = VideoFiles.CleanName(filename_no_ext)
+      if len(files)==1 and (ep==folder_show or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title = "01", folder_show  ### Movies ### 
       elif folder_show:                                                                                                                       ### Remove folder name from file name to reduce complexity and favor folder name over filename ### (who put crappy folder names and clean filenames anyway?)  # if not at root and containing folder exist and has name different from "_" (scrubed to "")
         if ep.lower().startswith(folder_show.lower()):                      ep, folder_use = ep[len(folder_show):].lstrip()[2:] if len(ep)>2 and ep.lower().startswith('s ') else ep[len(folder_show):].lstrip(), True #remove cleansed folder name from cleansed filename and remove potential space
         if folder_season and ep.startswith("s%2d"  % folder_season):        ep =  ep.replace("s%2d"  % folder_season, "", 1).lstrip()         # Serie S2  in season folder, Anidb specials regex doesn't like
@@ -308,7 +308,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if ep.lower().startswith( ("special", "picture drama", "omake") ):  season, title = 0, ep.title()                                     ### If specials, season is 0 and if title empty use as title ### 
         
         ### Search for the episode number ###  #if "-01-" in misc:  ep = ep.replace("-", " ") # Happy Tree Friends-01-Spin Fun Knowin' Ya.swf  #if len(ep)>2 and ep[:2].isdigit() and misc.count(ep[:2])==1: ep = ep[:1] + " " + ep2 [2:] # "Baby Einstein/01BE_FIRST_SOUNDS.avi"
-        words, misc, buffer = ep.split(' '), " ".join( [clean_filename(os.path.basename(x), True) for x in files]), re.sub(r'[\[\{].*?[\]\}]', '', folder_show.lower()) #put all filenames in folder in a string to count if ep number valid or present in multiple files
+        if ep.count(" - ")==2:  ep = ep.split(" - ",1)[1] #drop serie name #s01e002 "Log Horizon 2 - 01 - Shiroe of the Northern Lands [HorribleSubs].mkv
+        words, misc, buffer = ep.split(' '), " ".join( [clean_filename(os.path.basename(x), True) for x in files]), re.sub(r'[\[\{].*?[\]\}]', '', clean_filename(folder_show.lower(), True)) #put all filenames in folder in a string to count if ep number valid or present in multiple files
         for word in words:
           if  misc.count(word)>3 or not folder_use and word.lower() in buffer:
              buffer = buffer.replace(word.lower(), "") #replace_insensitive
