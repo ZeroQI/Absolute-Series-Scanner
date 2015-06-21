@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
+import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Media  ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
+from lxml import etree #import Stack
 
-### Log variables ###
+### Log variables, regex, skipped folders, words to remove, character maps ###
 PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/?X-Plex-Token=ACCOUNT_TOKEN_HERE"   # https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 LOG_FILENAME     = 'Plex Media Scanner (custom ASS).log'
 LINE_FEED        = "\n"; 
 
-### regular Expressions and variables ################### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python ####################
-season_re_match = [                                                                                                           ### Season folder ### 
+season_re_match = [### http://www.zytrax.com/tech/web/regex.htm ### http://regex101.com/#python                               ### Season folder ### 
   'specials',                                                                                                                 # Season 0 / specials folder
   'season[ -_]?(?P<season>[0-9]{1,2}).*',                                                                                     # US - Season
   'series[ -_]?(?P<season>[0-9]{1,2}).*',                                                                                     # UK - Series
@@ -28,14 +29,24 @@ roman_re_match =[".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]
 
 ignore_dirs_re_findall  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', 'Extras', 'Samples?', '^bonus', '.*bonus disc.*', 'trailers?', '@eaDir', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_re_findall = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack']                                                      # Skipped files (samples, trailers)                                                          
+ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub']           # extensions dropped no warning (useless or list would be too long)
 video_exts = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',
   'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv',
   'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'divx', 'webm', 'swf']                         #DVD: 'ifo', 'bup', 'vob',
-ignore_ext_no_warning   = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub']           # extensions dropped no warning (useless or list would be too long)
 
 whack_pre_clean = ["AAC2.0", 'DD5.1', "H.264-iT00NZ", "SD TV", "SD DVD", "HD TV", "x264-FMD Release", "x264-h65", "x264-mSD", "AAC", " - DDZ", "xvid-aldi"
 "H.264", "AAC.2.0", "AC3.5.1", "HDTV.x264-BAJSKORV", "x264-MgB", "OAR XviD-BiA-mOt", "XviD-2HD", "x264-SYS", "x264-FQM", "PROPER-LOL", "XviD-T00NG0D"] #include spaces, hyphens, dots, underscore
-FILTER_CHARS   = "\\/:*?<>|~=.;_"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+FILTER_CHARS   = "\\/:*?<>|~.;_"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+CHARACTERS_MAP = { 14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀',                    #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
+  50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' , #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
+  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,                                                             #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
+  50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,             #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
+  50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,             #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
+  50067:'O' , 50068:'Ô' , 50072:'O' , 50100:'o' , 50099:'o' , 50573:'o' , 50578:'OE', 50579:'oe',             #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
+  53423:'Я'  ,                                                                                                #'Я' ['\xd0', '\xaf']
+  50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' ,                                     #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
+  50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                                                             #
+  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49848:'¸',  49851:'»' , 49853:'1-2'}                        #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'                                                                                                 #'¸' ['\xc2', '\xb8']  
 whack = [                                                                                                     ### Tags to remove ###
   'x264', 'h264', 'h.264',  'dvxa', 'divx', 'xvid', 'divx', 'divx51', 'divx5.1', 'mp4',                       # Video Codecs
   'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',                                           # Audio Codecs, channels
@@ -56,38 +67,23 @@ whack = [                                                                       
   'x264-w4f', 'x264-bajskorv', 'x264-qcf', 'x264-batv', 'x264-MgB', 'x264-SnowDoN', 'x264-2hd', 'H264-PublicHD',
   'xvid-saints', 'xvid-pfa','xvid-fqm', 'xvid-asap','HOMЯ', 'yify', 'xvid', 'mp3', 'web-dl', "-Pikanet128", "iT00NZ", "x264-LOL", "x264-KILLERS", "hdtv-lol", "x264-EXCELLENCE", "REPACK-LOL"]   #
 
-CHARACTERS_MAP = {
-  50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' , #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
-  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,                                                             #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
-  50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,             #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
-  50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,             #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
-  50067:'O' , 50068:'Ô' , 50072:'O' , 50100:'o' , 50099:'o' , 50573:'o' , 50578:'OE', 50579:'oe',             #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
-  53423:'Я'  ,                                                                                                #'Я' ['\xd0', '\xaf']
-  50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' ,                                     #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
-  50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                                                             #
-  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49848:'¸',  49851:'»' , 49853:'1-2',                        #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'                                                                                                 #'¸' ['\xc2', '\xb8']  
-  14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀'}                                    #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
-
-import sys, os, time, re, fnmatch, unicodedata, urllib2
-from lxml import etree
-import Utils, VideoFiles, Media  ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ### #import Stack           ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
-
-### Log Path ############################################################################################
+### LOG_PATH calculated once for all calls ####################################################################
+#platform = sys.platform.lower() if "platform" in dir(sys) and callable(getattr(sys,'platform')) else "" 
 try:      platform = sys.platform.lower()                                                                                              # sys.platform: win32 | darwin | linux2, 
 except:                                                                                                                                #
   try:    platform = Platform.OS.lower()                                                                                               # Platform.OS:  Windows, MacOSX, or Linux #  
-  except: platform = ""                                                                                                                #
-if   platform in ('win32', 'windows'):  LOG_PATHS = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       #
-                                                      '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]     # CR \r seem added to LF (\N) on windows 
+  except: platform = ""  
+if   platform in ('win32', 'windows'):   LOG_PATHS = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       #
+                                                       '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]     # CR \r seem added to LF (\N) on windows 
 elif platform in ('darwin', 'macosx'):  LOG_PATHS = [ '$HOME/Library/Application Support/Plex Media Server/Logs' ]                     # LINE_FEED = "\r"
 elif 'linux' in platform:               LOG_PATHS = [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 # Linux
                                                       '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs',   # Debian, Fedora, CentOS, Ubuntu
-                                                      '/usr/local/plexdata/Plex Media Server/Logs',                                    # FreeBSD
-                                                      '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                # FreeNAS
-                                                      '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   # ReadyNAS
-                                                      '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # QNAP
-                                                      '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
-                                                      '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]             # Synology, if migrated a second raid volume as unique volume in new box         
+                                            '/usr/local/plexdata/Plex Media Server/Logs',                                    # FreeBSD
+                                            '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                # FreeNAS
+                                            '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   # ReadyNAS
+                                            '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # QNAP
+                                            '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
+                                            '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]             # Synology, if migrated a second raid volume as unique volume in new box         
 else:                                   LOG_PATHS = [ '$HOME' ]                                                                        # home folder as backup "C:\users\User.Machine" in windows 8, "users\Plex" on synology
 for LOG_PATH in LOG_PATHS:
   if '%' in LOG_PATH: LOG_PATH = os.path.expandvars(LOG_PATH)
@@ -98,11 +94,7 @@ else: LOG_PATH = os.path.expanduser('~')
 def Log(entry, filename=LOG_FILENAME): 
   with open(os.path.join(LOG_PATH, filename if filename else LOG_FILENAME), 'a') as file:
     file.write( time.strftime("%Y-%m-%d %H:%M:%S") + " " + entry + LINE_FEED)
-    print entry  # when ran from console
-
-### Allow to display ints even if equal to None at times ################################################
-def xint(s): 
-  return str(s) if s is not None and not s=="" else "None"
+    print entry  # when ran from console ### Allow to display ints even if equal to None at times ### def xint(s):   return str(s) if s is not None and not s=="" else "None"
 
 ### Convert Roman numerals ##############################################################################
 def roman_to_int(string):  # Regex for matching #M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})
@@ -112,6 +104,16 @@ def roman_to_int(string):  # Regex for matching #M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?
       result += value
       string  = string[len(roman_number):]
   return str(result)
+
+### replace a string by another while retaining original string case ###############################################################################
+def replace_insensitive (ep, word, sep=" "):
+  if ep.lower()==word.lower(): return ""
+  position = ep.lower().find(word.lower()) #Log("position: '%d', ep: '%s', word: '%s'" % (position, ep, word))
+  if position > -1 and len(ep)>len(word):  return (""  if position==0 else ep[:position-1].lstrip()) + (sep if len(ep) < position+len(word) else ep[position+len(word):].lstrip()) #remove word without touching case #Log("'%s', '%d', '%s', '%d', '%d'" % (ep, position, word, len(word), len(ep))) 
+
+### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] ###############################################################################
+def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
+  return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
 
 ### Return number of bytes of Unicode characters ########################################################
 def unicodeLen (char):                         # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
@@ -157,11 +159,6 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
       i += char_len
   return ''.join(string)
 
-def replace_insensitive (ep, word, sep=" "):
-  if ep.lower()==word.lower(): return ""
-  position = ep.lower().find(word.lower()) #Log("position: '%d', ep: '%s', word: '%s'" % (position, ep, word))
-  if position > -1 and len(ep)>len(word):  return (""  if position==0 else ep[:position-1].lstrip()) + (sep if len(ep) < position+len(word) else ep[position+len(word):].lstrip()) #remove word without touching case #Log("'%s', '%d', '%s', '%d', '%d'" % (ep, position, word, len(word), len(ep))) 
-
 ### Allow to display ints even if equal to None at times ################################################
 def clean_filename(string, delete_parenthesis=False):
   if not string: return ""
@@ -190,11 +187,7 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
       mediaList.append(tv_show) #otherwise only one episode per multi-episode is showing despite log below correct
     index = str(Series_re_search.index(rx)) if rx in Series_re_search else str(AniDB_re_search.index(rx)+len(Series_re_search)) if rx in AniDB_re_search else "" #rank of the regex used from 0
     Log("s%02de%03d%s \"%s\"%s%s" % (season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
-
-### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] ###############################################################################
-def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
-  return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
-  
+    
 ### Add files into array ################################################################################
 def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
   fullpath=os.path.join(subdir, ".plexignore")
@@ -292,7 +285,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           break
       if match: break                                                                                         # Breaking second for loop doesn't exist parent for / else: continue then break nex line would also work
     else:  season = 1                                                                                         #
-    folder_show = clean_filename( reverse_path[0] )                                                           # Serei name is folder name (since we removed season folders)
+    
+    ### Capture title form anidb.id or use folder name ###
+    guid_table = ("anidb.id", "Extras/anidb.id") #, "tvdb.id", "Extras/tvdb.id", "tmdb.id", "imdbid") #agent will need upgrading
+    for file_path in guid_table:
+      if os.path.isfile(os.path.join(root, path, file_path)):
+        with open(os.path.join(root, path, file_path), 'r') as guid_file:
+          guid        = guid_file.read().strip() #"%s:%s" % ( os.path.splitext(os.path.basename(file_path))[0], guid_file.read().strip() )  #agent will need upgrading
+          folder_show = "aid:"+guid              #folder_show = "[%s] "% guid + clean_filename( reverse_path[0] )  #agent will need upgrading
+        break
+    else: folder_show, guid = clean_filename( reverse_path[0] ), "" # Serie name is folder name (since we removed season folders)
+        
     if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3:  folder_show = (folder_show.replace(" - ", " ") if " - " in folder_show else folder_show).split(" ", 2)[2]  # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8
     Log("\"%s\"%s%s" % (folder_show, " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
     
@@ -355,6 +358,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     Log("-------------------------------------------------------------------------------------------------------------------------")  #Scan(path, files, mediaList, [])
   Log("")  # VideoFiles.Scan(path, files, mediaList, [], root) # Filter out bad stuff and duplicates.
 
+  #if sortToSeasons is False:  the_episode, the_season = int(episode_match.group('ep')), 1
+  #else:                       the_season, the_episode = episode_dict[int(episode_match.group('ep'))][0], episode_dict[int(episode_match.group('ep'))][1]
 if __name__ == '__main__':
   print "Absolute Series Scanner:"
   path, files, media = sys.argv[1], [os.path.join(path, file) for file in os.listdir(path)], []
