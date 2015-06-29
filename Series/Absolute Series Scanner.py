@@ -2,6 +2,7 @@
 #
 ### To-Do List ###
 # Scanner: try to perfect titles, so that i can include random files with a clean look, so people can't complain about files missing
+#   . multi-ep 3 digits
 #   . remove crash in 'Plex Media Scanner.log' that cripple speed: "Exception caught determining whether we could skip '' ~ Null value not allowed for this type"
 #   . tvdb.id pass through
 #   . Single files as season 1 episode 1 if no ep number ?
@@ -21,6 +22,7 @@
 #   . trailers function support, start with importing trailer episode range
 #   . Specials summaries off season 1...
 #   . multi guid: tvdb:xxxxx anidb:xxxx tmdb:xxx
+#   . genre weight 400 by default
 #
 import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Media  ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 from lxml import etree #import Stack
@@ -32,7 +34,7 @@ LINE_FEED        = "\n";
 
 season_rx = [                                                                                                                                             ### Seasons folder + skipped folders ### #http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
   'Specials',                                                                                                                                             # Specials (season 0)
-  '(Season|Series|Book|Saison|Livre)[ -_]*(?P<season>[0-9]{1,2}).*',                                                                                      # Season|Series|Book|Saison|Livre xx
+  '(Season|Series|Book|Saison|Livre)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                      # Season|Series|Book|Saison|Livre xx
   '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                  # 1a Stagione
   '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*']                                                                                                                   # Arc|Story arc ...   #The last line matches are dropped
 series_rx = [                                                                                                                                             ##### Series regex - "serie - xxx - title" ###
@@ -313,7 +315,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           if rx!=season_rx[-1]:  folder_season = season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0
           reverse_path.remove(folder)                                                                         # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
           if rx!=season_rx[-1]:  break 
-          match = None
+          match = None #continue as if nothing happend, will go to second folder
       if match: break
     else:  season = 1
     
@@ -349,7 +351,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           elif "-" in ep:                # if -
             ep = ep.strip("-")           #remove on both sides
             if len(ep.split("-",1))==2:  # if it splits in two parts
-              if re.match("^(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,2})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,2}))", ep, re.IGNORECASE): #if multi ep
+              if re.match("^(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))", ep, re.IGNORECASE): #if multi ep
                 ep="Skip"
                 break
               if len(words)>words.index(word)+1:  words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #???
@@ -366,7 +368,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
                 filename = clean_filename( " ".join(words).replace(ep, "(%s)" % ep))                                                                                                               # take everything after supposed episode number
                 ep = "(%s)" % word
                 continue
-            title = clean_filename( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                                                                                               # take everything after supposed episode number
+            title = clean_filename( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False).strip("-").strip()                                                                                                               # take everything after supposed episode number
             if word.lower().startswith("ep" ) and len(ep)>2 and ep[len("ep" ):].isdigit():  ep = ep[len("ep" ):]     #E   before ep number
             if word.lower().startswith("e"  ) and len(ep)>1 and ep[len("e"  ):].isdigit():  ep = ep[len("e"  ):]     #EP  before ep number
             if word.lower().startswith("act") and len(ep)>3 and ep[len("act"):].isdigit():  ep = ep[len("act"):]     #act before ep number ex: Trust and Betrayal OVA-act1
