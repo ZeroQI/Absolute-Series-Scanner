@@ -42,7 +42,7 @@ series_rx = [                                                                   
   '^(?P<show>.*?)[ _\.\-]*s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*)$)',
   '^(?P<title>.*?) \(?(?P<season>(19|20)[0-9]{2})\)$',                                                                                                   # 5 # title (1932).ext
   '^(?P<show>.*?)[ _\.\-]*(?P<season>(19|20)[0-9]{2})([ -_\.]+(?P<title>.*?))$',                                                                          # 2 # 1932 - title
-  '^(?P<show>.*?)[ _\.\-]*(?!Special|S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$',            # 3 # E01 | E01-02| E01-E02 | E01E02 
+  '^(?P<show>.*?)[ _\.\-]*(?!Special|S)(e|ep|e |ep |e-|ep-)(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$',            # 3 # E01 | E01-02| E01-E02 | E01E02 
   '^(?P<show>.*?)[ _\.\-]*(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$']                                                   # 4 # 01 of 08 (no stacking for this one ?)
 anidb_rx  = [                                                                                                                                             ### AniDB Specials regex ### 
   '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})( .*|$)',                                                                                 #  6 # 001-099 Specials
