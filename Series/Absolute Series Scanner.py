@@ -96,7 +96,7 @@ CHARACTERS_MAP = { 14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 148
   53423:'Я'  ,                                                                                                #'Я' ['\xd0', '\xaf']
   50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' ,                                     #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
   50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                                                             #
-  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49848:'¸',  49851:'»' , 49853:'1-2'}                        #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'                                                                                                 #'¸' ['\xc2', '\xb8']  
+  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49848:'¸',  49851:'»' , 49853:'½'}                        #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'                                                                                                 #'¸' ['\xc2', '\xb8']  
 
 ### LOG_PATH calculated once for all calls ####################################################################
 #platform = sys.platform.lower() if "platform" in dir(sys) and callable(getattr(sys,'platform')) else "" 
@@ -359,8 +359,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
               ep = ep.split("-",1)[0]
           ep = ep.strip()
           if ep=="trailer":  season, ep, title = 0, "201", "Trailer"
-          if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():  ep = ep [1:4]
-          if filename.count(ep)<2 and (misc.count(ep)>=3 or not folder_use and ep.lower() in buffer and ep.lower() not in clean_filename(buffer, True) and len(buffer)==len(ep)+len(clean_filename(buffer, True)) ):  buffer= buffer.replace(ep.lower(), "", 1) #, replace_insensitive(ep, ep, "")      # skip if present in more than 3 filenames #could remove from all episodes but friends "the one with..." ep name would be truncated however ep number reached beforehand
+          if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():  ep = ep [1:4]          #Log("ep: '%s', word: '%s', buffer: '%s', filename.count(ep): '%d', misc.count(ep): '%d', test: '%s'" % (ep, word, buffer, filename.count(ep), misc.count(ep), str(filename.count(ep)<2 and (misc.count(ep)>=3 or not folder_use and ep.lower() in buffer and ep.lower() not in clean_filename(buffer, True) and len(buffer)==len(ep)+len(clean_filename(buffer, True)) ))  ))
+          if not folder_use and (misc.count(ep)>=3 or ep.lower() in buffer and ep.lower() not in clean_filename(buffer, True) ):  buffer= buffer.replace(ep.lower(), "", 1) #  and len(buffer)==len(ep)+len(clean_filename(buffer, True))# skip word if: present in 3+ filenames, or in buffer (not year) and length of buffer = length word + length buffer no parenthesis
           elif ''.join(letter for letter in ep if letter.isdigit()):                                                                                                                                                                     ### if digit in current word we found the ep number normally ###
             if ep.isdigit() and len(ep)==4:                                                                                                                                                                                            #
               if int(ep)< 1900 or int(ep[0:1])==folder_season:  season, ep = int(ep[0:1]), ep[2:3]                                                                                         #1206 could be season 12 episode 06  #Get assigned from left ot right
