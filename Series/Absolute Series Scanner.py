@@ -2,19 +2,13 @@
 #
 ### To-Do List ###
 # Scanner: try to perfect titles, so that i can include random files with a clean look, so people can't complain about files missing
-#   . multi-ep 3 digits
 #   . remove crash in 'Plex Media Scanner.log' that cripple speed: "Exception caught determining whether we could skip '' ~ Null value not allowed for this type"
-#   . tvdb.id pass through
-#   . Single files as season 1 episode 1 if no ep number ?
 #   . X-Plex-Token.id in Logs folder to enable a log per Library instead of modifying logs per library
 #   . rotate logs like Plex
-#   . Add ends_with_number  = '.*([0-9]{1,2})$'
-#   . Add ends_with_episode = ['[ ]*[0-9]{1,2}x[0-9]{1,3}$', '[ ]*S[0-9]+E[0-9]+$']
-#   . Add year-month-day    =   '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10
-#   . Add day-month-year    = '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
-#
-# Scanner resolved:
-#   . source: only available for Movies metadata, not series. Can't see on web gui even for movies anyway
+#   . tvdb.id pass through
+#   . Add ends_with_number = '.*([0-9]{1,2})$' / #   . Add ends_with_episode = ['[ ]*[0-9]{1,2}x[0-9]{1,3}$', '[ ]*S[0-9]+E[0-9]+$']
+#   . Add year-month-day   = '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10
+#   . Add day-month-year   = '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
 #
 # Agent:
 #   . anidb reverse apostrophe removal in titles AND text, code not working
@@ -32,26 +26,26 @@ PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/?X-Plex-Token=ACCOUN
 LOG_FILENAME     = 'Plex Media Scanner (custom ASS).log'
 LINE_FEED        = "\n"; 
 
-season_rx = [                                                                                                                                             ### Seasons folder + skipped folders ### #http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
-  'Specials',                                                                                                                                             # Specials (season 0)
-  '(Season|Series|Book|Saison|Livre)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                      # Season|Series|Book|Saison|Livre xx
-  '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                  # 1a Stagione
-  '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*']                                                                                                                   # Arc|Story arc ...   #The last line matches are dropped
-series_rx = [                                                                                                                                             ##### Series regex - "serie - xxx - title" ###
-  '^(?P<show>.*?)[ _\.\-]*(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[-_][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',             # 0 # 1x01
-  '^(?P<show>.*?)[ _\.\-]*s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*)$)',
-  '^(?P<title>.*?) \(?(?P<season>(19|20)[0-9]{2})\)$',                                                                                                   # 5 # title (1932).ext
-  '^(?P<show>.*?)[ _\.\-]*(?P<season>(19|20)[0-9]{2})([ -_\.]+(?P<title>.*?))$',                                                                          # 2 # 1932 - title
-  '^(?P<show>.*?)[ _\.\-]*(?!S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$',            # 3 # E01 | E01-02| E01-E02 | E01E02 
-  '^(?P<show>.*?)[ _\.\-]*(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$']                                                   # 4 # 01 of 08 (no stacking for this one ?)
-anidb_rx  = [                                                                                                                                             ### AniDB Specials regex ### 
-  '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})( .*|$)',                                                                                 #  6 # 001-099 Specials
-  '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _-]?OP|OPENING) ?(?P<ep>\d{0,2}[a-z]?)$',                                                                            #  7 # 100-149 Openings
-  '^((?P<show>.*?)[ _\.\-]+)?(ED|NC[ _-]?ED|ENDING) ?(?P<ep>\d{0,2}[a-z]?)$',                                                                             #  8 # 150-199 Endings
-  '^((?P<show>.*?)[ _\.\-]+)?(TRAILER|PROMO|PV|T)($| ?(?P<ep>\d{1,2}))',                                                                                  #  9 # 200-299 Trailer, Promo with a  number
-  '^((?P<show>.*?)[ _\.\-]+)?(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})(.*)',                                                                                  # 10 # 300-399 Parodies
-  '^((?P<show>.*?)[ _\.\-]+)?(O|OTHERS?) ?(?P<ep>\d{1,2})(.*)']; AniDBOffset = [0, 100, 150, 200, 300, 400]                                               # 11 # 400-999 Others
-roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                           # 12 # look behind: (?<=S) < position < look forward: (?!S)
+season_rx = [                                                                                                                                                     ### Seasons folder + skipped folders ### #http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
+  'Specials',                                                                                                                                                     # Specials (season 0)
+  '(Season|Series|Book|Saison|Livre)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                             # Season|Series|Book|Saison|Livre xx
+  '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                          # 1a Stagione
+  '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*']                                                                                                                           # Arc|Story arc ...   #The last line matches are dropped
+series_rx = [                                                                                                                                                     ######### Series regex - "serie - xxx - title" ###
+  '^((?P<show>.*?)[ _\.\-]+)?(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[-_][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                     #  0 # 1x01
+  '^((?P<show>.*?)[ _\.\-]+)?s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([-_\.]|(e|ep)|[-_\. ](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*)$)', #  1 # 
+  '^(?P<title>.*?) \(?(?P<season>(19|20)[0-9]{2})\)$',                                                                                                            #  2 # title (1932).ext
+  '^((?P<show>.*?)[ _\.\-]+)?(?P<season>(19|20)[0-9]{2})([ -_\.]+(?P<title>.*?))$',                                                                                  #  3 # 1932 - title
+  '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                           #  5 # 01 of 08 (no stacking for this one ?)
+  '^((?P<show>.*?)[ _\.\-]+)?(?!S|SP|(NC)?OP|(NC)?ED|PV)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$']                            #  4 # E01 | E01-02| E01-E02 | E01E02 
+anidb_rx  = [                                                                                                                                                     ######### AniDB Specials regex ### 
+  '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})( .*|$)',                                                                                         #  6 # 001-099 Specials
+  '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _-]?OP|OPENING) ?(?P<ep>\d{0,2}[a-z]?)$',                                                                                    #  7 # 100-149 Openings
+  '^((?P<show>.*?)[ _\.\-]+)?(ED|NC[ _-]?ED|ENDING) ?(?P<ep>\d{0,2}[a-z]?)$',                                                                                     #  8 # 150-199 Endings
+  '^((?P<show>.*?)[ _\.\-]+)?(TRAILER|PROMO|PV|T)($| ?(?P<ep>\d{1,2}))',                                                                                          #  9 # 200-299 Trailer, Promo with a  number
+  '^((?P<show>.*?)[ _\.\-]+)?(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})(.*)',                                                                                          # 10 # 300-399 Parodies
+  '^((?P<show>.*?)[ _\.\-]+)?(O|OTHERS?) ?(?P<ep>\d{1,2})(.*)']; AniDBOffset = [0, 100, 150, 200, 300, 400]                                                       # 11 # 400-999 Others
+roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                   # 12 # look behind: (?<=S) < position < look forward: (?!S)
 
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack']                                                                                                          # Skipped files (samples, trailers)                                                          
@@ -64,29 +58,30 @@ FILTER_CHARS    = "\\/:*?<>|~.;_"                                               
 whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', 
   'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
   "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", 
-  'xvid-saints', 'xvid-pfa','xvid-fqm', 'xvid-asap',"xvid-aldi", "XviD-2HD", "XviD-T00NG0D", 'xvid-killer', "XViD-ViCKY", "XviD-LMAO", "XviD-AFG"
-  "PROPER-LOL",  "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "DD5_1", "AAC2_0", "WEB_DL",
-  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5",
-  "HDTV-AFG", "HDTV-LMAO", "XviD-BiA-mOt", 
-  "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt",
-  "AC3.5.1", "AAC2.0", "AAC.2.0", 'DD5.1',  "SD TV","SD DVD", "HD TV", 'divx5.1', "H.264", "-dvdrip", 'xvid',"dvd-jap",  "OAR HDTV-BiA-mOt"] #include spaces, hyphens, dots, underscore, case insensitive
+  "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
+  'xvid-saints', "XviD-T00NG0D", "XViD-ViCKY", "XviD-BiA", "XVID-FHW",
+  "PROPER-LOL",  "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "DD5_1", "AAC2_0", "WEB_DL", "www.crazy-torrent.com",
+  "ReourceRG Kids Release", "By UniversalFreedom", "BD 720p", "DVD 480p", "Exiled-Destiny",
+  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", 
+  "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "(1280x720 Hi10P)", 
+  "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", 'DD5.1',  "SD TV","SD DVD", "HD TV", 'divx5.1', "H.264", "-dvdrip", 'xvid',"dvd-jap",  "OAR HDTV-BiA-mOt"] #include spaces, hyphens, dots, underscore, case insensitive
 whack = [ #lowercase                                                                                          ### Tags to remove ###
   'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4',                                                    # Video Codecs
   'mp3', 'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',  'qaac',                           # Audio Codecs, channels
-  '480p', '576p', '720p', '1080p', '1080i', '1920x1080','1280x720',                                           #       Resolution
+  '480p', '576p', '720p', '1080p', '1080i', '1920x1080','1280x720', "(BD 1280x720 Hi10P)",                    #       Resolution
   'hi10', 'hi10p', '10bit', 'crf24',  'crf 24',                                                               #       color depth and encoding
   '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                         # Refresh rate, Format
   'dc','se', 'extended', 'unrated', 'multi','multisubs', 'dubbed','subbed', "french", "fr", "dub",            # edition (dc = directors cut, se = special edition), subs and dubs
   'limited', 'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored",            # format
   'retail', 'webrip','web-dl', 'wp','workprint',                                                              # release type: retail, web, work print
   'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix',      # misc 1
-  'fragment','ps3avchd','remux','fs','ws', "- copy", "reenc",                                                         # misc 2
+  'fragment','ps3avchd','remux','fs','ws', "- copy", "reenc",                                                 # misc 2
   'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip', 'wsrip',                                   # Source: bluray
-  'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'sd', 'hd', 'dvb',                                  # DVD, VCD, S-VCD
-  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis",                           # dtv, stv
+  'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'sd', 'hd', 'dvb', "release",                       # DVD, VCD, S-VCD
+  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis", "NoRar",                  # dtv, stv
   'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync', 'mp4',               # screener
-  "mthd", "thora", 'sickrage', 'brrip', 'ac3', "remastered", "yify", "tsr",
-  'rikou', 'HOMЯ', "iT00NZ", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "it00nz", "s4a"]   #
+  "mthd", "thora", 'sickrage', 'brrip', 'ac3', "remastered", "yify", "tsr", "reidy", "(1280x720)", "(gerdhanse)", "(720p)", "(Commie)",
+  'rikou', 'HOMЯ', "iT00NZ", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "()"]   #
 CHARACTERS_MAP = { 14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀',                    #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
   50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' , #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
   50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,                                                             #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
@@ -96,7 +91,7 @@ CHARACTERS_MAP = { 14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 148
   53423:'Я'  ,                                                                                                #'Я' ['\xd0', '\xaf']
   50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' ,                                     #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
   50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                                                             #
-  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49848:'¸',  49851:'»' , 49853:'½'}                        #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'                                                                                                 #'¸' ['\xc2', '\xb8']  
+  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49848:'¸',  49851:'»' , 49853:'½'}                          #'«' ['\xc2', '\xab'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'                                                                                                 #'¸' ['\xc2', '\xb8']  
 
 ### LOG_PATH calculated once for all calls ####################################################################
 #platform = sys.platform.lower() if "platform" in dir(sys) and callable(getattr(sys,'platform')) else "" 
@@ -218,7 +213,7 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
       tv_show.parts.append(file)
       mediaList.append(tv_show) #otherwise only one episode per multi-episode is showing despite log below correct
     index = str(series_rx.index(rx)) if rx in series_rx else str(anidb_rx.index(rx)+len(series_rx)) if rx in anidb_rx else "" #rank of the regex used from 0
-    Log("s%02de%03d%s \"%s\"%s%s" % (season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
+    Log("s%04de%03d%s \"%s\"%s%s" % (season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
     
 ### Add files into array ################################################################################
 def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
@@ -332,22 +327,25 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     Log("\"%s\"%s%s" % (folder_show, " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
     
     movie_list={}
+    counter   = 501
     ### Main File loop to start adding files now ###
     for file in files:                                                                                                                        # "files" is a list of media files full path, File is one of the entries
       filename = os.path.splitext(os.path.basename(file))[0] #remove folders and extension(mp4)
       season = 1 if folder_season is None else folder_season
-      show, year, ep, ep2, title, folder_use = folder_show, folder_year, clean_filename(filename, True), None, "", False       #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]): #misc, year      = VideoFiles.CleanName(filename_no_ext)
+      show, year, ep, ep2, title, folder_use = folder_show, folder_year, clean_filename(filename, False), None, "", False       #if re.match('.+ \([1-2][0-9]{3}\)', paths[-1]): #misc, year      = VideoFiles.CleanName(filename_no_ext)
       if len(files)==1 and (ep==folder_show or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title = "01", folder_show  ### Movies ### 
       elif folder_show:                                                                                                                       ### Remove folder name from file name to reduce complexity and favor folder name over filename ### (who put crappy folder names and clean filenames anyway?)  # if not at root and containing folder exist and has name different from "_" (scrubed to "")
-        if ep.lower().startswith(folder_show.lower()):  ep, folder_use = ep[len(folder_show):].lstrip()[2:] if len(ep)>2 and ep.lower().startswith('s ') else ep[len(folder_show):].lstrip(), True #remove cleansed folder name from cleansed filename and remove potential space
+        if ep.lower().startswith(folder_show.lower()):  ep, folder_use = ep[len(folder_show):].lstrip(), True #remove cleansed folder name from cleansed filename and remove potential space
+        if len(ep)>2 and ep.lower().startswith('s '): ep = ep[2:]
         if folder_season and ep.startswith(("S%d"   % folder_season, "s%d"   % folder_season)):  ep =  replace_insensitive(ep, "S%d"   % folder_season, "").lstrip() #Series S2  like transformers (bad naming)                                                                       # Serie S2  in season folder, Anidb specials regex doesn't like
         if folder_season and ep.startswith(("S%02d" % folder_season, "s%02d" % folder_season)):  ep =  replace_insensitive(ep, "S%02d" % folder_season, "").lstrip() #Series S02 like transformers (bad naming)                                                                      # Serie S02 in season folder, Anidb specials regex doesn't like
-        if ep.lower().startswith(("special", "picture drama", "omake")):  season, title = 0, ep.title()                                                                                                              ### If specials, season is 0 and if title empty use as title ### 
+        if ep.lower().startswith(("special", "picture drama", "omake")):                         season, title = 0, ep.title()                                                                                                              ### If specials, season is 0 and if title empty use as title ### 
         
-        words, misc, buffer = filter(None, ep.split()), " ".join( [clean_filename(os.path.basename(x), True) for x in files]), clean_filename(folder_show.lower(), False) #re.sub(r'[\[\{\(].*?[\]\}\)]', '', clean_filename(folder_show.lower(), True))                               # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_filename was true ###
+        words, misc, buffer = filter(None, ep.split()), " ".join( [clean_filename(os.path.basename(x), False) for x in files]), clean_filename(folder_show.lower(), False) #re.sub(r'[\[\{\(].*?[\]\}\)]', '', clean_filename(folder_show.lower(), True))                               # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_filename was true ###
         for word in words:                                                                                                                                                                                                                 # if word=='': continue filter prevent "" on double spaces
           ep=word.strip()  #cannot use words[words.index(word)] otherwise
           if ep in ("", "-"):  continue
+          elif ep in clean_filename(folder_show, True) or "(" in ep and ")" in ep: continue
           elif "-" in ep:                # if -
             ep = ep.strip("-")           #remove on both sides
             if len(ep.split("-",1))==2:  # if it splits in two parts
@@ -359,8 +357,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
               ep = ep.split("-",1)[0]
           ep = ep.strip()
           if ep=="trailer":  season, ep, title = 0, "201", "Trailer"
-          if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():  ep = ep [1:4]          #Log("ep: '%s', word: '%s', buffer: '%s', filename.count(ep): '%d', misc.count(ep): '%d', test: '%s'" % (ep, word, buffer, filename.count(ep), misc.count(ep), str(filename.count(ep)<2 and (misc.count(ep)>=3 or not folder_use and ep.lower() in buffer and ep.lower() not in clean_filename(buffer, True) and len(buffer)==len(ep)+len(clean_filename(buffer, True)) ))  ))
-          if not folder_use and (misc.count(ep)>=3 or ep.lower() in buffer and ep.lower() not in clean_filename(buffer, True) ):  buffer= buffer.replace(ep.lower(), "", 1) #  and len(buffer)==len(ep)+len(clean_filename(buffer, True))# skip word if: present in 3+ filenames, or in buffer (not year) and length of buffer = length word + length buffer no parenthesis
+          if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():  ep = ep [1:4]  # Log("ep: '%s', word: '%s', buffer: '%s', filename.count(ep): '%d', misc.count(ep): '%d', test: '%s'" % (ep, word, buffer, filename.count(ep), misc.count(ep), str(filename.count(ep)<2 and (misc.count(ep)>=3 or not folder_use and ep.lower() in buffer and ep.lower() not in clean_filename(buffer, True) and len(buffer)==len(ep)+len(clean_filename(buffer, True)) ))  ))
+          if not folder_use and (misc.count(ep)>=3 or                                        # If the folder name is nor in the filename AND 
+             ep.lower() in buffer and ep.lower() not in clean_filename(buffer, False) ):     #
+            buffer= buffer.replace(ep.lower(), "", 1)                                        #  and len(buffer)==len(ep)+len(clean_filename(buffer, True))# skip word if: present in 3+ filenames, or in buffer (not year) and length of buffer = length word + length buffer no parenthesis
           elif ''.join(letter for letter in ep if letter.isdigit()):                                                                                                                                                                     ### if digit in current word we found the ep number normally ###
             if ep.isdigit() and len(ep)==4:                                                                                                                                                                                            #
               if int(ep)< 1900 or int(ep[0:1])==folder_season:  season, ep = int(ep[0:1]), ep[2:3]                                                                                         #1206 could be season 12 episode 06  #Get assigned from left ot right
@@ -369,12 +369,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
                 ep = "(%s)" % word
                 continue
             title = clean_filename( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False).strip("-").strip()                                                                                                               # take everything after supposed episode number
-            if word.lower().startswith("ep" ) and len(ep)>2 and ep[len("ep" ):].isdigit():  ep = ep[len("ep" ):]     #E   before ep number
-            if word.lower().startswith("e"  ) and len(ep)>1 and ep[len("e"  ):].isdigit():  ep = ep[len("e"  ):]     #EP  before ep number
-            if word.lower().startswith("act") and len(ep)>3 and ep[len("act"):].isdigit():  ep = ep[len("act"):]     #act before ep number ex: Trust and Betrayal OVA-act1
-            if word.lower().startswith("s"  ) and len(ep)>1 and ep[len("s"  ):].isdigit():
-              if len(words)==words.index(word)+1:  ep, season = ep[len("s" ):], 0  #S1 at the end, nothing afterwards 
-              else: continue #Season 2 without folder season like s00e002 seen for "[HorribleSubs] Hakkenden - Eight Dogs of the East S2 - E15 [720p].mkv"
+            if word.lower().startswith("ep" ) and len(ep)>2 and ep[len("ep" ):].isdigit():  ep         = ep[len("ep" ):]    # E   before ep number
+            if word.lower().startswith("e"  ) and len(ep)>1 and ep[len("e"  ):].isdigit():  ep         = ep[len("e"  ):]    # EP  before ep number
+            if word.lower().startswith("act") and len(ep)>3 and ep[len("act"):].isdigit():  ep         = ep[len("act"):]    # act before ep number ex: Trust and Betrayal OVA-act1
+            if word.lower().startswith("s"  ) and len(ep)>1 and ep[len("s"  ):].isdigit():  ep, season = ep[len("s" ):], 0  # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
             break
       if ep.isdigit():
         if season==1 and int(ep)==0:  ep,  season = "01", 0 #s01e00 becomes s00e01
@@ -391,13 +389,14 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if match:
           show   = clean_filename( match.group('show' )) if match.groupdict().has_key('show' ) and match.group('show' ) and not folder_use and show =="" else show # Mainly if file at root or _ folder
           title  = clean_filename( match.group('title')) if match.groupdict().has_key('title') and match.group('title') else ""
-          if rx in series_rx:                                                       ### Normal Regex ########################################################################
-            if match.groupdict().has_key('season') and match.group('season') and match.group('season').isdigit():  season = int(match.group('season'))
-            if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ) and match.group('ep2'   ).isdigit():  ep2    = match.group('ep2') 
-          if match.groupdict().has_key('ep') and match.group('ep') is not None and not match.group('ep')=="":   ep          = match.group('ep')
-          else:                                                                                                 
-            movie_list[season] = 1 if season not in movie_list else movie_list[season] + 1 #add movies using year as season, starting at 1
-            ep = str(movie_list[season]) # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
+          #if rx in series_rx:                                                       ### Normal Regex ########################################################################
+          if match.groupdict().has_key('season') and match.group('season') and match.group('season').isdigit():  season = int(match.group('season'))
+          if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ) and match.group('ep2'   ).isdigit():  ep2    = match.group('ep2') 
+          if match.groupdict().has_key('ep'    ) and match.group('ep'    ):                                      ep     = match.group('ep')
+          elif rx not in anidb_rx:                                                                                                 
+            movie_list[season] = movie_list[season]+1 if season in movie_list else 1  #add movies using year as season, starting at 1
+            ep = str(movie_list[season])                                              # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
+          else: ep = "01"
           if rx in anidb_rx:                                                          ### AniDB Specials ################################################################
             offset, season = AniDBOffset [ anidb_rx.index(rx) ], 0                    # offset = 100 for OP, 150 for ED, etc...
             if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                  ### OP/ED with letter version Example: op2a
@@ -407,11 +406,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             ep = str( offset + int(ep))                                               # Add episode number to the offset, 01 by default from the match group above
           elif rx in series_rx:                                                       ### Normal Regex ########################################################################
             if int(ep)==0:  episode, season = "01", 0                                 # Swap s01e00 and s00e01
-          #elif rx in roman_rx:  ep = roman_to_int(ep)                           ### Roman numbers ### doesn't work is ep title present
+          #elif rx in roman_rx:  ep = roman_to_int(ep)                                 ### Roman numbers ### doesn't work is ep title present
           add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx)
           break
       if match: continue  # next file iteration
-      Log("*no episode number found for ep: \"%s\", filename: \"%s\", word: '%s'" % (ep, filename, word))
+      
+      if "-" in ep and len(ep.split("-"))>1:  title=ep.split("-")[1]           #Log("*no episode number found for ep: \"%s\", filename: \"%s\", word: '%s'" % (ep, filename, word))
+      for word in ep.split(" "):   
+        if word in folder_show:  replace_insensitive (ep, word, sep="") #title.replace(word, "", 1)
+      title = ep.strip()
+      add_episode_into_plex(mediaList, files, file, root, path, show, 0, counter, title, year, None, rx)
+      counter+=1
     Log("-------------------------------------------------------------------------------------------------------------------------")  #Scan(path, files, mediaList, [])
   Log("")  # VideoFiles.Scan(path, files, mediaList, [], root) # Filter out bad stuff and duplicates.
 
