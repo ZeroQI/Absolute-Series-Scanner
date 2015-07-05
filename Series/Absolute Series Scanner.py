@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ### To-Do List Scanner: try to perfect titles, so that i can include random files with a clean look, so people can't complain about files missing
-#   . remove crash in 'Plex Media Scanner.log' that cripple speed: "Exception caught determining whether we could skip '' ~ Null value not allowed for this type"
+#   . remove crash in 'Plex Media Scanner.log': "ERROR - Exception caught determining whether we could skip '' ~ Null value not allowed for this type"
 #   . rotate logs like Plex OR keep latest scan log if library log
 #   . tvdb.id pass through
 #
@@ -11,7 +11,6 @@
 #   . Specials summaries off season 1...
 #   . multi guid: tvdb:xxxxx anidb:xxxx tmdb:xxx
 #   . genre weight 400 by default
-
 import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Media  ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 from lxml import etree #import Stack
 
@@ -27,10 +26,10 @@ series_rx = [                                                                   
   '^(?P<title>.*?) \(?(?P<season>(19|20)[0-9]{2})\)$',                                                                                                               #  2 # title (1932).ext
   '^((?P<show>.*?)[ _\.\-]+)?(?P<season>(19|20)[0-9]{2})([ -_\.]+(?P<title>.*?))$',                                                                                  #  3 # 1932 - title
   '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                           #  4 # 01 of 08 (no stacking for this one ?)
-  '^((?P<show>.*?)[ _\.\-]+)?(?!S|SP|(NC)?OP|(NC)?ED|PV)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$']      #  5 # E01 | E01-02| E01-E02 | E01E02 
+  '^((?P<show>.*?)[ _\.\-]+)?(?!S|SP|(NC)?OP|(NC)?ED|PV)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(v2|v3|v4|v5)?(( | - )(?P<title>.*?))?$']      #  5 # E01 | E01-02| E01-E02 | E01E02 
 anidb_rx  = [                                                                                                                                                        ######### AniDB Specials regex ### 
   '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})( .*|$)',                                                                                            #  6 # 001-099 Specials
-  '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2v3|v4|v5)?.*$',                                                                       #  7 # 100-149 Openings
+  '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?.*$',                                                                       #  7 # 100-149 Openings
   '^((?P<show>.*?)[ _\.\-]+)?(ED|NC[ _-]?ED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?.*$',                                                                        #  8 # 150-199 Endings
   '^((?P<show>.*?)[ _\.\-]+)?(TRAILER|PROMO|PV|T)($| ?(?P<ep>\d{1,2}))',                                                                                             #  9 # 200-299 Trailer, Promo with a  number
   '^((?P<show>.*?)[ _\.\-]+)?(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})(.*)',                                                                                             # 10 # 300-399 Parodies
@@ -94,22 +93,25 @@ try:      platform = sys.platform.lower()                                       
 except:                                                                                                                                #
   try:    platform = Platform.OS.lower()                                                                                               # Platform.OS:  Windows, MacOSX, or Linux #  
   except: platform = ""  
-if   platform in ('win32', 'windows'):  LOG_PATHS = [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       #
-                                                      '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ]     # CR \r seem added to LF (\N) on windows 
-elif platform in ('darwin', 'macosx'):  LOG_PATHS = [ '$HOME/Library/Application Support/Plex Media Server/Logs' ]                     # LINE_FEED = "\r"
-elif 'linux' in platform:               LOG_PATHS = [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 # Linux
-                                                      '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs',   # Debian, Fedora, CentOS, Ubuntu
-                                                      '/usr/local/plexdata/Plex Media Server/Logs',                                    # FreeBSD
-                                                      '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                # FreeNAS
-                                                      '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   # ReadyNAS
-                                                      '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # QNAP
-                                                      '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
-                                                      '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]             # Synology, if migrated a second raid volume as unique volume in new box         
-else:                                   LOG_PATHS = [ '$HOME' ]                                                                        # home folder as backup "C:\users\User.Machine" in windows 8, "users\Plex" on synology
-for LOG_PATH in LOG_PATHS:
-  if '%' in LOG_PATH: LOG_PATH = os.path.expandvars(LOG_PATH)
-  if os.path.isdir(LOG_PATH):  break
-else: LOG_PATH = os.path.expanduser('~')
+LOG_PATHS = {
+  'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                        #
+              '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ],     #
+  'darwin': [ '$HOME/Library/Application Support/Plex Media Server/Logs' ],                     # LINE_FEED = "\r"
+  'linux':  [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                  # Linux
+               '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs',   # Debian, Fedora, CentOS, Ubuntu
+               '/usr/local/plexdata/Plex Media Server/Logs',                                    # FreeBSD
+               '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                # FreeNAS
+               '${JAIL_ROOT}/var/db/plexdata/Plex Media Server/Logs/',                          # FreeNAS
+               '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   # ReadyNAS
+               '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # QNAP
+               '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
+               '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]            # Synology, if migrated a second raid volume as unique volume in new box         
+}
+platform = sys.platform.lower() if not platform.startswith("linux") else "linux"
+for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ '$HOME' ]:
+  if '%' in LOG_PATH or '$' in LOG_PATH: LOG_PATH = os.path.expandvars(LOG_PATH) # % on win only, $ on linux
+  if os.path.isdir(LOG_PATH):  break  #os.path.exists(path) #os.getcwd: Logs
+else: LOG_PATH = os.path.expanduser('~') #logging.basicConfig(filename=os.path.join(path, 'animess.log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
 
 ### Allow to log to the same folder Plex writes its logs in #############################################
 global LOG_PATH, LOG_FILE_LIBRARY
@@ -212,8 +214,8 @@ def clean_filename(string, delete_parenthesis=False):
   for word in whack_pre_clean:        string = replace_insensitive(string, word) if word.lower() in string.lower() else string
   for char in  FILTER_CHARS:          string = string.replace(char, ' ') if char in string else string  # replace os forbidden chars with spaces
   string = " ".join([word for word in filter(None, string.split()) if word.lower() not in whack])                          # remove wouble spaces + words present in "whack" list #filter(None, string.split())
-  for rx in ("-", "- ","v1", "v2", "v3"):             string=string[  len(rx):] if string.lower().startswith(rx) else string  # In python 2.2.3: string = string.strip(string, " -_")
-  for rx in (" -", "-", "v1", "v2", "v3", "- copy"):  string=string[:-len(rx) ] if string.lower().endswith  (rx) else string  # In python 2.2.3: string = string.strip(string, " -_")
+  for rx in ("-", "- "):               string=string[1:] if string.startswith(rx) else string  # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
+  for rx in (" -", "-", "- copy"):    string=string[:-len(rx) ] if string.lower().endswith  (rx) else string  # In python 2.2.3: string = string.strip(string, " -_")
   if re.match("[\(\[]?[0-9A-F]{8}[\[\)]?", string.split(" ")[-1], re.IGNORECASE): string = "".join(string.split(" ")[:-1]) #string.rsplit(" ", 1)[0]
   return string.strip()
 
@@ -341,8 +343,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         words, misc, buffer = filter(None, ep.split()), " ".join( [clean_filename(os.path.basename(x), False) for x in files]), clean_filename(folder_show.lower(), False) #re.sub(r'[\[\{\(].*?[\]\}\)]', '', clean_filename(folder_show.lower(), True))                               # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_filename was true ###
         for word in words:                                                                                                                                                                                                                 # if word=='': continue filter prevent "" on double spaces
           ep=word.strip()  #cannot use words[words.index(word)] otherwise
-          if ep in ("ED", "OP"):                                                                  break                        # "OP/ED xx" goes to regex
-          if ep in ("", "-", "_", clean_filename(folder_show, True)) or "(" in ep and ")" in ep:  continue                     #
           if "-" in ep:                                                                                                        #
             ep = ep.strip("-")                                                                                                 # remove on both sides
             if len(ep.split("-",1))==2:                                                                                        # if it splits in two parts
@@ -352,8 +352,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
               if len(words)>words.index(word)+1:  words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #???
               else:                               words.append("-".join(ep.split("-",1)[1:]))
               ep = ep.split("-",1)[0]
+          if ep.endswith(("v1", "v2", "v3")):
+            if len(ep)==2: continue
+            else:       ep=ep[:-2]
+          if ep in ("", "-", "_", clean_filename(folder_show, True)) or "(" in ep and ")" in ep:  continue                     #
+          if ep in ("ED", "OP", "NCOP", "NCED"):                                                                  break                        # "OP/ED xx" goes to regex
           ep = ep.strip()
-          if ep=="trailer":  season, ep, title = 0, "201", "Trailer" #remove ?
+          if ep == "trailer":  season, ep, title = 0, "201", "Trailer" #remove ?
           if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():  ep = ep [1:4]  # Log("ep: '%s', word: '%s', buffer: '%s', filename.count(ep): '%d', misc.count(ep): '%d', test: '%s'" % (ep, word, buffer, filename.count(ep), misc.count(ep), str(filename.count(ep)<2 and (misc.count(ep)>=3 or not folder_use and ep.lower() in buffer and ep.lower() not in clean_filename(buffer, True) and len(buffer)==len(ep)+len(clean_filename(buffer, True)) ))  ))
           if not folder_use and (misc.count(ep)>=3 or                                        # If the folder name is nor in the filename AND 
              ep.lower() in buffer and ep.lower() not in clean_filename(buffer, False) ):     #
