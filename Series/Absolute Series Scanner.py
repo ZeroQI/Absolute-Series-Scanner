@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-### To-Do List Scanner
-#   . remove crash in 'Plex Media Scanner.log': "ERROR - Exception caught determining whether we could skip '' ~ Null value not allowed for this type"
-#   . rotate logs like Plex OR keep latest scan log if library log
-
 ### Log variables, regex, skipped folders, words to remove, character maps ###
 import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Media  ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 from lxml import etree #import Stack
@@ -39,17 +35,15 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", 
   "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
   'xvid-saints', "XviD-T00NG0D", "XViD-ViCKY", "XviD-BiA", "XVID-FHW",
-  "PROPER-LOL", "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "DD5_1", "AAC2_0", "WEB_DL", "www.crazy-torrent.com",
-  "ReourceRG Kids Release", "By UniversalFreedom", "BD 720p", "DVD 480p", "(DVD_480p)",
-  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", 
-  "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "( Hi10P)", 
+  "PROPER-LOL", "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "WEB_DL", "www.crazy-torrent.com", "ReourceRG Kids Release", "By UniversalFreedom", 
+  "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", 
   "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)",
   "1920x1080", "1280x720", "848x480", "952x720", "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p", "720p", "480p",
   "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", 'xvid', "(BD, 720p, FLAC)",
-  "FLAC", "AAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", 'DD5.1', "5.1",'divx5.1',
+  "FLAC", "AAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", 'DD5.1', "5.1",'divx5.1', "DD5_1", "AAC2_0",
   "3xR", "(-Anf-)", "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HoM", "HorribleSubs", "joseole99", "(II Subs)",
   "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", "h264",
-  "()", "( )", "(  )", "(   )", "(    )", "(     )", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
+  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "()", "( )", "(  )", "(   )", "(    )", "(     )", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
 whack = [ #lowercase                                                                                          ### Tags to remove ###
   'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4',                                                    # Video Codecs
   'mp3', 'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',  'qaac',                           # Audio Codecs, channels
@@ -93,11 +87,11 @@ LOG_PATHS = {
                '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
                '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ]            # Synology, if migrated a second raid volume as unique volume in new box         
 }
-platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" #Platform.OS.lower()
+platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
 for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
   if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
-  if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(path)
-else: LOG_PATH = os.path.expanduser('~')                                           # #logging.basicConfig(), logging.basicConfig(filename=os.path.join(path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
+  if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
+else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
 
 ### Allow to log to the same folder Plex writes its logs in #############################################
 global LOG_PATH, LOG_FILE_LIBRARY
@@ -210,11 +204,11 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
     ep2 = ep
   for epn in range(ep, ep2+1):
     tv_show, tv_show.display_offset = Media.Episode(show, season, epn, title, year), (epn-ep)*100/(ep2-ep+1)
-    tv_show.parts.append(file)
+    tv_show.parts.append(file); #if str(os.path.getsize(file))=="0": tv_show.parts.append(os.path.join(LOG_PATH,"dummy.mp4")) with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
     mediaList.append(tv_show) #otherwise only one episode per multi-episode is showing despite log below correct
   index = str(series_rx.index(rx)) if rx in series_rx else str(anidb_rx.index(rx)+len(series_rx)) if rx in anidb_rx else ""  # rank of the regex used from 0
   Log("s%04de%03d%s \"%s\"%s%s" % (season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
-    
+
 ### Add files into array ################################################################################
 def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
   fullpath=os.path.join(subdir, ".plexignore")
@@ -334,7 +328,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           elif ''.join(letter for letter in ep if letter.isdigit()):                                                                                                             ### if digit in current word we found the ep number normally ###
             if ep.isdigit() and len(ep)==4:                                                                                                                                      #
               if int(ep)< 1900 or int(ep[0:1])==folder_season:  season, ep = int(ep[0:1]), ep[2:3]                                                                               #1206 could be season 12 episode 06  #Get assigned from left ot right
-              else:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                                                               # take everything after supposed episode number
+              else:                                             filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                                                               # take everything after supposed episode number
             title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                                       # take everything after supposed episode number
             for prefix in ["ep", "e", "act", "s"]:
               if word.lower().startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season             # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
