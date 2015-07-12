@@ -295,13 +295,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         
         words, misc, buffer = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), False) for x in files]), clean_string(folder_show.lower(), False)           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
         for word in words:                                                                                                                                                       # if word=='': continue filter prevent "" on double spaces
+          Log(word)
           ep=word.strip()                                                                                                                                                        # cannot use words[words.index(word)] otherwise
           if ep.endswith(("v1", "v2", "v3", "v4")):                             ep=ep[:-2].rstrip('-')                                                                           #  if len(ep)==2: continue          #  else:       ep=ep[:-2]
           if "-" in ep and len(filter(None, ep.split("-",1)))==2:                                                                                                                #If '-' in center      # ep.split("-",1)                                                                                                                                   # if it splits in two parts
             if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):  ep="Skip"; break                                                   # if multi ep: make it non digit and exit for loop for words
-            words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x).                                                   #???
-            ep = ep.split("-",1)[0]                                                                                                                                              #
-          if ep in clean_string(folder_show, True) or "(" in ep and ")" in ep:  continue                                                                                         #
+            if ''.join(letter for letter in ep if letter.isdigit())=="": continue
+            if ''.join(letter for letter in ep.split("-",1)[0] if letter.isdigit()): ep = ep.split("-",1)[0]
+            else: ep = ep.split("-",1)[1] #words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x).                                                   #???
+            Log("this word: '%s', next word: '%s'" % (ep.split("-",1)[0], "-".join(ep.split("-",1)[1:])))
+                                                                                                                                                        #
+          if ep in clean_string(folder_show, True) or ep in ("-") or "(" in ep and ")" in ep:  continue                                                                                         #
           if ep in ("ED", "OP", "NCOP", "NCED"):                                break                                                                                            # "OP/ED xx" goes to regex
           if ep == "trailer":                                                   season, ep, title = 0, "201", "Trailer"                                                          #remove ?
           if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():    ep = ep [1:4]                                                                                    #
