@@ -8,7 +8,7 @@ season_rx = [                                                                   
   '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                             # 1a Stagione
   '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*']                                                                                                                              # Arc|Story arc ...   #The last line matches are dropped
 series_rx = [                                                                                                                                                        ######### Series regex - "serie - xxx - title" ###
-  '^((?P<show>.*?)[ _\.\-]+)?(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[-_][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                     #  0 # 1x01
+  '^((?P<show>.*?)[ _\.\-]+)?(?P<season>[0-9]{1,2})[Xx](?P<https://zeroqi.i234.me:51/webman/index.cgi#ep>[0-9]{1,3})((|[-_][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                     #  0 # 1x01
   '^((?P<show>.*?)[ _\.\-]+)?s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([ _\.\-]|(e|ep)|[ _\.\-](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*?)$)',#  1 # 01-02 | ep01-ep02 | e01-02
   '^(?P<title>.*?) [\(]?(?P<season>(19|20)[0-9]{2})[\)]$',                                                                                                           #  2 # title (1932).ext
   '^((?P<show>.*?)[ _\.\-]+)?\((?P<season>(19|20)[0-9]{2})\)([ _\.\-]+(?P<title>.*?))$',                                                                             #  3 # 1932 - title
@@ -35,11 +35,11 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
   'xvid-saints', "XviD-T00NG0D", "XViD-ViCKY", "XviD-BiA", "XVID-FHW", "PROPER-LOL", "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "WEB_DL",
   "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
-  "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HoM", "HorribleSubs", 
+  "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
   "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
   "1920x1080", "1280x720", "(BD 1280x720 Hi10P)", "848x480", "952x720", "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p", "720p", "480p",
   "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
-  "FLAC", "AAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", 'DD5.1', "5.1",'divx5.1', "DD5_1", "AAC2_0",
+  "FLAC", "AAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", 'DD5.1', "5.1",'divx5.1', "DD5_1", "AAC2_0", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
   "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "()", "( )", "(  )", "(   )", "(    )", "(     )", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
 whack = [ #lowercase                                                                                          ### Tags to remove ###
   'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4',                                                    # Video Codecs
@@ -48,15 +48,15 @@ whack = [ #lowercase                                                            
   '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                         # Refresh rate, Format
   'mp3', 'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',  'qaac',                           # Audio Codecs, channels
   'dc', 'se', 'extended', 'unrated', 'multi','multisubs', 'dubbed','subbed', "french", "fr", "dub",           # edition (dc = directors cut, se = special edition), subs and dubs
-  'limited', 'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored",            # format
+  'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored",                       # format
   'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix',      # misc 1
-  'fragment','ps3avchd','remux','fs','ws', "- copy", "reenc",                                                 # misc 2
+  'fragment','ps3avchd','remux','fs','ws', "- copy", "reenc", "hom",                                                 # misc 2
   'retail', 'webrip','web-dl', 'wp','workprint',                                                              # release type: retail, web, work print
   'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip', 'wsrip',                                   # Source: bluray
   'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'sd', 'hd', 'dvb', "release",                       # DVD, VCD, S-VCD
   'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis", "NoRar",                  # dtv, stv
   'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync', 'mp4',               # screener
-  "mthd", "thora", 'sickrage', 'brrip', 'ac3', "remastered", "yify", "tsr", "reidy", "(1280x720)", "(gerdhanse)", "(720p)", "(Commie)",
+  "mthd", "thora", 'sickrage', 'brrip', 'ac3', "remastered", "yify", "tsr", "reidy", "(1280x720)", "(gerdhanse)", "(720p)", "(Commie)", #'limited', 
   'rikou', 'HOMЯ', "iT00NZ", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "()", "(", ")"]   #
 CHARACTERS_MAP = { 14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀',                   #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
   50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' , #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
@@ -170,11 +170,13 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
 ### Allow to display ints even if equal to None at times ################################################
 def clean_string(string, no_parenthesis=False):
   if not string: return ""
-  string = encodeASCII(string)                                                                                                                                       # Translate them
+  string = encodeASCII(string)                                   #look behind: (?<=S) < position < look forward: (?!S)                                                                                                    # Translate them
   if "(" in string and no_parenthesis:                                     string = re.sub(r'\(.*?\)', '', string)                                                   # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
-  if "[" in string or "{" in string:                                       string = re.sub(r'[\[\{].*?[\]\}]', '', string)                                           # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
-  if ", The" in string:                                                    string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
-  if ", A"   in string:                                                    string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
+  if "[" in string or "{" in string:
+    string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', '', string)                       # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
+    if "[" in string in string: string = string.replace("[", '').replace("]", '')
+  if string.endswith(", The"):                                             string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
+  if string.endswith(", A"):                                               string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
   if "`"     in string:                                                    string = string.replace("`", "'")                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
   for word in whack_pre_clean:                                             string = replace_insensitive(string, word) if word.lower() in string.lower() else string  #
   for char in  FILTER_CHARS:                                               string = string.replace(char, ' ') if char in string else string                          # replace os forbidden chars with spaces
@@ -295,7 +297,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         
         words, misc, buffer = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), False) for x in files]), clean_string(folder_show.lower(), False)           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
         for word in words:                                                                                                                                                       # if word=='': continue filter prevent "" on double spaces
-          Log(word)
           ep=word.strip()                                                                                                                                                        # cannot use words[words.index(word)] otherwise
           if ep.endswith(("v1", "v2", "v3", "v4")):                             ep=ep[:-2].rstrip('-')                                                                           #  if len(ep)==2: continue          #  else:       ep=ep[:-2]
           if "-" in ep and len(filter(None, ep.split("-",1)))==2:                                                                                                                #If '-' in center      # ep.split("-",1)                                                                                                                                   # if it splits in two parts
@@ -303,7 +304,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if ''.join(letter for letter in ep if letter.isdigit())=="": continue
             if ''.join(letter for letter in ep.split("-",1)[0] if letter.isdigit()): ep = ep.split("-",1)[0]
             else: ep = ep.split("-",1)[1] #words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x).                                                   #???
-            Log("this word: '%s', next word: '%s'" % (ep.split("-",1)[0], "-".join(ep.split("-",1)[1:])))
                                                                                                                                                         #
           if ep in clean_string(folder_show, True) or ep in ("-") or "(" in ep and ")" in ep:  continue                                                                                         #
           if ep in ("ED", "OP", "NCOP", "NCED"):                                break                                                                                            # "OP/ED xx" goes to regex
