@@ -37,9 +37,9 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
   "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
   "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
-  "1920x1080", "1280x720", "(BD 1280x720 Hi10P)", "848x480", "952x720", "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p", "720p", "480p",
+  "1920x1080", "1280x720", "(BD 1280x720 Hi10P)", "848x480", "952x720", "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p", "720p", "480p", "(DVD_480p)",
   "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
-  "FLAC", "AAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", 'DD5.1', "5.1",'divx5.1', "DD5_1", "AAC2_0", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
+  "FLAC", "AAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", 'DD5.1', "5.1",'divx5.1', "DD5_1", "AAC2_0", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5", "(Exiled_Destiny)",
   "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "()", "( )", "(  )", "(   )", "(    )", "(     )", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
 whack = [ #lowercase                                                                                          ### Tags to remove ###
   'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4',                                                    # Video Codecs
@@ -80,7 +80,8 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   # ReadyNAS
                           '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # QNAP
                           '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
-                          '/volume2/Plex/Library/Application Support/Plex Media Server/Logs' ] }           # Synology, if migrated a second raid volume as unique volume in new box         
+                          '/volume2/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, if migrated a second raid volume as unique volume in new box         
+                          '/raid0/data/module/Plex/sys/Plex Media Server/Logs' ] }                         # Thecus
 platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
 for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
   if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
@@ -179,7 +180,7 @@ def clean_string(string, no_parenthesis=False):
   if string.endswith(", A"):                                               string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
   if "`"     in string:                                                    string = string.replace("`", "'")                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
   for word in whack_pre_clean:                                             string = replace_insensitive(string, word) if word.lower() in string.lower() else string  #
-  for char in  FILTER_CHARS:                                               string = string.replace(char, ' ') if char in string else string                          # replace os forbidden chars with spaces
+  for char in  FILTER_CHARS:                                               string = string.replace(char, " ") if char in string else string                          # replace os forbidden chars with spaces
   if re.match("[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?", string.split(" ")[-1]):  string = "".join(string.split(" ")[:-1])                                                  # Remove CRCs
   for rx in ("-", "_"):                                                    string = string[1:] if string.startswith(rx) else string                                  # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
   for rx in ("-", "_", "- copy"):                                          string = string[:-len(rx) ] if string.lower().endswith  (rx) else string                  # In python 2.2.3: string = string.strip(string, " -_")
