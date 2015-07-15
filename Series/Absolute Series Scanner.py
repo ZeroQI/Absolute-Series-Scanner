@@ -13,7 +13,7 @@ series_rx = [                                                                   
   '^(?P<title>.*?) [\(]?(?P<season>(19|20)[0-9]{2})[\)]$',                                                                                                           #  2 # title (1932).ext
   '^((?P<show>.*?)[ _\.\-]+)?\((?P<season>(19|20)[0-9]{2})\)([ _\.\-]+(?P<title>.*?))$',                                                                             #  3 # 1932 - title
   '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                           #  4 # 01 of 08 (no stacking for this one ?)
-  '^(?P<show>.*?)[ _\.\-]*(?!S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$']                               #  5 # E01 | E01-02| E01-E02 | E01E02 
+  '^((?P<show>.*?)[ _\.\-]+)?(?!S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$']                               #  5 # E01 | E01-02| E01-E02 | E01E02 
 anidb_rx  = [                                                                                                                                                        ######### AniDB Specials regex ### 
   '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})( .*|$)',                                                                                            #  6 # 001-099 Specials
   '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?.*$',                                                                    #  7 # 100-149 Openings
@@ -28,7 +28,7 @@ ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtr
 ignore_exts     = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub']    # extensions dropped no warning (skipped list would be too long if showed)
 video_exts      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', # DVD: 'ifo', 'bup', 'vob'
   'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm']
-FILTER_CHARS    = "\\/:*?<>|~.;_"                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+FILTER_CHARS    = "\\/:*?<>|~;_" #.                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', 
   'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
   "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release", "By UniversalFreedom", 
@@ -37,10 +37,13 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
   "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
   "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
-  "1920x1080", "1280x720", "(BD 1280x720 Hi10P)", "848x480", "952x720", "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p", "720p", "480p", "(DVD_480p)",
+  "(BD 1280x720 Hi10P)", "(DVD_480p)",
+  "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p",
+  "1920x1080", "1280x720", "848x480", "952x720", 
+  "1080p", "720p", "480p",
   "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
-  "FLAC", "AAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", 'DD5.1', "5.1",'divx5.1', "DD5_1", "AAC2_0", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5", "(Exiled_Destiny)",
-  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "()", "( )", "(  )", "(   )", "(    )", "(     )", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
+  "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0",  "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5", "(Exiled_Destiny)",
+  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "( )", "(  )", "(   )", "(    )", "(     )", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
 whack = [ #lowercase                                                                                          ### Tags to remove ###
   'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4',                                                    # Video Codecs
   'hi10', 'hi10p', '10bit', 'crf24',  'crf 24',                                                               #       color depth and encoding
@@ -50,8 +53,8 @@ whack = [ #lowercase                                                            
   'dc', 'se', 'extended', 'unrated', 'multi','multisubs', 'dubbed','subbed', "french", "fr", "dub",           # edition (dc = directors cut, se = special edition), subs and dubs
   'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored",                       # format
   'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix',      # misc 1
-  'fragment','ps3avchd','remux','fs','ws', "- copy", "reenc", "hom",                                                 # misc 2
-  'retail', 'webrip','web-dl', 'wp','workprint',                                                              # release type: retail, web, work print
+  'fragment','ps3avchd','remux','fs','ws', "- copy", "reenc", "hom",                                          # misc 2
+  'retail', 'webrip','web-dl', 'wp','workprint', "mkv",                                                       # release type: retail, web, work print
   'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip', 'wsrip',                                   # Source: bluray
   'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'sd', 'hd', 'dvb', "release",                       # DVD, VCD, S-VCD
   'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis", "NoRar",                  # dtv, stv
@@ -171,20 +174,18 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
 ### Allow to display ints even if equal to None at times ################################################
 def clean_string(string, no_parenthesis=False):
   if not string: return ""
-  string = encodeASCII(string)                                   #look behind: (?<=S) < position < look forward: (?!S)                                                                                                    # Translate them
+  if "`"     in string:                                                    string = string.replace("`", "'")                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
   if "(" in string and no_parenthesis:                                     string = re.sub(r'\(.*?\)', '', string)                                                   # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
-  if "[" in string or "{" in string:
-    string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', '', string)                       # remove "[xxx]" groups as Plex cleanup keep inside () but not inside []
-    if "[" in string in string: string = string.replace("[", '').replace("]", '')
+  if "[" in string or "{" in string:                                       string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', '', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
   if string.endswith(", The"):                                             string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
   if string.endswith(", A"):                                               string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
-  if "`"     in string:                                                    string = string.replace("`", "'")                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
   for word in whack_pre_clean:                                             string = replace_insensitive(string, word) if word.lower() in string.lower() else string  #
   for char in  FILTER_CHARS:                                               string = string.replace(char, " ") if char in string else string                          # replace os forbidden chars with spaces
-  if re.match("[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?", string.split(" ")[-1]):  string = "".join(string.split(" ")[:-1])                                                  # Remove CRCs
-  for rx in ("-", "_"):                                                    string = string[1:] if string.startswith(rx) else string                                  # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
-  for rx in ("-", "_", "- copy"):                                          string = string[:-len(rx) ] if string.lower().endswith  (rx) else string                  # In python 2.2.3: string = string.strip(string, " -_")
-  return " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                              # remove wouble spaces + words present in "whack" list #filter(None, string.split())
+  if re.match("[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?", string.split(" ")[-1]):  string = " ".join(string.split(" ")[:-1])                                                 # CRCs removal
+  for rx in ("-", "_", "()", "[]", "{}"):                                  string = string[1:         ] if string.startswith(rx) else string                         # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
+  for rx in ("-", "_", "()", "[]", "{}", "- copy"):                        string = string[ :-len(rx) ] if string.lower().endswith  (rx) else string                 # In python 2.2.3: string = string.strip(string, " -_")
+  string = encodeASCII(string)                                                                                                                                       # Translate them
+  return " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                              # remove double spaces + words present in "whack" list #filter(None, string.split())
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep=1, title="", year="", ep2="", rx=""):
@@ -279,7 +280,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           folder_show = "%s:%s:%s" % (os.path.splitext(os.path.basename(file_path))[0], guid_file.read().strip(), clean_string(reverse_path[0]) )  #agent will need upgrading
           if folder_show.startswith("anidb:"): folder_show = "aid:" + folder_show[6:] ### remove before releasing new HAMA agent ################################################
         break
-    else:  folder_show = clean_string( reverse_path[0] ) # Serie name is folder name (since we removed season folders)
+    else:  folder_show = re.sub(r'\[.*?\]', '', clean_string( reverse_path[0] ))   # Serie name is folder name (since we removed season folders)
     if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3:  folder_show = (folder_show.replace(" - ", " ") if " - " in folder_show else folder_show).split(" ", 2)[2]  # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8
     Log("\"%s\"%s%s" % (folder_show, " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
     
@@ -297,8 +298,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if ep.lower().startswith(("special", "picture drama", "omake")):                                 season, title  = 0, ep.title()                                                  ### If specials, season is 0 and if title empty use as title ### 
         
         words, misc, buffer = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), False) for x in files]), clean_string(folder_show.lower(), False)           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
-        for word in words:                                                                                                                                                       # if word=='': continue filter prevent "" on double spaces
-          ep=word.strip()                                                                                                                                                        # cannot use words[words.index(word)] otherwise
+        for word in words:                     
+          ep=word.strip()                                                                                                                                                        # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
           if ep.endswith(("v1", "v2", "v3", "v4")):                             ep=ep[:-2].rstrip('-')                                                                           #  if len(ep)==2: continue          #  else:       ep=ep[:-2]
           if "-" in ep and len(filter(None, ep.split("-",1)))==2:                                                                                                                #If '-' in center      # ep.split("-",1)                                                                                                                                   # if it splits in two parts
             if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):  ep="Skip"; break                                                   # if multi ep: make it non digit and exit for loop for words
@@ -307,7 +308,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             else: ep = ep.split("-",1)[1] #words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x).                                                   #???
                                                                                                                                                         #
           if ep in clean_string(folder_show, True) or ep in ("-") or "(" in ep and ")" in ep:  continue                                                                                         #
-          if ep in ("ED", "OP", "NCOP", "NCED"):                                break                                                                                            # "OP/ED xx" goes to regex
+          if not ep.isdigit() and "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit(): season, ep, title = 0, "1", "Special " + ep; Log(title); break #ep 12.5 so prob no specials
+          for prefix in ("ED", "OP", "NCOP", "NCED"):
+            if ep.lower().startswith(prefix.lower()) and len(ep)>len(prefix) and ep[len(prefix)].isdigit(): break                                                                                            # "OP/ED xx" goes to regex
           if ep == "trailer":                                                   season, ep, title = 0, "201", "Trailer"                                                          #remove ?
           if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():    ep = ep [1:4]                                                                                    #
           if not folder_use and (misc.count(ep)>=3 or ep.lower() in buffer and ep.lower() not in clean_string(buffer, False) ):  buffer= buffer.replace(ep.lower(), "", 1)       # If the folder name is nor in the filename and len(buffer)==len(ep)+len(clean_string(buffer, True))# skip word if: present in 3+ filenames, or in buffer (not year) and length of buffer = length word + length buffer no parenthesis
