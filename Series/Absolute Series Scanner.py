@@ -84,7 +84,8 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # QNAP
                           '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
                           '/volume2/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, if migrated a second raid volume as unique volume in new box         
-                          '/raid0/data/module/Plex/sys/Plex Media Server/Logs' ] }                         # Thecus
+                          '/raid0/data/module/Plex/sys/Plex Media Server/Logs' ],                          # Thecus
+                          '/raid0/data/PLEX_CONFIG/Plex Media Server/Logs' ]}                              # Thecus Plex community version
 platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
 for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
   if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
@@ -197,7 +198,8 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
     ep2 = ep
   for epn in range(ep, ep2+1):
     tv_show, tv_show.display_offset = Media.Episode(show, season, epn, title, year), (epn-ep)*100/(ep2-ep+1)
-    tv_show.parts.append(file); #if str(os.path.getsize(file))=="0": tv_show.parts.append(os.path.join(LOG_PATH,"dummy.mp4")) with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
+    if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):  file = os.path.join(LOG_PATH,"dummy.mp4") #with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
+    tv_show.parts.append(file); #if str(os.path.getsize(file))=="0": 
     mediaList.append(tv_show) #otherwise only one episode per multi-episode is showing despite log below correct
   index = str(series_rx.index(rx)) if rx in series_rx else str(anidb_rx.index(rx)+len(series_rx)) if rx in anidb_rx else ""  # rank of the regex used from 0
   Log("s%04de%03d%s \"%s\"%s%s" % (season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
@@ -243,7 +245,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   ### Rename log file with library name if XML file can be accessed ###
   global LOG_FILE_LIBRARY
   LOG_FILE_LIBRARY = LOG_FILE if root not in PLEX_LIBRARY else LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] #LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
-  Log(("=== Library Scan: \"%s\", Root: \"%s\", Skipped mediums ===" % ("X-Plex-Token.id file misisng" if root not in PLEX_LIBRARY else PLEX_LIBRARY[root], root)).ljust(157, '='))
+  Log(("=== Library Scan: \"%s\", Root: \"%s\", Skipped mediums ===" % ("X-Plex-Token.id file missing" if root not in PLEX_LIBRARY else PLEX_LIBRARY[root], root)).ljust(157, '='))
   file_tree = {}; explore_path(root, root, file_tree)                                                         # Build file_tree wwhich output skipped medium in logs
   with open(os.path.join(LOG_PATH, LOG_FILE_LIBRARY[:-4]+" - filelist"+LOG_FILE_LIBRARY[-4:]), 'w') as file:  ### Create a log with the library files relative path in logs folder for T/S 
     for folder in sorted(file_tree):                                                                          # convert to ansi, then notepad++ to replace \r\n to \n if needed + batch to recreate dummy library for tests
@@ -252,7 +254,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
   
   ### Main loop for folders ###
   for path in sorted(file_tree):                                                                              # Loop to add all series while on the root folder Scan call, which allows subfolders to work
-    files, folder_year, folder_season, reverse_path, AniDB_op, counter = file_tree[path], None, None, list(reversed(Utils.SplitPath(path))), {}, 1 #
+    files, folder_year, folder_season, reverse_path, AniDB_op, counter, folder_show = file_tree[path], None, None, list(reversed(Utils.SplitPath(path))), {}, 1, None #
     
     ### bluray folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
     if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and paths[1].lower() == 'bdmv':
@@ -274,13 +276,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     else:  season = 1                                  # Season is 1 by default is season folder not present
     
     ### Capture title form anidb.id or use folder name ###
-    for file_path in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tmdb.id", "Extras/tmdb.id", "imdbid", "Extras/imdb.id", ):
+    match = re.search("(?P<show>.*?) ?\[(?P<source>(anidb|tvdb|tmdb|imdb))-(tt)?(?P<guid>[0-9]{1,7})\]", reverse_path[0], re.IGNORECASE)
+    if match:  folder_show = reverse_path[0]    #"[" in reverse_path[0] and 
+    for file_path in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id"): #"tmdb.id", "Extras/tmdb.id", "imdb.id", "Extras/imdb.id", ):
       if os.path.isfile(os.path.join(root, path, file_path)):
-        with open(os.path.join(root, path, file_path), 'r') as guid_file:
-          folder_show = "%s:%s:%s" % (os.path.splitext(os.path.basename(file_path))[0], guid_file.read().strip(), clean_string(reverse_path[0]) )  #agent will need upgrading
-          if folder_show.startswith("anidb:"): folder_show = "aid:" + folder_show[6:] ### remove before releasing new HAMA agent ################################################
+        with open(os.path.join(root, path, file_path), 'r') as guid_file:  folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file_path))[0], guid_file.read().strip() )  #agent will need upgrading
         break
-    else:  folder_show = re.sub(r'\[.*?\]', '', clean_string( reverse_path[0] ))   # Serie name is folder name (since we removed season folders)
+    if not folder_show:      folder_show = clean_string(reverse_path[0])  # Serie name is folder name (since we removed season folders)
     if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3:  folder_show = (folder_show.replace(" - ", " ") if " - " in folder_show else folder_show).split(" ", 2)[2]  # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8
     Log("\"%s\"%s%s" % (folder_show, " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
     
