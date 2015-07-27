@@ -13,7 +13,7 @@ series_rx = [                                                                   
   '^(?P<title>.*?) [\(]?(?P<season>(19|20)[0-9]{2})[\)]$',                                                                                                           #  2 # title (1932).ext
   '^((?P<show>.*?)[ _\.\-]+)?\((?P<season>(19|20)[0-9]{2})\)([ _\.\-]+(?P<title>.*?))$',                                                                             #  3 # 1932 - title
   '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                           #  4 # 01 of 08 (no stacking for this one ?)
-  '^((?P<show>.*?)[ _\.\-]+)?(?!S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$']                               #  5 # E01 | E01-02| E01-E02 | E01E02 
+  '^((?P<show>.*?)[ _\.]+)?(?!S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-|-e|-ep)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$']                               #  5 # E01 | E01-02| E01-E02 | E01E02 
 anidb_rx  = [                                                                                                                                                        ######### AniDB Specials regex ### 
   '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})( .*|$)',                                                                                            #  6 # 001-099 Specials
   '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?.*$',                                                                    #  7 # 100-149 Openings
@@ -189,19 +189,22 @@ def clean_string(string, no_parenthesis=False):
   return " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                              # remove double spaces + words present in "whack" list #filter(None, string.split())
 
 ### Add files into Plex database ########################################################################
-def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep=1, title="", year="", ep2="", rx=""):
+def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx=""):
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title = title.title()  # capitalise if all caps or all lowecase and one space at least
   if ep==0:    episode, season = 1, 0                                                            # s01e00 and S00e00 => s00e01
   if not ep2:  ep2 = ep                                                                          # make ep2 same as ep for loop and tests
   if ep > ep2 or show=="":
     Log("Warning - show: '%s', s%02de%03d-%03d, file: '%s' has ep1 > ep2, or show empty" % (show, season, ep, ep2, file))
     ep2 = ep
-  if not os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files")) and str(os.path.getsize(file))=="0":  return
-  if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):  file = os.path.join(LOG_PATH,"dummy.mp4") #with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
+  if year =="": year=None
+  if not os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files")) and str(os.path.getsize(file))=="0":  return #do not keep dummy files by default unless this file present in Logs folder
+  if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):  file = os.path.join(LOG_PATH,"dummy.mp4")                  #with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
   for epn in range(ep, ep2+1):
-    tv_show, tv_show.display_offset = Media.Episode(show, season, epn, title, year), (epn-ep)*100/(ep2-ep+1)
-    tv_show.parts.append(file); #
-    mediaList.append(tv_show) #otherwise only one episode per multi-episode is showing despite log below correct
+    if len(show) == 0: log.Debug("add_episode_into_plex() - BAZINGA - show empty, report logs to dev ASAP")
+    else:
+      tv_show, tv_show.display_offset = Media.Episode(show, season, epn, title, year), (epn-ep)*100/(ep2-ep+1)
+      tv_show.parts.append(file); #
+      mediaList.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = str(series_rx.index(rx)) if rx in series_rx else str(anidb_rx.index(rx)+len(series_rx)) if rx in anidb_rx else ""  # rank of the regex used from 0
   Log("s%04de%03d%s \"%s\"%s%s" % (season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
 
@@ -301,7 +304,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if folder_season and ep.lower().startswith(("S%02d" % folder_season, "s%02d" % folder_season)):  ep             =  replace_insensitive(ep, "S%02d" % folder_season, "").lstrip() # Series S02 like transformers (bad naming)                                                                      # Serie S02 in season folder, Anidb specials regex doesn't like
         if ep.lower().startswith(("special", "picture drama", "omake")):                                 season, title  = 0, ep.title()                                                  ### If specials, season is 0 and if title empty use as title ### 
         
-        words, misc, buffer = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), False) for x in files]), clean_string(folder_show.lower(), False)           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+        words, misc, buffer = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), True) for x in files]), clean_string(folder_show.lower(), False)           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
         for word in words:                     
           ep=word.strip()                                                                                                                                                        # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
           if ep.endswith(("v1", "v2", "v3", "v4")):                             ep=ep[:-2].rstrip('-')                                                                           #  if len(ep)==2: continue          #  else:       ep=ep[:-2]
@@ -316,8 +319,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           for prefix in ("ED", "OP", "NCOP", "NCED"):
             if ep.lower().startswith(prefix.lower()) and len(ep)>len(prefix) and ep[len(prefix)].isdigit(): break                                                                                            # "OP/ED xx" goes to regex
           if ep == "trailer":                                                   season, ep, title = 0, "201", "Trailer"                                                          #remove ?
-          if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():    ep = ep [1:4]                                                                                    #
-          if not folder_use and (misc.count(ep)>=3 or ep.lower() in buffer and ep.lower() not in clean_string(buffer, False) ):  buffer= buffer.replace(ep.lower(), "", 1)       # If the folder name is nor in the filename and len(buffer)==len(ep)+len(clean_string(buffer, True))# skip word if: present in 3+ filenames, or in buffer (not year) and length of buffer = length word + length buffer no parenthesis
+          if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():    ep = ep [1:4]                                                                                    # #misc.count(ep)>=3
+          if not folder_use and misc.count(ep)>=3 or ep.lower() in buffer and ep.lower() not in clean_string(buffer, False):  buffer= buffer.replace(ep.lower(), "", 1)       # If the folder name is nor in the filename and len(buffer)==len(ep)+len(clean_string(buffer, True))# skip word if: present in 3+ filenames, or in buffer (not year) and length of buffer = length word + length buffer no parenthesis
           elif ''.join(letter for letter in ep if letter.isdigit()):                                                                                                             ### if digit in current word we found the ep number normally ###
             if ep.isdigit() and len(ep)==4:                                                                                                                                      #
               if int(ep)< 1900 or int(ep[0:1])==folder_season:  season, ep = int(ep[0:1]), ep[2:3]                                                                               #1206 could be season 12 episode 06  #Get assigned from left ot right
