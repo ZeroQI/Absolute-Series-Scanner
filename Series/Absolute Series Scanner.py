@@ -197,7 +197,7 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
     Log("Warning - show: '%s', s%02de%03d-%03d, file: '%s' has ep1 > ep2, or show empty" % (show, season, ep, ep2, file))
     ep2 = ep
   if year =="": year=None
-  if not os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files")) and str(os.path.getsize(file))=="0":  return #do not keep dummy files by default unless this file present in Logs folder
+  if not os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files")) and str(os.path.getsize(os.path.realpath(file)))=="0":  return #do not keep dummy files by default unless this file present in Logs folder
   if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):  file = os.path.join(LOG_PATH,"dummy.mp4")                  #with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
   for epn in range(ep, ep2+1):
     if len(show) == 0: log.Debug("add_episode_into_plex() - BAZINGA - show empty, report logs to dev ASAP")
