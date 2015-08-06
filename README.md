@@ -1,23 +1,21 @@
 Functionalities<BR>
 ===============
 <UL>
-      <LI> Logs in Plex Logs folder "Plex Media Scanner (custom ASS).log" with one line per folder, season folder and per file</LI>
+      <LI> Logs in Plex Logs folder "Plex Media Scanner (custom ASS).log" with one line for the serie folder and per file</LI>
       <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])</LI>
-      <LI> Seasons folders with serie name afterwards, including "Series" appelation</LI>
+      <LI> Seasons folders with serie name afterwards (Season 1 Zero no tsukaima), including "Series" appelation</LI>
       <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)</LI>
-      <LI> Specials chars handling ("CØDE：BREAKER") and files starting with dors (".Hack")</LI>
-      <LI> Movie files in Series accepted if they have the same name as the folder (or 01|ep 01|s01e01)</LI>
-      <LI> Episodes from different series in single folder (dump folder) supported</LI>
+      <LI> Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")</LI>
+      <LI> Movie files in Series libraries accepted if they have the same name as the folder (or 01|ep 01|s01e01)</LI>
       <LI> Console output supported if launched from command line</LI>
   </UL>
 Naming Conventions Rules<BR>
 ========================
 
 <UL>
-  <LI> Naming convention for Plex:
+  <LI> Naming convention for Plex: (which this scanner kinda improve allowing more)
     <UL>
-      <LI> https://oldwiki.plexapp.com/index.php?title=Media_Naming_and_Organization_Guide</LI>
-      <LI> https://support.plex.tv/hc/en-us/categories/200028098-Media-Preparation</LI>
+      <LI> https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows</LI>
     </UL>
   <LI> Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows</LI>
 </UL>
@@ -25,7 +23,7 @@ Naming Conventions Rules<BR>
 How to name the file ?
 ======================
 
-   <CODE>Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE>
+   <CODE>Example: Optional: Grouping Folder / Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE>
    <BR>
 <TABLE>
 <THEAD>
@@ -49,9 +47,10 @@ How to name the file ?
 </THEAD>
 <TBODY>
 <TR> <TD> fanart    </TD> <TD> title-fanart-1.ext or art/backdrop/background/fanart.ext (same level as Video TS)  </TD> </TR>
-<TR> <TD> poster    </TD> <TD> Serie  (Show name-1.jpg folder, poster, show.ext (jpg, jpeg,png,tbn)),  Season          Season-1a.ext in season folder       </TD> <TR>          
-<TR> <TD> Banner    </TD> <TD> Serie Name-bannera.ext or banner.jpg </TD> </TR>
-<TR> <TD> theme song  </TD><TR>
+<TR> <TD> poster    </TD> <TD> Serie folder: Show name-1/folder/poster/show.ext (jpg, jpeg, png, tbn),  Season folder: Season-1a.ext</TD> <TR>          
+<TR> <TD> Banner    </TD> <TD> Show Name-1/Show Name-bannera.ext/banner/banner-1.jpg </TD> </TR>
+<TR> <TD> theme.mp3  </TD><TR>
+<TR> <TD> Subtitles: file name.ext (srt, smi, ssa, ass) </TD><TR>
 <TR> <TD> .plexignore </TD><TR>
 </TBODY>
 </TABLE>
@@ -60,24 +59,25 @@ Where to get the perfect title ?
 ================================
 
 <UL>
-  <LI> Series: TheTVDB.com, TV database, will not store boxset specific files, nor sport or porn </LI>
+  <LI> Series: TheTVDB.com or TVrage or TheMovieDB, TV database, will not store boxset specific files(nor sport or porn for tvdb)</LI>
   <LI> Movies: TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
   <LI> Anime:  AniDB.net, the Anime main title is generally the best, or romaji (x-jat) </LI>
 </UL>
 
 Local metadata
 ==============
-In progress using HAMA
+Use local media assets. If it doen't work with Hama, please let me know
+https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
-TeraStorage Folder Structure ?
+Big Storage Folder Structure ?
 ==============================
+I thought my folder structure could help many.
 Implied is original language, folder named dubbed otherwise
 
 <UL>
   <LI> Series </LI>
     <UL>
-      <LI> Xx </LI>
-      <LI> Xx Documentaries </LI>
+      <LI> Xx (En/Fr/Sp/Jap sub En/...)</LI>
       <LI> Xx Reality-Shows </LI>
       <LI> Xx Stand-Up Comedy </LI>
       <LI> Xx Dubbed </LI>
@@ -85,19 +85,16 @@ Implied is original language, folder named dubbed otherwise
 
   <LI> Movies </LI>
     <UL>
-      <LI> Xx </LI>
-      <LI> Xx Documentaries </LI>
+      <LI> Xx (En/Fr/Sp/Jap sub En/...)</LI>
       <LI> Xx Reality-Shows </LI>
       <LI> Xx Stand-Up Comedy </LI>
     </UL>
     
   <LI> Anime </LI>
     <UL>
-      <LI> Xx </LI>
-      <LI> Xx Hentai </LI>
-      <LI> Xx Kids </LI>
-      <LI> Xx Movies </LI>
-      <LI> Xx Series </LI>
+      <LI> Xx (Jap sub En)</LI>
+      <LI> Xx Movies (En/Fr/...)</LI>
+      <LI> Xx Series (En/Fr/...)</LI>
     </UL>
     
   <LI> Knowledge </LI>
