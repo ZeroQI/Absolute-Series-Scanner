@@ -1,7 +1,11 @@
 Functionalities<BR>
 ===============
 <UL>
-      <LI> Logs in Plex Logs folder "Plex Media Scanner (custom ASS).log" with one line for the serie folder and per file</LI>
+      <LI> Include all files not recognised as Season 0 episode 501+</LI>
+      <LI> "keep_zero_size_files" file in logs folder to allow using zero size files, otherwise skip them</LI>
+      <LI> "X-Plex-Token.id"      file in logs folder to create a scanner log per library</LI>
+      <LI> "Plex Media Scanner (custom ASS).log" in Plex Logs folder with one line for the serie folder and per file</LI>
+      <LI> "Plex Media Scanner (custom ASS) - filelist.log" contain all filenames so i can reproduce your library with a batch file after converting to utf-8 with notepad</LI>
       <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])</LI>
       <LI> Seasons folders with serie name afterwards (Season 1 Zero no tsukaima), including "Series" appelation</LI>
       <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)</LI>
@@ -35,7 +39,7 @@ How to name the file ?
 <TR> <TD> Multi-Episode style:   </TD> <TD> Extend              </TD> <TD> Season 2/Show Name s02e03-04-05.ext </TD> </TR>
 <TR> <TD> Multi-part episodes:   </TD> <TD> cdX, discX, diskX, dvdX, partX, ptX </TD> <TD> Season 2/Show Name s02e03 - pt1.ext </TD> </TR>
 <TR> <TD> Multi-Media Version:   </TD> <TD> Movie Name (year) - 1080p.ext </TD> <TD> Movie Name (year) - 1080p.ext </TD> </TR>
-<TR> <TD> Specials scrapped:     </TD> <TD> Specials, Season 0  </TD> <TD> Specials/Show Name s00e01.ext </TD> </TR>
+<TR> <TD> Specials scrapped:     </TD> <TD> Specials, Season 0  </TD> <TD> Specials/Show Name s00e01/OP1/Ed3a.ext </TD> </TR>
 <TR> <TD> Other non scrapped:    </TD> <TD> Extras              </TD> <TD> Extras/Show Name xxxx.ext </TD> </TR>
 <TR> <TD> BD rips                </TD> <TD> /path/to/series-library/Series Name Season 2 </TD> <TD> Series.Name.Disc1.S02.E01-E12/BDMV/STREAM </TD> </TR>
 </TBODY>
