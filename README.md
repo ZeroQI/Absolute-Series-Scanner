@@ -46,12 +46,12 @@ How to name the file ?
 <TR> <TH> Data type </TH> <TH> Source                </TH> <TH>           Comment </TH> </TR>
 </THEAD>
 <TBODY>
-<TR> <TD> fanart    </TD> <TD> title-fanart-1.ext or art/backdrop/background/fanart.ext (same level as Video TS)  </TD> </TR>
-<TR> <TD> poster    </TD> <TD> Serie folder: Show name-1/folder/poster/show.ext (jpg, jpeg, png, tbn),  Season folder: Season-1a.ext</TD> <TR>          
-<TR> <TD> Banner    </TD> <TD> Show Name-1/Show Name-bannera.ext/banner/banner-1.jpg </TD> </TR>
-<TR> <TD> theme.mp3  </TD><TR>
-<TR> <TD> Subtitles: file name.ext (srt, smi, ssa, ass) </TD><TR>
-<TR> <TD> .plexignore </TD><TR>
+<TR> <TD> fanart    </TD> <TD> art/backdrop/background/fanart-1.ext</TD> <TD> -1 can be ommited (same level as Video TS) </TD> </TR>
+<TR> <TD> poster    </TD> <TD> Serie folder: Show name-1/folder/poster/show.ext (jpg, jpeg, png, tbn),  Season folder: Season01a.ext </TD> <TD> . </TD> <TR>          
+<TR> <TD> Banner    </TD> <TD> Show Name-1/Show Name-bannera.ext/banner/banner-1.jpg  </TD> <TD> </TD> </TR>
+<TR> <TD> Theme song</TD> <TD> theme.mp3  </TD> <TD> </TD> <TR>
+<TR> <TD> Subtitles </TD> <TD> file name.ext (srt, smi, ssa, ass)  </TD> <TD> </TD><TR>
+<TR> <TD> Plexignore files  </TD> <TD> .plexignore  </TD> <TD> </TD> <TR>
 </TBODY>
 </TABLE>
    
