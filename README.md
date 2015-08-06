@@ -2,6 +2,7 @@ Functionalities<BR>
 ===============
 <UL>
       <LI> Include all files not recognised as Season 0 episode 501+</LI>
+      <LI> ".plexignore" file supported</LI>
       <LI> "keep_zero_size_files" file in logs folder to allow using zero size files, otherwise skip them</LI>
       <LI> "X-Plex-Token.id"      file in logs folder to create a scanner log per library</LI>
       <LI> "Plex Media Scanner (custom ASS).log" in Plex Logs folder with one line for the serie folder and per file</LI>
