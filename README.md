@@ -1,19 +1,22 @@
 Functionalities<BR>
 ===============
 <UL>
+      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])</LI>
+      <LI> Seasons folders with serie name afterwards (Season 1 Zero no tsukaima), including "Series" appelation</LI>
       <LI> Include all files not recognised as Season 0 episode 501+</LI>
+      <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)</LI>
+      <LI> Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")</LI>
+      <LI> Movie files in Series libraries accepted if they have the same name as the folder (or 01|ep 01|s01e01)</LI>
+      <LI> Console output supported if launched from command line</LI>
       <LI> ".plexignore" file supported</LI>
       <LI> "keep_zero_size_files" file in logs folder to allow using zero size files, otherwise skip them</LI>
       <LI> "X-Plex-Token.id"      file in logs folder to create a scanner log per library</LI>
       <LI> "Plex Media Scanner (custom ASS).log" in Plex Logs folder with one line for the serie folder and per file</LI>
       <LI> "Plex Media Scanner (custom ASS) - filelist.log" contain all filenames so i can reproduce your library with a batch file after converting to utf-8 with notepad</LI>
-      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])</LI>
-      <LI> Seasons folders with serie name afterwards (Season 1 Zero no tsukaima), including "Series" appelation</LI>
-      <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)</LI>
-      <LI> Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")</LI>
-      <LI> Movie files in Series libraries accepted if they have the same name as the folder (or 01|ep 01|s01e01)</LI>
-      <LI> Console output supported if launched from command line</LI>
+      <LI> support id files "anidb.id", "tvdb.id", "tmdb.id" (might have to make thetvdb serie id "tsdb.id")</LI>
+      <LI> support id files in folder names like "tv show [anidb-12345]" or "Serie name [tvdb-1234567]"</LI>
   </UL>
+  
 Naming Conventions Rules<BR>
 ========================
 
@@ -71,7 +74,7 @@ Where to get the perfect title ?
 
 Local metadata
 ==============
-Use local media assets. If it doen't work with Hama, please let me know
+Use local media assets. If it doen't work with Hama, please let me know <BR />
 https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
 Big Storage Folder Structure ?
