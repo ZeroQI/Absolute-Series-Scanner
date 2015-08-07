@@ -43,7 +43,7 @@ How to name the file ?
 <TR> <TD> Multi-Episode style:   </TD> <TD> Extend              </TD> <TD> Season 2/Show Name s02e03-04-05.ext </TD> </TR>
 <TR> <TD> Multi-part episodes:   </TD> <TD> cdX, discX, diskX, dvdX, partX, ptX </TD> <TD> Season 2/Show Name s02e03 - pt1.ext </TD> </TR>
 <TR> <TD> Multi-Media Version:   </TD> <TD> Movie Name (year) - 1080p.ext </TD> <TD> Movie Name (year) - 1080p.ext </TD> </TR>
-<TR> <TD> Specials scrapped:     </TD> <TD> Specials, Season 0  </TD> <TD> Specials/Show Name s00e01/OP1/Ed3a.ext </TD> </TR>
+<TR> <TD> Specials scrapped:     </TD> <TD> Specials, Season 0  </TD> <TD> s00e01/OP1/Ed3a/NCOP/S01/S1.ext </TD> </TR>
 <TR> <TD> Other non scrapped:    </TD> <TD> Extras              </TD> <TD> Extras/Show Name xxxx.ext </TD> </TR>
 <TR> <TD> BD rips                </TD> <TD> /path/to/series-library/Series Name Season 2 </TD> <TD> Series.Name.Disc1.S02.E01-E12/BDMV/STREAM </TD> </TR>
 </TBODY>
