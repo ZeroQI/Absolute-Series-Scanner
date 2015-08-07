@@ -342,7 +342,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       ep = clean_string(filename, False)
       for rx in series_rx + anidb_rx: # + roman_rx:        #if rx in roman_rx:  ep = clean_string(ep.rsplit(' ', 1)[1] if ' ' in ep else ep) ### move that to chech from the beginning ?
         match = re.search(rx, ep, re.IGNORECASE)
-        Log("rx: " + rx)
         if match:
           show  = clean_string( match.group('show' )) if match.groupdict().has_key('show' ) and match.group('show' ) and not folder_use and show =="" else show # Mainly if file at root or _ folder
           title = clean_string( match.group('title')) if match.groupdict().has_key('title') and match.group('title') else ""
