@@ -15,12 +15,12 @@ series_rx = [                                                                   
   '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                           #  4 # 01 of 08 (no stacking for this one ?)
   '^((?P<show>.*?)[ _\.\-]+)?(?!S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-|-e|-ep)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$']                               #  5 # E01 | E01-02| E01-E02 | E01E02 
 anidb_rx  = [                                                                                                                                                        ######### AniDB Specials regex ### 
-  '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})(( | - )(?P<title>.*?))?$',                                                                                            #  6 # 001-099 Specials
-  '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)(( | - )(?P<title>.*?))?$',                                                                    #  7 # 100-149 Openings
-  '^((?P<show>.*?)[ _\.\-]+)?(ED|NC[ _-]?ED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)(( | - )(?P<title>.*?))?$',                                                                     #  8 # 150-199 Endings
-  '^((?P<show>.*?)[ _\.\-]+)?(TRAILER|PROMO|PV|T)($| ?(?P<ep>\d{1,2}))',                                                                                             #  9 # 200-299 Trailer, Promo with a  number
-  '^((?P<show>.*?)[ _\.\-]+)?(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})(( | - )(?P<title>.*?))?$',                                                                                             # 10 # 300-399 Parodies
-  '^((?P<show>.*?)[ _\.\-]+)?(O|OTHERS?) ?(?P<ep>\d{1,2})(( | - )(?P<title>.*?))?$']; AniDBOffset = [0, 100, 150, 200, 300, 400]                                                          # 11 # 400-999 Others
+  '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})(?P<title>.*?)$',                                                                                 #  6 # 001-099 Specials
+  '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _\-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                            #  7 # 100-149 Openings
+  '^((?P<show>.*?)[ _\.\-]+)?(ED|NC[ _\-]?ED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                             #  8 # 150-199 Endings
+  '^((?P<show>.*?)[ _\.\-]+)?(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                                  #  9 # 200-299 Trailer, Promo with a  number
+  '^((?P<show>.*?)[ _\.\-]+)?(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                                  # 10 # 300-399 Parodies
+  '^((?P<show>.*?)[ _\.\-]+)?(O|OTHERS?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$']; AniDBOffset = [0, 100, 150, 200, 300, 400]                                               # 11 # 400-999 Others
 roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                      # 12 # look behind: (?<=S) < position < look forward: (?!S)
 #   . Add year-month-day   = '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10 #   . Add day-month-year   = '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
@@ -340,8 +340,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       
       ### Check for series_rx + anidb_rx + roman_rx ###
       ep = clean_string(filename, False)
-      for rx in series_rx + anidb_rx + roman_rx:        #if rx in roman_rx:  ep = clean_string(ep.rsplit(' ', 1)[1] if ' ' in ep else ep) ### move that to chech from the beginning ?
+      for rx in series_rx + anidb_rx: # + roman_rx:        #if rx in roman_rx:  ep = clean_string(ep.rsplit(' ', 1)[1] if ' ' in ep else ep) ### move that to chech from the beginning ?
         match = re.search(rx, ep, re.IGNORECASE)
+        Log("rx: " + rx)
         if match:
           show  = clean_string( match.group('show' )) if match.groupdict().has_key('show' ) and match.group('show' ) and not folder_use and show =="" else show # Mainly if file at root or _ folder
           title = clean_string( match.group('title')) if match.groupdict().has_key('title') and match.group('title') else ""
