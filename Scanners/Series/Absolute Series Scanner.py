@@ -2,26 +2,26 @@
 ### Log variables, regex, skipped folders, words to remove, character maps ###
 import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Media #import Stack ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 from lxml import etree 
-season_rx = [                                                                                                                                                        ### Seasons folder + skipped folders ### #http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
-  'Specials',                                                                                                                                                        # Specials (season 0)
-  '(Season|Series|Book|Saison|Livre)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                # Season|Series|Book|Saison|Livre xx
-  '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                             # 1a Stagione
-  '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*']                                                                                                                              # Arc|Story arc ...   #The last line matches are dropped
-series_rx = [                                                                                                                                                        ######### Series regex - "serie - xxx - title" ###
-  '^((?P<show>.*?)[ _\.\-]+)?(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[-_][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                     #  0 # 1x01
+season_rx = [                                                                                                                                                           ### Seasons folder + skipped folders ### #http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
+  'Specials',                                                                                                                                                           # Specials (season 0)
+  '(Season|Series|Book|Saison|Livre)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                   # Season|Series|Book|Saison|Livre xx
+  '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                                # 1a Stagione
+  '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*']                                                                                                                                 # Arc|Story arc ...   #The last line matches are dropped
+series_rx = [                                                                                                                                                           ######### Series regex - "serie - xxx - title" ###
+  '^((?P<show>.*?)[ _\.\-]+)?(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[-_][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                        #  0 # 1x01
   '^((?P<show>.*?)[ _\.\-]+)?s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([ _\.\-]|(e|ep)|[ _\.\-](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*?)$)',#  1 # 01-02 | ep01-ep02 | e01-02
-  '^(?P<title>.*?) [\(]?(?P<season>(19|20)[0-9]{2})[\)]$',                                                                                                           #  2 # title (1932).ext
-  '^((?P<show>.*?)[ _\.\-]+)?\((?P<season>(19|20)[0-9]{2})\)([ _\.\-]+(?P<title>.*?))$',                                                                             #  3 # 1932 - title
-  '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                           #  4 # 01 of 08 (no stacking for this one ?)
+  '^(?P<title>.*?) [\(]?(?P<season>(19|20)[0-9]{2})[\)]$',                                                                                                              #  2 # title (1932).ext
+  '^((?P<show>.*?)[ _\.\-]+)?\((?P<season>(19|20)[0-9]{2})\)([ _\.\-]+(?P<title>.*?))$',                                                                                #  3 # 1932 - title
+  '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  4 # 01 of 08 (no stacking for this one ?)
   '^((?P<show>.*?)[ _\.\-]+)?(?!S)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-|-e|-ep)(?P<ep2>[0-9]{1,3}))?(( | - )(?P<title>.*?))?$']                               #  5 # E01 | E01-02| E01-E02 | E01E02 
-anidb_rx  = [                                                                                                                                                        ######### AniDB Specials regex ### 
-  '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{0,2})(?P<title>.*?)$',                                                                                 #  6 # 001-099 Specials
-  '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _\-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                            #  7 # 100-149 Openings
-  '^((?P<show>.*?)[ _\.\-]+)?(ED|NC[ _\-]?ED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                             #  8 # 150-199 Endings
-  '^((?P<show>.*?)[ _\.\-]+)?(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                                  #  9 # 200-299 Trailer, Promo with a  number
-  '^((?P<show>.*?)[ _\.\-]+)?(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                                  # 10 # 300-399 Parodies
-  '^((?P<show>.*?)[ _\.\-]+)?(O|OTHERS?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$']; AniDBOffset = [0, 100, 150, 200, 300, 400]                                               # 11 # 400-999 Others
-roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                      # 12 # look behind: (?<=S) < position < look forward: (?!S)
+anidb_rx  = [                                                                                                                                                           ######### AniDB Specials regex ### 
+  '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                       #  6 # 001-099 Specials
+  '^((?P<show>.*?)[ _\.\-]+)?(OP|NC[ _\-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                  #  7 # 100-149 Openings
+  '^((?P<show>.*?)[ _\.\-]+)?(ED|NC[ _\-]?ED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                   #  8 # 150-199 Endings
+  '^((?P<show>.*?)[ _\.\-]+)?(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                     #  9 # 200-299 Trailer, Promo with a  number
+  '^((?P<show>.*?)[ _\.\-]+)?(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                     # 10 # 300-399 Parodies
+  '^((?P<show>.*?)[ _\.\-]+)?(O|OTHERS?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$']; AniDBOffset = [0, 100, 150, 200, 300, 400]                                  # 11 # 400-999 Others
+roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                         # 12 # look behind: (?<=S) < position < look forward: (?!S)
 #   . Add year-month-day   = '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10 #   . Add day-month-year   = '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db']                                                                                                            # Skipped files (samples, trailers)                                                          
@@ -37,10 +37,10 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
   "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
   "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
-  "(BD 1280x720 Hi10P)", "(DVD_480p)",
+  "(BD 1280x720 Hi10P)", "(DVD_480p)","(1080p_10bit)",
   "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p",
   "1920x1080", "1280x720", "848x480", "952x720", 
-  "1080p", "720p", "480p",
+  "1080p", "720p", "480p", "_BD",
   "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
   "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0",  "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5", "(Exiled_Destiny)",
   "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "( )", "(  )", "(   )", "(    )", "(     )", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
