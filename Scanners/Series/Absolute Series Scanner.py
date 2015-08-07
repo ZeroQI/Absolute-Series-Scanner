@@ -287,10 +287,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     for file_path in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id"): #"tmdb.id", "Extras/tmdb.id", "imdb.id", "Extras/imdb.id", ):
       if os.path.isfile(os.path.join(root, path, file_path)):
         with open(os.path.join(root, path, file_path), 'r') as guid_file:  folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file_path))[0], guid_file.read().strip() )  #agent will need upgrading
+        #Log("Bazinga: " + folder_show)
         break
-    if not folder_show:      folder_show = clean_string(reverse_path[0])  # Serie name is folder name (since we removed season folders)
-    if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3:  folder_show = (folder_show.replace(" - ", " ") if " - " in folder_show else folder_show).split(" ", 2)[2]  # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8
-    if '[' in folder_show: folder_show = re.sub(r'\[.*?\]', '', folder_show)    
+    else:
+      if not folder_show:      folder_show = clean_string(reverse_path[0])  # Serie name is folder name (since we removed season folders)
+      else:
+        if '[' in folder_show: folder_show = re.sub(r'\[.*?\]', '', folder_show)    
+        if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3:  folder_show = (folder_show.replace(" - ", " ") if " - " in folder_show else folder_show).split(" ", 2)[2]  # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8
     Log("\"%s\"%s%s" % (folder_show if path else "Root Folder (show name will be taken from filename)", " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
     
     ### Main File loop to start adding files now ###
