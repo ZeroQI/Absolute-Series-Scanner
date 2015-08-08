@@ -17,11 +17,11 @@ anidb_rx  = [                                                                   
   '^(?P<show>.*?)[ _\.\-]*(S|SP|SPECIAL|OAV) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                         #  6 # 001-099 Specials
   '^(?P<show>.*?)[ _\.\-]*(OP|NC[ _\-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?[ _\.\-]*(?P<title>.*)$',                                                     #  7 # 100-149 Openings
   '^(?P<show>.*?)[ _\.\-]*(ED|NC[ _\-]?ED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                      #  8 # 150-199 Endings
-  '^(?P<show>.*?)[ _\.\-]*(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        #  9 # 200-299 Trailer, Promo with a  number
-  '^(?P<show>.*?)[ _\.\-]*(P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
+  '^(?P<show>.*?)[ _\.\-]*(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                                        #  9 # 200-299 Trailer, Promo with a  number
+  #'^(?P<show>.*?)[ _\.\-]*((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
   '^(?P<show>.*?)[ _\.\-]*(O|OTHERS?)(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                           # 11 # 400-499 Others
   '^(?P<show>.*?)[ _\.\-]*(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*?))?$']                                     # 3 # E01 | E01-02| E01-E02 | E01E02 
-AniDBOffset = [0, 100, 150, 200, 300, 400, 0]                                                                      
+AniDBOffset = [0, 100, 150, 200, 400, 0]  #300                                                                    
 roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                         # 12 # look behind: (?<=S) < position < look forward: (?!S)
 #   . Add year-month-day   = '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10 #   . Add day-month-year   = '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
@@ -183,7 +183,7 @@ def clean_string(string, no_parenthesis=False):
   if string.endswith(", A"):                                               string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
   for word in whack_pre_clean:                                             string = replace_insensitive(string, word) if word.lower() in string.lower() else string  #
   for char in  FILTER_CHARS:                                               string = string.replace(char, " ") if char in string else string                          # replace os forbidden chars with spaces
-  if re.match("[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?", string.split(" ")[-1]):  string = " ".join(string.split(" ")[:-1])                                                 # CRCs removal
+  if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string.split(" ")[-1]):  string = re.sub('[0-9a-fA-F]{8}', '', string) #" ".join(string.split(" ")[:-1])                                                 # CRCs removal
   for rx in ("-", "_", "()", "[]", "{}"):                                  string = string[1:         ] if string.startswith(rx) else string                         # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
   for rx in ("-", "_", "()", "[]", "{}", "- copy"):                        string = string[ :-len(rx) ] if string.lower().endswith  (rx) else string                 # In python 2.2.3: string = string.strip(string, " -_")
   string = encodeASCII(string)                                                                                                                                       # Translate them
@@ -290,10 +290,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         #Log("Bazinga: " + folder_show)
         break
     else:
-      if not folder_show:      folder_show = clean_string(reverse_path[0])  # Serie name is folder name (since we removed season folders)
-      else:
-        if '[' in folder_show: folder_show = re.sub(r'\[.*?\]', '', folder_show)    
+      if folder_show:    
+        if '[' in folder_show:                                                                                  folder_show = re.sub(r'\[.*?\]', '', folder_show)    
         if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3:  folder_show = (folder_show.replace(" - ", " ") if " - " in folder_show else folder_show).split(" ", 2)[2]  # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8
+      else:   folder_show = clean_string(reverse_path[0])  # Serie name is folder name (since we removed season folders)
     Log("\"%s\"%s%s" % (folder_show if path else "Root Folder (show name will be taken from filename)", " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
     
     ### Main File loop to start adding files now ###
@@ -318,7 +318,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           if ''.join(letter for letter in ep if letter.isdigit())=="": continue
           if ''.join(letter for letter in ep.split("-",1)[0] if letter.isdigit()): ep = ep.split("-",1)[0]
           else: ep = ep.split("-",1)[1] #words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x).                                                   #???
-                                                                                                                                                      #
         if ep in clean_string(folder_show, True) or ep in ("-") or "(" in ep and ")" in ep:  continue                                                                                         #
         if not ep.isdigit() and "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit(): season, ep, title = 0, "1", "Special " + ep; Log(title); break #ep 12.5 so prob no specials
         for prefix in ("ED", "OP", "NCOP", "NCED"):
@@ -331,7 +330,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if int(ep)< 1900 or int(ep[0:1])==folder_season:  season, ep = int(ep[0:1]), ep[2:3]                                                                               #1206 could be season 12 episode 06  #Get assigned from left ot right
             else:                                             filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                                                               # take everything after supposed episode number
           for prefix in ["ep", "e", "act", "s"]:
-            if word.lower().startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season             # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
+            if ep.lower().startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season             # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
           title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                                       # take everything after supposed episode number
           if path=="":  show = clean_string( " ".join(words[:words.index(word)-1]) if len(words)-words.index(word)-1 >1 else "No title", False)
           break
@@ -352,11 +351,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           if match.groupdict().has_key('season') and match.group('season'):  season = int(match.group('season'))
           if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):  ep2    = match.group('ep2') 
           if match.groupdict().has_key('ep'    ) and match.group('ep'    ):  ep     = match.group('ep')
-          elif rx not in anidb_rx:                                                    # if no ep in regex
+          elif rx not in anidb_rx[:-1]:                                                    # if no ep in regex
             movie_list[season] = movie_list[season]+1 if season in movie_list else 1  #add movies using year as season, starting at 1
             ep = str(movie_list[season])                                              # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
           else: ep = "01"                                                             #No ep number, anidb usefull ?????
-          if rx in anidb_rx:                                                          ### AniDB Specials ################################################################
+          if rx in anidb_rx[:-1]:                                                          ### AniDB Specials ################################################################
             offset, season = AniDBOffset [ anidb_rx.index(rx) ], 0                    # offset = 100 for OP, 150 for ED, etc... #Log("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
             if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                  ### OP/ED with letter version Example: op2a
               AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')  # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have here
@@ -371,7 +370,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
       for word in ep.split(" "):                                                                         #
         if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")                            # title.replace(word, "", 1)
       title, counter = ep.strip(), counter +1                                                            #
-      add_episode_into_plex(mediaList, files, file, root, path, show, 0, counter, title, year, None, rx) # Log("ep: '%s', clean filename ep: '%s', file: '%s'" % (ep, clean_string(filename, False), file))
+      add_episode_into_plex(mediaList, files, file, root, path, show, 0, counter, title, year, None, "") # Log("ep: '%s', clean filename ep: '%s', file: '%s'" % (ep, clean_string(filename, False), file))
     Log("".ljust(157, '-'))                                                                              # Scan(path, files, mediaList, [])
   Log("")                                                                                                # VideoFiles.Scan(path, files, mediaList, [], root) # Filter out bad stuff and duplicates.
 
