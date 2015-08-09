@@ -11,17 +11,18 @@ series_rx = [                                                                   
   '^((?P<show>.*?)[ _\.\-]+)?(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[-_][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                        #  0 # 1x01
   '^((?P<show>.*?)[ _\.\-]+)?s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([ _\.\-]|(e|ep)|[ _\.\-](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*?)$)',#  1 # s01e01-02 | ep01-ep02 | e01-02
   '^(?P<title>.*?) [\(]?(?P<season>(19|20)[0-9]{2})[\)]$',                                                                                                              #  2 # title (1932).ext
-  '^((?P<show>.*?)[ _\.\-]+)?\((?P<season>(19|20)[0-9]{2})\)([ _\.\-]+(?P<title>.*?))$',                                                                                #  3 # 1932 - title
-  '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$']                                                              #  4 # 01 of 08 (no stacking for this one ?)
+  #'^((?P<show>.*?)[ _\.\-]+)?\((?P<season>(19|20)[0-9]{2})\)([ _\.\-]+(?P<title>.*?))$',                                                                               #  3 # 1932 - title
+  '^((?P<show>.*?)[ _\.\-]+)?(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  4 # 01 of 08 (no stacking for this one ?)
+  '^(?P<show>.*?) - (?P<ep>[0-9]{1,3}) - (?P<title>.*)$']                                                                                                               #  5 # Serie - xx - title.ext
 anidb_rx  = [                                                                                                                                                           ######### AniDB Specials regex ### 
-  '^(?P<show>.*?)[ _\.\-]*(S|SP|SPECIAL|OAV) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                         #  6 # 001-099 Specials
-  '^(?P<show>.*?)[ _\.\-]*(OP|NC[ _\-]?OP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?[ _\.\-]*(?P<title>.*)$',                                                     #  7 # 100-149 Openings
-  '^(?P<show>.*?)[ _\.\-]*(ED|NC[ _\-]?ED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                      #  8 # 150-199 Endings
-  '^(?P<show>.*?)[ _\.\-]*(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                                        #  9 # 200-299 Trailer, Promo with a  number
-  #'^(?P<show>.*?)[ _\.\-]*((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
-  '^(?P<show>.*?)[ _\.\-]*(O|OTHERS?)(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                           # 11 # 400-499 Others
-  '^(?P<show>.*?)[ _\.\-]*(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*?))?$']                                     # 3 # E01 | E01-02| E01-E02 | E01E02 
-AniDBOffset = [0, 100, 150, 200, 400, 0]  #300                                                                    
+  '^((?P<show>.*?)[ _\.\-]+)?(S|SP|SPECIAL|OAV) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                         #  6 # 001-099 Specials
+  '^((?P<show>.*?)[ _\.\-]+)?(OP|NCOP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                     #  7 # 100-149 Openings
+  '^((?P<show>.*?)[ _\.\-]+)?(ED|NCED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                      #  8 # 150-199 Endings
+  '^((?P<show>.*?)[ _\.\-]+)?(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                                        #  9 # 200-299 Trailer, Promo with a  number
+  '^((?P<show>.*?)[ _\.\-]+)?((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
+  '^((?P<show>.*?)[ _\.\-]+)?(O|OTHERS?)(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                           # 11 # 400-499 Others
+  '^((?P<show>.*?)[ _\.\-]+)?(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*?))?$']                                     # 3 # E01 | E01-02| E01-E02 | E01E02 
+AniDBOffset = [0, 100, 150, 200, 300, 400, 0]  #300                                                                    
 roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                         # 12 # look behind: (?<=S) < position < look forward: (?!S)
 #   . Add year-month-day   = '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10 #   . Add day-month-year   = '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
@@ -92,6 +93,7 @@ for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join
   if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
   if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
 else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
+keep_zero_size_files = os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files"))
 
 ### Allow to log to the same folder Plex writes its logs in #############################################
 global LOG_FILE_LIBRARY
@@ -198,7 +200,7 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
     Log("Warning - show: '%s', s%02de%03d-%03d, file: '%s' has ep1 > ep2, or show empty" % (show, season, ep, ep2, file))
     ep2 = ep
   if year =="": year=None
-  if not os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files")) and str(os.path.getsize(file))=="0":  return #do not keep dummy files by default unless this file present in Logs folder
+  if not keep_zero_size_files and str(os.path.getsize(file))=="0":  return #do not keep dummy files by default unless this file present in Logs folder
   if     os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):  file = os.path.join(LOG_PATH,"dummy.mp4")                  #with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log("add_episode_into_plex() - BAZINGA - show empty, report logs to dev ASAP")
@@ -310,27 +312,31 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if ep.lower().startswith(("special", "picture drama", "omake")):                                 season, title  = 0, ep.title()                                                  ### If specials, season is 0 and if title empty use as title ### 
         
       words, misc, buffer = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), True) for x in files]), clean_string(folder_show.lower(), False)           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+      folder_test="whatever serie i troubleshoot"
       for word in words:                     
         ep=word.strip()                                                                                                                                                        # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
+        if folder_show==folder_test:  Log(ep)                                                                                                                                  # Analyse non regex engine word cycled
         if ep.endswith(("v1", "v2", "v3", "v4")):                             ep=ep[:-2].rstrip('-')                                                                           #  if len(ep)==2: continue          #  else:       ep=ep[:-2]
-        if "-" in ep and len(filter(None, ep.split("-",1)))==2:                                                                                                                #If '-' in center      # ep.split("-",1)                                                                                                                                   # if it splits in two parts
+        if "-" in ep and len(filter(None, ep.split("-",1)))==2:                                                                                                                #If '-' in center      # ep.split("-",1)   # if it splits in two parts
           if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):  ep="Skip"; break                                                   # if multi ep: make it non digit and exit for loop for words
-          if ''.join(letter for letter in ep if letter.isdigit())=="": continue
-          if ''.join(letter for letter in ep.split("-",1)[0] if letter.isdigit()): ep = ep.split("-",1)[0]
-          else: ep = ep.split("-",1)[1] #words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x).                                                   #???
-        if ep in clean_string(folder_show, True) or ep in ("-") or "(" in ep and ")" in ep:  continue                                                                                         #
-        if not ep.isdigit() and "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit(): season, ep, title = 0, "1", "Special " + ep; Log(title); break #ep 12.5 so prob no specials
-        for prefix in ("ED", "OP", "NCOP", "NCED"):
-          if ep.lower().startswith(prefix.lower()) and len(ep)>len(prefix) and ep[len(prefix)].isdigit(): break                                                                                            # "OP/ED xx" goes to regex
+          if ''.join(letter for letter in ep if letter.isdigit())=="": continue                                                                                                # 
+          if ''.join(letter for letter in ep.split("-",1)[0] if letter.isdigit()): ep = ep.split("-",1)[0]                                                                     #
+          else: ep = ep.split("-",1)[1]                                                                                                                                        #words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x).                    #???
+        if ep in clean_string(folder_show, True) and clean_string(filename, True).count(ep)!=2 or ep in ("-") or "(" in ep and ")" in ep: 
+          if folder_show==folder_test:  Log("skip word, count: '%s'" % (clean_string(filename, True).count(ep)));
+          continue                                                                   # Episode number in serie name, regex will sort
+        if not ep.isdigit() and "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit(): season, ep, title = 0, "1", "Special " + ep; Log(title); break     #ep 12.5 so prob no specials
+        for prefix in ("ED", "OP", "NCOP", "NCED"):                                                                                                                            #
+          if ep.lower().startswith(prefix.lower()) and len(ep)>len(prefix) and ep[len(prefix)].isdigit(): break                                                                # "OP/ED xx" goes to regex
         if ep == "trailer":                                                   season, ep, title = 0, "201", "Trailer"                                                          #remove ?
         if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:4].isdigit():    ep = ep [1:4]                                                                                    # #misc.count(ep)>=3
-        if not folder_use and misc.count(ep)>=3 and path or ep.lower() in buffer and ep.lower() not in clean_string(buffer, False):  buffer= buffer.replace(ep.lower(), "", 1)       # If the folder name is nor in the filename and len(buffer)==len(ep)+len(clean_string(buffer, True))# skip word if: present in 3+ filenames, or in buffer (not year) and length of buffer = length word + length buffer no parenthesis
+        if not folder_use and misc.count(ep)>=3 and path or ep.lower() in buffer and ep.lower() not in clean_string(buffer, False):  buffer= buffer.replace(ep.lower(), "", 1) # If the folder name is nor in the filename and len(buffer)==len(ep)+len(clean_string(buffer, True))# skip word if: present in 3+ filenames, or in buffer (not year) and length of buffer = length word + length buffer no parenthesis
         elif ''.join(letter for letter in ep if letter.isdigit()):                                                                                                             ### if digit in current word we found the ep number normally ###
           if ep.isdigit() and len(ep)==4:                                                                                                                                      #
             if int(ep)< 1900 or int(ep[0:1])==folder_season:  season, ep = int(ep[0:1]), ep[2:3]                                                                               #1206 could be season 12 episode 06  #Get assigned from left ot right
-            else:                                             filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                                                               # take everything after supposed episode number
-          for prefix in ["ep", "e", "act", "s"]:
-            if ep.lower().startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season             # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
+            else:                                             filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                    # take everything after supposed episode number
+          for prefix in ["ep", "e", "act", "s"]:                                                                                                                               #
+            if ep.lower().startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season               # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
           title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                                       # take everything after supposed episode number
           if path=="":  show = clean_string( " ".join(words[:words.index(word)-1]) if len(words)-words.index(word)-1 >1 else "No title", False)
           break
@@ -362,6 +368,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
               ep, offset  = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )  # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
             ep = str( offset + int(ep))                                               # Add episode number to the offset, 01 by default from the match group above
           #elif rx in roman_rx:  ep = roman_to_int(ep)                                ### Roman numbers ### doesn't work is ep title present
+          #position = title[title.find(ep)+len(ep):].lstrip()) 
           add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx)
           break
       if match: continue  # next file iteration
