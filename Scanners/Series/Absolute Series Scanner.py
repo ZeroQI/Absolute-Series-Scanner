@@ -95,6 +95,7 @@ for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join
   if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
 else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
 keep_zero_size_files = os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files"))
+no_timestamp         = os.path.isfile(os.path.join(LOG_PATH, "no_timestamp"        ))
 
 ### Allow to log to the same folder Plex writes its logs in #############################################
 global LOG_FILE_LIBRARY
@@ -102,7 +103,7 @@ LOG_FILE_LIBRARY = LOG_FILE = 'Plex Media Scanner (custom ASS).log'  # Log filen
 def Log(entry, filename=None): 
   global LOG_FILE_LIBRARY
   with open(os.path.join(LOG_PATH, filename if filename else LOG_FILE_LIBRARY), 'a') as file:
-    file.write( time.strftime("%Y-%m-%d %H:%M:%S") + " " + entry + "\n")
+    file.write(("" if no_timestamp else time.strftime("%Y-%m-%d %H:%M:%S") + " ") + entry + "\n")
     print entry  # when ran from console ### Allow to display ints even if equal to None at times ### def xint(s):   return str(s) if s is not None and not s=="" else "None"
 
 ### import Plex token to have a library list to put hte library name on the log filename ###
