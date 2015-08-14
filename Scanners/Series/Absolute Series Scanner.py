@@ -41,14 +41,14 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
   "(BD 1280x720 Hi10P)", "(DVD_480p)","(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", 
   "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p",
-  "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit",
+  "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)",
   "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
   "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0",  "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5", "(Exiled_Destiny)",
   "1080p", "720p", "480p", "_BD", ".XVID", "(xvid)", 
   "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "( )", "(  )", "(   )", "(    )", "(     )", "(_)", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
 whack = [ #lowercase                                                                                          ### Tags to remove ###
-  'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4',                                                    # Video Codecs
-  'hi10', 'hi10p', '10bit', 'crf24',  'crf 24',                                                               #       color depth and encoding
+  'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi",                                             # Video Codecs
+  'hi10', 'hi10p', '10bit', 'crf24', 'crf 24',                                                                #       color depth and encoding
   '480p', '576p', '720p', '1080p', '1080i', '1920x1080','1280x720',                                           #       Resolution
   '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                         # Refresh rate, Format
   'mp3', 'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',  'qaac',                           # Audio Codecs, channels
@@ -181,7 +181,9 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
 def clean_string(string, no_parenthesis=False):
   if not string: return ""
   if "`"     in string:                                                    string = string.replace("`", "'")                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
-  if "(" in string and no_parenthesis:                                     string = re.sub(r'\(.*?\)', '', string)                                                   # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
+  if no_parenthesis and "(" in string:                                     string = re.sub(r'\(.*?\)', ' ', string)                                                  # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
+  elif "(" in string and not " (" in string:                               string = string.replace("(", " (")
+  elif ")" in string and not ") " in string:                               string = string.replace(")", ") ")
   if "[" in string or "{" in string:                                       string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', '', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
   if string.endswith(", The"):                                             string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
   if string.endswith(", A"):                                               string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
@@ -308,16 +310,16 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             if ep.lower().startswith(prefix.lower()):  ep =  replace_insensitive(ep, prefix , "").lstrip()                                                                         # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
         if ep.lower().startswith(("special", "picture drama", "omake")):                               season, title  = 0, ep.title()                                              ### If specials, season is 0 and if title empty use as title ### 
         
-      words, misc = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower()                                # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+      words, misc = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower()                                  # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
       for word in words:                     
         ep=word.lower().strip()                                                                                                                             # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
-        if "(" in ep:  ep = ep [1:5] if len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:5].isdigit() else ep.split('-',1)[0]                              # show - 12(xvid)
+        if "(" in ep and len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:5].isdigit():  ep = ep [1:5]                                                     # remove parenthesis from year in parenthesis
         if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                             # If separator in string
           if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):  ep="Skip"; break                                # if multi ep: make it non digit and exit so regex takes care of it
           ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1]                           # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
         if ep.endswith(("v1", "v2", "v3", "v4")):  ep=ep[:-2].rstrip('-')                                                                                   # 
         if ep.upper().startswith(("ed", "op", "ncop", "nced")): break                                                                                       # "OP/ED xx" goes to regex
-        if ep == "trailer":                                                             season, ep, title = 0, "201",               "Trailer";       break  # remove ?
+        if "trailer" in ep:                                                             season, ep, title = 0, "201",               "Trailer";       break  # remove ?
         if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():  season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break  # ep 12.5 = "1" title "Special 12.5"
         if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:1])==folder_season):  season, ep = int(ep[0:2]), ep[2:4]          # 1206 could be season 12 episode 06  #Get assigned from left ot right
         elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                    # take everything after supposed episode number
