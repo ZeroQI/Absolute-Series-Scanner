@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ### Log variables, regex, skipped folders, words to remove, character maps ###
 import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Media #import Stack ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
-from lxml import etree 
+from lxml import etree
 season_rx = [                                                                                                                                                           ### Seasons folder + skipped folders ### #http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
   'Specials',                                                                                                                                                           # Specials (season 0)
   '(Season|Series|Book|Saison|Livre)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                   # Season|Series|Book|Saison|Livre xx
@@ -13,17 +13,15 @@ series_rx = [                                                                   
   '(?P<title>.*?) [\(]?(?P<season>(19|20)[0-9]{2})[\)]$',                                                                                                               #  2 # title (1932).ext
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  3 # 01 of 08 (no stacking for this one ?)
   '^(?P<show>.*?) - (?P<ep>[0-9]{1,3}) - (?P<title>.*)$']                                                                                                               #  4 # Serie - xx - title.ext
-anidb_rx  = [                                                                                                                                                           ######### AniDB Specials regex ### 
+#   . Add year-month-day   = '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',                                              #    # 2009-02-10 #   . Add day-month-year   = '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
+AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                                                                                                            ######### AniDB Specials regex ### 
   '(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAV) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                      #  5 # 001-099 Specials
   '(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                      #  6 # 100-149 Openings
   '(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                       #  7 # 150-199 Endings
   '(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                          #  8 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
   '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                        # 09 # 400-499 Others
   '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*?))?$']                 # 10 # E01 | E01-02| E01-E02 | E01E02 
-  #'(^|(?P<show>.*?)[ _\.\-]+)\((?P<season>(19|20)[0-9]{2})\)([ _\.\-]+(?P<title>.*?))$',                                                                               # __ # 1932 - title
 #roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                        # __ # look behind: (?<=S) < position < look forward: (?!S)
-AniDBOffset = [0, 100, 150, 200, 300, 400, 0]  #300                                                                    
-#   . Add year-month-day   = '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10 #   . Add day-month-year   = '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db']                                                                                                            # Skipped files (samples, trailers)                                                          
 ignore_exts     = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub']    # extensions dropped no warning (skipped list would be too long if showed)
@@ -106,13 +104,11 @@ def Log(entry, filename=None):
     print entry  # when ran from console ### Allow to display ints even if equal to None at times ### def xint(s):   return str(s) if s is not None and not s=="" else "None"
 
 ### import Plex token to have a library list to put hte library name on the log filename ###
-PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/?X-Plex-Token=ACCOUNT_TOKEN_HERE"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
-if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):                                  #Log("'X-Plex-Token.id' file present")
+PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/?X-Plex-Token=ACCOUNT_TOKEN_HERE"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):                                                    #Log("'X-Plex-Token.id' file present")
   with open(os.path.join(LOG_PATH, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL = PLEX_LIBRARY_URL.replace("ACCOUNT_TOKEN_HERE", token_file.read().strip())  #Log("PLEX_LIBRARY_URL: '%s', token: '%s'" % (PLEX_LIBRARY_URL, token))
-PLEX_LIBRARY = {}
 try:
-  result      = urllib2.urlopen(PLEX_LIBRARY_URL)
-  library_xml = etree.fromstring(result.read())
+  library_xml = etree.fromstring(urllib2.urlopen(PLEX_LIBRARY_URL).read())
   for library in library_xml.iterchildren('Directory'):
     for path in library.iterchildren('Location'):  PLEX_LIBRARY[path.get("path")] = library.get("title")
 except:  Log("Place correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
@@ -195,7 +191,7 @@ def clean_string(string, no_parenthesis=False):
   return " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                              # remove double spaces + words present in "whack" list #filter(None, string.split())
 
 ### Add files into Plex database ########################################################################
-def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx=""):
+def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}):
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title = title.title()  # capitalise if all caps or all lowecase and one space at least
   if ep==0:    episode, season = 1, 0                                                            # s01e00 and S00e00 => s00e01
   if not ep2:  ep2 = ep                                                                          # make ep2 same as ep for loop and tests
@@ -205,6 +201,8 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
   if year =="": year=None
   if not keep_zero_size_files and str(os.path.getsize(file))=="0":  return #do not keep dummy files by default unless this file present in Logs folder
   if     os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):  file = os.path.join(LOG_PATH,"dummy.mp4")                  #with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
+  if tvdb_mapping and ep  in tvdb_mapping:  season, ep  = tvdb_mapping[ep ]
+  if tvdb_mapping and ep2 in tvdb_mapping:  season, ep2 = tvdb_mapping[ep2]
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log("add_episode_into_plex() - BAZINGA - show empty, report logs to dev ASAP")
     else:
@@ -212,8 +210,7 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
       tv_show.parts.append(file); #
       mediaList.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = str(series_rx.index(rx)) if rx in series_rx else str(anidb_rx.index(rx)+len(series_rx)) if rx in anidb_rx else ""  # rank of the regex used from 0
-  if path:  Log("s%04de%03d%s \"%s\"%s%s" % (season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
-  else:     Log("\"%s\" s%04de%03d%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
+  Log("\"%s\" s%04de%03d%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
 
 ### Add files into array ################################################################################
 def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[]):
@@ -287,11 +284,24 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     else:  season = 1                                  # Season is 1 by default is season folder not present
     
     ### Capture title form anidb.id or use folder name ###
-    folder_show = reverse_path[0]
+    folder_show, guid, tvdb_mapping = reverse_path[0], "", {}
     if not re.search(".*? ?\[(anidb|tvdb|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
       for file_path in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tmdb.id", "Extras/tmdb.id", "tsdb.id", "Extras/tsdb.id", "imdb.id", "Extras/imdb.id"):
         if os.path.isfile(os.path.join(root, path, file_path)):
-          with open(os.path.join(root, path, file_path), 'r') as guid_file:  folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file_path))[0], guid_file.read().strip() )
+          with open(os.path.join(root, path, file_path), 'r') as guid_file:
+            guid = guid_file.read().strip()
+            folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file_path))[0], guid)
+          if guid and "tvdb" in file_path and not folder_season: 
+            try:
+              Log('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid)
+              result    = urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read()
+              tvdbanime =  etree.fromstring(result)
+              for episode in tvdbanime.xpath('Episode'):
+                SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
+                EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
+                absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
+                if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber))
+            except: Log("tvdb xml loading issue")
           break
       else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2]  if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
     Log("\"%s\"%s%s" % (folder_show if path else "Root Folder (show name will be taken from filename)", " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "") )
@@ -330,18 +340,18 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if not path:  show = clean_string( " ".join(words[:words.index(word)-1]) if len(words)-words.index(word)-1 >1 else "No title", False)               #  
         title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                      # take everything after supposed episode number
         break
-      if ep.isdigit():  add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None");  continue
+      if ep.isdigit():  add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping);  continue
       
       ### Check for series_rx + anidb_rx + roman_rx ###
       ep = clean_string(filename, False)
       for rx in series_rx + anidb_rx: # + roman_rx:        #if rx in roman_rx:  ep = clean_string(ep.rsplit(' ', 1)[1] if ' ' in ep else ep) ### move that to chech from the beginning ?
         match = re.search(rx, ep, re.IGNORECASE)
         if match:
-          show  = clean_string( match.group('show' )) if match.groupdict().has_key('show' ) and match.group('show' ) and not folder_use and show =="" else show # Mainly if file at root or _ folder
-          title = clean_string( match.group('title')) if match.groupdict().has_key('title') and match.group('title') else ""
-          if match.groupdict().has_key('season') and match.group('season'):  season = int(match.group('season'))
-          if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):  ep2    = match.group('ep2') 
-          if match.groupdict().has_key('ep'    ) and match.group('ep'    ):  ep     = match.group('ep')
+          if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show' )) # Mainly if file at root or _ folder
+          if match.groupdict().has_key('title' ) and match.group('title' ):               title  = clean_string( match.group('title'))
+          if match.groupdict().has_key('season') and match.group('season'):               season = int(match.group('season'))
+          if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):               ep2    = match.group('ep2') 
+          if match.groupdict().has_key('ep'    ) and match.group('ep'    ):               ep     = match.group('ep')
           elif rx not in anidb_rx[:-1]:                                               # if no ep in regex
             movie_list[season] = movie_list[season]+1 if season in movie_list else 1  #add movies using year as season, starting at 1
             ep = str(movie_list[season])                                              # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
@@ -353,7 +363,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
               ep, offset  = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )  # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
             ep = str( offset + int(ep))                                               # Add episode number to the offset, 01 by default from the match group above
           #elif rx in roman_rx:  ep = roman_to_int(ep)                                ### Roman numbers ### doesn't work is ep title present
-          add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx)
+          add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping)
           break
       if match: continue  # next file iteration
       
