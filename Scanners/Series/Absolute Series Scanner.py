@@ -311,7 +311,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     for file in files:                                                                                                                                                             # "files" is a list of media files full path, File is one of the entries
       filename                                       = os.path.splitext(os.path.basename(file))[0]                                                                                 # remove folders and extension(mp4)
       show, year, season, ep, ep2, title, folder_use = folder_show, folder_year, 1 if folder_season is None else folder_season, clean_string(filename, False), None, "", False     # misc, year      = VideoFiles.CleanName(filename_no_ext)
-      if ep==folder_show or len(files)==1 and ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title = "01", folder_show                   ### Movies ### 
+      if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];                                      #If using WebAOM (anidb rename) and movie on root
+      elif ep==folder_show or len(files)==1 and ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title = "01", folder_show                 ### Movies ### 
       elif folder_show:                                                                                                                                                            ### Remove folder name from file name to reduce complexity and favor folder name over filename ### (who put crappy folder names and clean filenames anyway?)  # if not at root and containing folder exist and has name different from "_" (scrubed to "")
         if ep.lower().startswith(folder_show.lower()):  ep, folder_use = ep[len(folder_show):].lstrip(), True                                                                      #remove cleansed folder name from cleansed filename and remove potential space
         if folder_season > 1:
@@ -337,7 +338,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           if ep in ("", "-") or ''.join(letter for letter in ep if letter.isdigit())=="" or path and misc.count(ep)>=3 or ep in clean_string(folder_show, True) and clean_string(filename, True).count(ep)!=2:  continue
           for prefix in ["ep", "e", "act", "s"]:                                                                                                            #
             if ep.startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season    # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
-        if not path:  show = clean_string( " ".join(words[:words.index(word)-1]) if len(words)-words.index(word)-1 >1 else "No title", False)               #  
+        if not path and not ep.isdigit():  show = clean_string( " ".join(words[:words.index(word)-1]) if len(words)-words.index(word)-1 >1 else "No title", False)               #  
         title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                      # take everything after supposed episode number
         break
       if ep.isdigit():  add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping);  continue
