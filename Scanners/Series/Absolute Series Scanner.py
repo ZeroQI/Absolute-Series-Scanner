@@ -20,7 +20,7 @@ AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                    
   '(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                       #  7 # 150-199 Endings
   '(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                          #  8 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
   '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                        # 09 # 400-499 Others
-  '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*?))?$']                 # 10 # E01 | E01-02| E01-E02 | E01E02 
+  '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$']                 # 10 # E01 | E01-02| E01-E02 | E01E02 
 #roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                        # __ # look behind: (?<=S) < position < look forward: (?!S)
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db']                                                                                                            # Skipped files (samples, trailers)                                                          
@@ -36,8 +36,8 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
   "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
   "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
-  "(BD 1280x720 Hi10P)", "(DVD_480p)","(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", 
-  "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p",
+  "(BD 1280x720 Hi10P)", "(DVD_480p)","(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", "x264-RedBlade",
+  "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p.BluRay",
   "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)",
   "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
   "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0",  "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5", "(Exiled_Destiny)",
@@ -67,9 +67,9 @@ CHARACTERS_MAP = { 14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 148
   50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,             #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
   50067:'O' , 50068:'Ô' , 50072:'O' , 50099:'o' , 50100:'o' , 50102:'o' , 50573:'o' , 50578:'OE', 50579:'oe', #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
   53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' ,                         #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
-  50071:'x' ,                                                                                                 #'×' ['\xc3', '\x97'],
-  50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                                                             #
-  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½', 52353:''}              #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8']  #	['\xcc', '\x81'] 
+  50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                                                 #'×' ['\xc3', '\x97'],
+  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½',              #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8']
+  52352:'', 52353:''}                                                                                         #'̀' ['\xcc', '\x80'] #	['\xcc', '\x81'] 
 
 ### LOG_PATH calculated once for all calls ####################################################################                        #platform = sys.platform.lower() if "platform" in dir(sys) and callable(getattr(sys,'platform')) else "" 
 LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       #
@@ -179,12 +179,12 @@ def clean_string(string, no_parenthesis=False):
   if no_parenthesis and "(" in string:                                     string = re.sub(r'\(.*?\)', ' ', string)                                                  # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
   elif "(" in string and not " (" in string:                               string = string.replace("(", " (")
   elif ")" in string and not ") " in string:                               string = string.replace(")", ") ")
-  if "[" in string or "{" in string:                                       string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', '', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
+  if "[" in string or "{" in string:                                       string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
   if string.endswith(", The"):                                             string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
   if string.endswith(", A"):                                               string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
   for word in whack_pre_clean:                                             string = replace_insensitive(string, word) if word.lower() in string.lower() else string  #
   for char in  FILTER_CHARS:                                               string = string.replace(char, " ") if char in string else string                          # replace os forbidden chars with spaces
-  if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string.split(" ")[-1]):  string = re.sub('[0-9a-fA-F]{8}', '', string) #" ".join(string.split(" ")[:-1])                                                 # CRCs removal
+  if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string):   string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                       # CRCs removal
   for rx in ("-", "_", "()", "[]", "{}"):                                  string = string[len(rx):   ] if string.startswith(rx) else string                         # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
   for rx in ("-", "_", "()", "[]", "{}", "- copy"):                        string = string[ :-len(rx) ] if string.lower().endswith  (rx) else string                 # In python 2.2.3: string = string.strip(string, " -_")
   string = encodeASCII(string)                                                                                                                                       # Translate them
@@ -293,7 +293,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
             folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file_path))[0], guid)
           if guid and "tvdb" in file_path and not folder_season: 
             try:
-              Log('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid)
+              Log("TVDB season mode enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % guid)
               result    = urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read()
               tvdbanime =  etree.fromstring(result)
               for episode in tvdbanime.xpath('Episode'):
@@ -311,14 +311,14 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     for file in files:                                                                                                                                                             # "files" is a list of media files full path, File is one of the entries
       filename                                       = os.path.splitext(os.path.basename(file))[0]                                                                                 # remove folders and extension(mp4)
       show, year, season, ep, ep2, title, folder_use = folder_show, folder_year, 1 if folder_season is None else folder_season, clean_string(filename, False), None, "", False     # misc, year      = VideoFiles.CleanName(filename_no_ext)
-      if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];                                      #If using WebAOM (anidb rename) and movie on root
+      if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];                                    #If using WebAOM (anidb rename) and movie on root
       elif ep==folder_show or len(files)==1 and ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title = "01", folder_show                 ### Movies ### 
       elif folder_show:                                                                                                                                                            ### Remove folder name from file name to reduce complexity and favor folder name over filename ### (who put crappy folder names and clean filenames anyway?)  # if not at root and containing folder exist and has name different from "_" (scrubed to "")
         if ep.lower().startswith(folder_show.lower()):  ep, folder_use = ep[len(folder_show):].lstrip(), True                                                                      #remove cleansed folder name from cleansed filename and remove potential space
         if folder_season > 1:
           for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                                      #"%s %d " % (folder_show, folder_season), 
             if ep.lower().startswith(prefix.lower()):  ep =  replace_insensitive(ep, prefix , "").lstrip()                                                                         # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
-        if ep.lower().startswith(("special", "picture drama", "omake")):                               season, title  = 0, ep.title()                                              ### If specials, season is 0 and if title empty use as title ### 
+        if ep.lower().startswith(("special", "picture drama", "omake")) or "omake" in ep.lower():                               season, title  = 0, ep.title()                                              ### If specials, season is 0 and if title empty use as title ### 
         
       words, misc = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower()                                  # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
       for word in words:                     
@@ -326,7 +326,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
         if "(" in ep and len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:5].isdigit():  ep = ep [1:5]                                                     # remove parenthesis from year in parenthesis
         if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                             # If separator in string
           if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):  ep="Skip"; break                                # if multi ep: make it non digit and exit so regex takes care of it
-          ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1]                           # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
+          ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1];                          # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
         if ep.endswith(("v1", "v2", "v3", "v4")):  ep=ep[:-2].rstrip('-')                                                                                   # 
         if ep.upper().startswith(("ed", "op", "ncop", "nced")): break                                                                                       # "OP/ED xx" goes to regex
         if "trailer" in ep:                                                             season, ep, title = 0, "201",               "Trailer";       break  # remove ?
@@ -338,7 +338,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
           if ep in ("", "-") or ''.join(letter for letter in ep if letter.isdigit())=="" or path and misc.count(ep)>=3 or ep in clean_string(folder_show, True) and clean_string(filename, True).count(ep)!=2:  continue
           for prefix in ["ep", "e", "act", "s"]:                                                                                                            #
             if ep.startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season    # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
-        if not path and ep.isdigit():  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)                                    # root folder and 
+        if not path and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)                                 # root folder and 
         title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                      # take everything after supposed episode number
         break
       if ep.isdigit():  add_episode_into_plex(mediaList, files, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping);  continue
