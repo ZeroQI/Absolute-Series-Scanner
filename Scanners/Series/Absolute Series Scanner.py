@@ -22,11 +22,11 @@ AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                    
   '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                        # 09 # 400-499 Others
   '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$']                 # 10 # E01 | E01-02| E01-E02 | E01E02 
 #roman_rx  = [".*? (L?X{0,3})(IX|IV|V?I{0,3})$"]                                                                                                                        # __ # look behind: (?<=S) < position < look forward: (?!S)
-ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', "VIDEO_TS"]# Filters.py  removed '\..*',        
+ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db']                                                                                                            # Skipped files (samples, trailers)                                                          
-ignore_exts     = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub']    # extensions dropped no warning (skipped list would be too long if showed)
+ignore_exts     = ['plexignore', 'ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub', 'vob', 'bup']    # extensions dropped no warning (skipped list would be too long if showed)
 video_exts      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', # DVD: 'ifo', 'bup', 'vob'
-  'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm']
+  'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']
 FILTER_CHARS    = "\\/:*?<>|~;_." #.                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', 
   'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
@@ -192,22 +192,27 @@ def clean_string(string, no_parenthesis=False):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}):
+  #useless: files root path
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title = title.title()  # capitalise if all caps or all lowecase and one space at least
   if ep==0:    episode, season = 1, 0                                                            # s01e00 and S00e00 => s00e01
   if not ep2:  ep2 = ep                                                                          # make ep2 same as ep for loop and tests
-  if ep > ep2 or show=="" and path:
+  if ep > ep2 or show=="":
     Log("Warning - show: '%s', s%02de%03d-%03d, file: '%s' has ep1 > ep2, or show empty" % (show, season, ep, ep2, file))
     ep2 = ep
   if year =="": year=None
-  if not keep_zero_size_files and str(os.path.getsize(file))=="0":  return #do not keep dummy files by default unless this file present in Logs folder
-  if     os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):  file = os.path.join(LOG_PATH,"dummy.mp4")                  #with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
+  if not keep_zero_size_files and str(os.path.getsize(file))=="0":  return                       #do not keep dummy files by default unless this file present in Logs folder
+  #if     os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):  file = os.path.join(LOG_PATH,"dummy.mp4")                  #with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
   if tvdb_mapping and ep  in tvdb_mapping:  season, ep  = tvdb_mapping[ep ]
   if tvdb_mapping and ep2 in tvdb_mapping:  season, ep2 = tvdb_mapping[ep2]
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log("add_episode_into_plex() - BAZINGA - show empty, report logs to dev ASAP")
     else:
       tv_show, tv_show.display_offset = Media.Episode(show, season, epn, title, year), (epn-ep)*100/(ep2-ep+1)
-      tv_show.parts.append(file); #
+      if os.path.basename(file).upper()=="VIDEO_TS.IFO":  
+        for item in os.listdir(os.path.dirname(file))
+          if item.upper()=="VTS_01_2.VOB":  continue
+          if item.upper().startswith("VTS_01_"):  tv_show.parts.append(os.path.join(os.path.dirname(file), item))
+      else:  tv_show.parts.append(file)
       mediaList.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = str(series_rx.index(rx)) if rx in series_rx else str(anidb_rx.index(rx)+len(series_rx)) if rx in anidb_rx else ""  # rank of the regex used from 0
   Log("\"%s\" s%04de%03d%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))  #Stack.Scan(path, files, mediaList, [])
@@ -233,7 +238,8 @@ def explore_path(root, subdir, file_tree, plexignore_files=[], plexignore_dirs=[
       for rx in ignore_files_rx+plexignore_files:                                                # Filter trailers and sample files
         if re.match(rx, item, re.IGNORECASE):  Log("File:   '%s' match %s: '%s'" % (fullpath[len(root):], "ignore_files_rx" if rx in ignore_files_rx else "plexignore_files", rx)); break
       else: 
-        if   '.' in item and item.lower().rsplit('.', 1)[1] in video_exts:       files.append(fullpath)
+        if   '.' in item and item.lower().rsplit('.', 1)[1] in video_exts:
+          if not item.lower().endswith(".ifo") or "VIDEO_TS.IFO"== item.upper():  files.append(fullpath) 
         elif '.' in item and item.lower().rsplit('.', 1)[1] not in ignore_exts:  Log("File:   '%s' extension not in video_exts" %(fullpath[len(root):]))                                        ### files
   dirs.sort(); files.sort(key=natural_sort_key)
   for item in dirs:
@@ -252,26 +258,36 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
 
   ### Rename log file with library name if XML file can be accessed ###
   global LOG_FILE_LIBRARY
-  LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE #LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
-  Log(("=== Library Scan: \"%s\", Root: \"%s\", Skipped mediums ===" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id file missing", root)).ljust(157, '='))
-  file_tree = {}; explore_path(root, root, file_tree)                                                         # Build file_tree which output skipped medium in logs
-  with open(os.path.join(LOG_PATH, LOG_FILE_LIBRARY[:-4]+" - filelist"+LOG_FILE_LIBRARY[-4:]), 'w') as file:  ### Create a log with the library files relative path in logs folder for T/S 
-    for folder in sorted(file_tree):                                                                          # convert to ansi, then notepad++ to replace \r\n to \n if needed + batch to recreate dummy library for tests
-      for filename in file_tree[folder]:  file.write( filename.replace(root, "")[1:] + "\n")                  # for each folder, for each file, write the relative path with windows line ending 
+  LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  #LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
+  with open(os.path.join(LOG_PATH, LOG_FILE_LIBRARY), 'w') as file:  file.write("")                                    #reset log file every run
+  Log(("=== Library Scan: \"%s\", Root: \"%s\"" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id file missing", root)).ljust(157, '='))
+  if no_timestamp:          Log("'no_timestamp'         file in Logs folder, Log creation time: " + time.strftime("%Y-%m-%d %H:%M:%S"))
+  if keep_zero_size_files:  Log("'keep_zero_size_files' file in Logs folder, used mainly for debugging")
+  Log(("=== Skipped mediums ===").ljust(157, '='))
+  file_tree = {}; explore_path(root, root, file_tree)                                                                  # Build file_tree which output skipped medium in logs
+  with open(os.path.join(LOG_PATH, LOG_FILE_LIBRARY[:-4]+" - filelist"+LOG_FILE_LIBRARY[-4:]), 'w') as file:           ### Create a log with the library files relative path in logs folder for T/S 
+    for folder in sorted(file_tree):                                                                                   # convert to ansi, then notepad++ to replace \r\n to \n if needed + batch to recreate dummy library for tests
+      for filename in file_tree[folder]:  file.write( filename.replace(root, "")[1:] + "\n")                           # for each folder, for each file, write the relative path with windows line ending 
   Log("=== filelist created - now processing it ===".ljust(157, '='))
   
   ### Main loop for folders ###
   for path in sorted(file_tree):                                                                              # Loop to add all series while on the root folder Scan call, which allows subfolders to work
-    files, folder_year, folder_season, reverse_path, AniDB_op, counter, folder_show = file_tree[path], None, None, list(reversed(Utils.SplitPath(path))), {}, 1, None #
+    files, folder_year, folder_season, reverse_path, AniDB_op, counter, folder_show, disc = file_tree[path], None, None, list(reversed(Utils.SplitPath(path))), {}, 1, None, False #
     
     ### bluray folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
     if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and paths[1].lower() == 'bdmv':
       if reverse_path[0].lower() == 'stream': reverse_path.pop(0)
       if reverse_path[0].lower() == 'bdmv' :  reverse_path.pop(0)
-      ep = clean_string(reverse_path[0], True)
+      ep, disc = clean_string(reverse_path[0], True), True
       if len(reverse_path)>1:  reverse_path.pop(0)
-      Log("BluRay folder detected - using as equivalent to filename ep: '%s', reverse_path: '%s'" % (ep, reverse_path[0]))
+      Log("BluRay folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
     
+    ### DVD folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
+    if "VIDEO_TS.IFO" in str(files).upper():
+      if reverse_path[0].lower() == 'video_ts': reverse_path.pop(0)
+      ep, disc = clean_string(reverse_path[0], True), True
+      if len(reverse_path)>1:  reverse_path.pop(0)
+      
     ### Extract season folder to reduce complexity and use folder as serie name ###
     for folder in reverse_path[:-1]:                   # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
       for rx in season_rx :                            # in anime, more specials folders than season folders, so doing it first
@@ -309,7 +325,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
     ### Main File loop to start adding files now ###
     movie_list, counter = {}, 500
     for file in files:                                                                                                                                                             # "files" is a list of media files full path, File is one of the entries
-      filename                                       = os.path.splitext(os.path.basename(file))[0]                                                                                 # remove folders and extension(mp4)
+      filename = os.path.splitext(os.path.basename(file))[0] if not disc else ep
       show, year, season, ep, ep2, title, folder_use = folder_show, folder_year, 1 if folder_season is None else folder_season, clean_string(filename, False), None, "", False     # misc, year      = VideoFiles.CleanName(filename_no_ext)
       if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];                                    #If using WebAOM (anidb rename) and movie on root
       elif ep==folder_show or len(files)==1 and ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title = "01", folder_show                 ### Movies ### 
