@@ -209,7 +209,7 @@ def add_episode_into_plex(mediaList, files, file, root, path, show, season=1, ep
     else:
       tv_show, tv_show.display_offset = Media.Episode(show, season, epn, title, year), (epn-ep)*100/(ep2-ep+1)
       if os.path.basename(file).upper()=="VIDEO_TS.IFO":  
-        for item in os.listdir(os.path.dirname(file))
+        for item in os.listdir(os.path.dirname(file)):
           if item.upper()=="VTS_01_2.VOB":  continue
           if item.upper().startswith("VTS_01_"):  tv_show.parts.append(os.path.join(os.path.dirname(file), item))
       else:  tv_show.parts.append(file)
