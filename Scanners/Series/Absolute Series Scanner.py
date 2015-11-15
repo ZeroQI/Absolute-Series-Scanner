@@ -85,7 +85,8 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
                           '/volume2/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, if migrated a second raid volume as unique volume in new box         
                           '/raid0/data/module/Plex/sys/Plex Media Server/Logs',                            # Thecus
-                          '/raid0/data/PLEX_CONFIG/Plex Media Server/Logs' ]}                              # Thecus Plex community version
+                          '/raid0/data/PLEX_CONFIG/Plex Media Server/Logs',                                # Thecus Plex community version
+                          '/config/Library/Application Support/Plex Media Server/Logs']}                   # Docker linuxserver/plex
 platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
 for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
   if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
