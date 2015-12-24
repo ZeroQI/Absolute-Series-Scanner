@@ -4,7 +4,7 @@ import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Medi
 from lxml import etree
 season_rx = [                                                                                                                                                           ### Seasons folder + skipped folders ### #http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
   'Specials',                                                                                                                                                           # Specials (season 0)
-  '(Season|Series|Book|Saison|Livre)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                   # Season|Series|Book|Saison|Livre xx
+  '(Season|Series|Book|Saison|Livre|Staffel)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                   # Season|Series|Book|Saison|Livre xx
   '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                                # 1a Stagione
   '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*']                                                                                                                                 # Arc|Story arc ...   #The last line matches are dropped
 series_rx = [                                                                                                                                                           ######### Series regex - "serie - xxx - title" ###
