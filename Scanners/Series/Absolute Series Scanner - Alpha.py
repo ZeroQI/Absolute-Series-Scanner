@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Media #import Stack ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 from lxml import etree
-### Log variables, regex, skipped folders, words to remove, character maps ###
-season_rx = ['Specials', '(Season|Series|Book|Saison|Livre)[ _\-]*(?P<season>[0-9]{1,2}).*', '(?P<season>[0-9]{1,2})a? Stagione.*', '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*|_?[Mm]isc'] ### Seasons folder + skipped folders #The last line matches are dropped ### #http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
+### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
+season_rx = [                                                                                                                                                           ### Seasons Folders 
+ 'Specials',                                                                                                                                                            # Specials (season 0)
+ '(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                  # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
+ '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                                 # ##a Stagione
+ '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*' ]                                                                                                                                 # Last entry in array, folder name droped but files kept: Story, Arc, Ark, Video                                                                          #
 series_rx = [                                                                                                                                                           ######### Series regex - "serie - xxx - title" ###
-  '(^|(?P<show>.*?)[ _\.\-]+)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[-_][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                        #  0 # 1x01
+  '(^|(?P<show>.*?)[ _\.\-]+)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[_\-][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                       #  0 # 1x01
   '(^|(?P<show>.*?)[ _\.\-]+)s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([ _\.\-]|(e|ep)|[ _\.\-](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*?)$)',#  1 # s01e01-02 | ep01-ep02 | e01-02
-  '(?P<title>.*?) [\(]?(?P<season>(19|20)[0-9]{2})[\)]$',                                                                                                               #  2 # title (1932).ext
+  '(?P<title>.*?) [(]?(?P<season>(19|20)[0-9]{2})[)]$',                                                                                                                 #  2 # title (1932).ext
+  '[(]?(?P<season>(19|20)[0-9]{2})[)]?[ _\.\-]+(?P<title>.*?)$',                                                                                                        #  2 # (1932) title.ext
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  3 # 01 of 08 (no stacking for this one ?)
   '^(?P<show>.*?) - (?P<ep>[0-9]{1,3}) - (?P<title>.*)$']                                                                                                               #  4 # Serie - xx - title.ext
 AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                                                                                                            ######### AniDB Specials regex ### 
@@ -16,7 +21,7 @@ AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                    
   '(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                          #  8 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
   '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                        # 09 # 400-499 Others
   '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$']                  # 10 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
-ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
+ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '.plexignore']                                                       # Skipped files (samples, trailers)                                                          
 ignore_exts     = ['ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub', 'vob', 'bup', 'id']    # extensions dropped no warning (skipped list would be too long if showed)
 video_exts      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', # DVD: 'ifo', 'bup', 'vob'
@@ -194,147 +199,146 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
   Log("\"%s\" s%04de%03d%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))
 
 ### Look for episodes ###################################################################################
-def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs):
+def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
 
-  root_call = True if path == "" else False
   global LOG_FILE_LIBRARY;  LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  ### Rename log file with library name if XML file can be accessed or token file present in log folder. LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
-  if root_call:
+  root_call = True if path == "" else False
+  if root_call :
     Log(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
-    Log("keep_zero_size_files: '%s', no_timestamp: '%s'" % (str(keep_zero_size_files), str(no_timestamp)))
-  elif len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files
+    Log("keep_zero_size_files: '%s'" % str(keep_zero_size_files))
+    Log("no_timestamp:         '%s'" % str(no_timestamp        ))
+    Log("season_from_folder:   '%s'" % str(season_from_folder  ))
+    Log("".ljust(157, '='))
+  elif len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   Log("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log("".ljust(157, '='))  # Exit every other iteration than the root scan
-  filelist = [path]                                                           # filelist contain list of folder's path relative to root
-  while len(filelist)>0:                                                      # loop through path filelist   #for abs_path, subdirs, files in os.walk(os.path.join(root, path)) if path=="" else [(os.path.join(root, path), [], [os.path.basename(file) for file in files])]:
-    path     = filelist.pop(0)                                                # relative path, no / at the end nor front
-    if root_call and path:                                                    # files and subdirs have to be generated if not provided (initial scanner call on path "" and non initial scanner call since not processing subfolders)
-      files   = os.listdir(  os.path.join(root, path) )                       # files contain files and folders, subdirs empty (for now)
-      subdirs = [dir for dir in files if os.path.isdir(os.path.join(root, path, dir))]
-    else:  files = [os.path.basename(file) for file in files]
-    for subdir in subdirs:                                                    #
-      if root_call and path:  files.remove(subdir)                            #
-      for rx in ignore_dirs_rx:                                               # if initial scan and root folder
-        if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log("\"%s\" match ignore_dirs_rx: \"%s\"" % (path, rx));  break  #skip dirs to be ignored
-      else:  filelist.append(os.path.join(root, path, subdir)[len(root)+1:])  # Add subdirs to filelist 
-    if len(files)==0: continue                                                # skip if no files
-    reverse_path = list(reversed(Utils.SplitPath(path)))
-    
-    ### bluray/DVD folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
-    if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
-      for temp in ['stream', 'bdmv', 'video_ts']:
-        if reverse_path[0].lower() == temp:  reverse_path.pop(0)
-      ep, disc = clean_string(reverse_path[0], True), True
-      if len(reverse_path)>1:  reverse_path.pop(0)
-      Log("BluRay/DVD folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
-    else: disc = False
-    
-    ### Extract season folder to reduce complexity and use folder as serie name ###
-    folder_season =  None
-    for last_folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-      for rx in season_rx :                               # in anime, more specials folders than season folders, so doing it first
-        match = re.match(rx, last_folder, re.IGNORECASE)  #
-        if match:
-          if rx!=season_rx[-1]:  folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #get season number but Skip last entry in seasons (skipped folders)
-          reverse_path.remove(last_folder);  break        # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
-      if match and rx!=season_rx[-1]:  break              # cascade break if not skipped folder since season number found
-    
-    ### Display Serie name and skip grouped serie when path is not empty ###
-    folder_show = reverse_path[0] if reverse_path else ""
-    if path=="":                              Log("Root Folder (show name will be taken from filename)")     
-    elif root_call and len(reverse_path)!=2:  del subdirs[:-0]; continue  #root scan , folder at root or 1 level lower and season folder, anyhow not grouped, not sure it actually discard subfolder calls
-    else:                                     Log("\"%s\"%s%s%s" % (folder_show if path else "Root Folder (show name will be taken from filename)", " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "", " grouped" if root_call else "") )
-    
-    ### Capture title from anidb.id or use folder name,  ###
-    guid, tvdb_mapping = "", {}
-    if not re.search(".*? ?\[(anidb|tvdb|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
-      for file in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tmdb.id", "Extras/tmdb.id", "tsdb.id", "Extras/tsdb.id", "imdb.id", "Extras/imdb.id"):
-        if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), file)):
-          with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
-            guid        = guid_file.read().strip()
-            folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file))[0], guid)
-          if guid and "tvdb" in file and not folder_season and not (root_call and path  and len(reverse_path)==2): 
-            try:
-              Log("TVDB season mode enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % guid)
-              tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
-              for episode in tvdbanime.xpath('Episode'):
-                SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
-                EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
-                absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
-                if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber))
-            except: Log("tvdb xml loading issue")
-          break
-      else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
-          
-    ### File main loop ###
-    movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
-    for file in files:
-      for rx in ignore_files_rx:                                                                                        # Filter trailers and sample files
-        match=re.match(rx, file, re.IGNORECASE)
-        if match:  Log("File:   '%s' match ignore_files_rx: '%s'" % (file, rx));  break
-      ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
-      if ext not in video_exts + ignore_exts and not match:   Log("File:   '%s' extension not in video_exts" % file)
-      if ext not in video_exts or ext=="ifo" and not file.upper()=="VIDEO_TS.IFO" or match:  continue
-       
-      filename, year                           = os.path.splitext(os.path.basename(file))[0] if not disc else ep, ""
-      show, season, ep, ep2, title, folder_use = folder_show, folder_season if folder_season else 1, clean_string(filename, False), None, "", False
-      if not path and " - Complete Movie" in ep:                                                                                     ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];                                    #If using WebAOM (anidb rename) and movie on root
-      elif ep==folder_show or len(files)==1 and ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title       = "01", folder_show            ### Movies ### 
-      elif folder_show:                                                                                                                                                             ### Remove folder name from file name to reduce complexity and favor folder name over filename ### (who put crappy folder names and clean filenames anyway?)  # if not at root and containing folder exist and has name different from "_" (scrubed to "")
-        if ep.lower().startswith(folder_show.lower()):  ep, folder_use = ep[len(folder_show):].lstrip(), True                                                                       #remove cleansed folder name from cleansed filename and remove potential space
-        if folder_season > 1:                                                                                                                                                       #
-          for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                                       #"%s %d " % (folder_show, folder_season), 
-            if ep.lower().startswith(prefix.lower()):                                              ep =  replace_insensitive(ep, prefix , "").lstrip()                                                                          # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
-        if ep.lower().startswith(("special", "picture drama", "omake")) or "omake" in ep.lower():  season, title  = 0, ep.title()                                                   ### If specials, season is 0 and if title empty use as title ### 
-      words, misc = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower()                                                           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
-      for word in words:                                                                                                                                                            #
-        ep=word.lower().strip()                                                                                                                                                     # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
-        if "(" in ep and len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:5].isdigit():                        ep = ep [1:5]                                                        # remove parenthesis from year in parenthesis
-        if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                                                     # If separator in string
-          if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):      ep="Skip"; break                                                     # if multi ep: make it non digit and exit so regex takes care of it
-          ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1];                                                  # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
-        if ep.endswith(("v1", "v2", "v3", "v4")):                                                               ep=ep[:-2].rstrip('-')                                              # 
-        if ep.upper().startswith(("ed", "op", "ncop", "nced")):                                                 break                                                               # "OP/ED xx" goes to regex
-        if "trailer" in ep:                                                                                     season, ep, title = 0, "201",               "Trailer";       break  # remove ?
-        if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                          season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break  # ep 12.5 = "1" title "Special 12.5"
-        if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:1])==folder_season):  season, ep = int(ep[0:2]), ep[2:4]                                  # 1206 could be season 12 episode 06  #Get assigned from left ot right
-        elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                                            # take everything after supposed episode number
-        else:                                                                                                                                                                       # 
-          if ''.join(letter for letter in ep if letter.isdigit())=="": continue                                                                                                     #
-          if ep in ("", "-") or ''.join(letter for letter in ep if letter.isdigit())=="" or path and misc.count(ep)>=3 or ep in clean_string(folder_show, True) and clean_string(filename, True).count(ep)!=2:  continue
-          for prefix in ["ep", "e", "act", "s"]:                                                                                                                                    #
-            if ep.startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season                            # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
-        if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)  # root folder and 
-        title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                                              # take everything after supposed episode number
+  for subdir in subdirs:                                                    #
+    for rx in ignore_dirs_rx:                                               # if initial scan and root folder
+      if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log("\"%s\" match ignore_dirs_rx: \"%s\"" % (path, rx));  break  #skip dirs to be ignored
+  reverse_path = list(reversed(Utils.SplitPath(path)))
+  
+  ### bluray/DVD folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
+  if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
+    for temp in ['stream', 'bdmv', 'video_ts']:
+      if reverse_path[0].lower() == temp:  reverse_path.pop(0)
+    ep, disc = clean_string(reverse_path[0], True), True
+    if len(reverse_path)>1:  reverse_path.pop(0)
+    Log("BluRay/DVD folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
+  else: disc = False
+  
+  ### Extract season folder to reduce complexity and use folder as serie name ###
+  folder_season =  None
+  for last_folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
+    for rx in season_rx :                               # in anime, more specials folders than season folders, so doing it first
+      match = re.match(rx, last_folder, re.IGNORECASE)  #
+      if match:
+        if rx!=season_rx[-1]:  folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #get season number but Skip last entry in seasons (skipped folders)
+        reverse_path.remove(last_folder);  break        # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
+    if match and rx!=season_rx[-1]:  break              # cascade break if not skipped folder since season number found
+    if len(reverse_path)>1 and path.count("/"):         #if grouping folders, skip and add them as additionnal folders
+      Log("Grouping folder: '%s'" % path);  
+      Log("".ljust(157, '-'))
+      return
+  
+  ### Display Serie name and skip grouped serie when path is not empty ###
+  folder_show = reverse_path[0] if reverse_path else ""
+  if path=="":                              Log("Root Folder (show name will be taken from filename)")     
+  elif root_call and len(reverse_path)!=2:  del subdirs[:-0]; return  #root scan , folder at root or 1 level lower and season folder, anyhow not grouped, not sure it actually discard subfolder calls
+  else:                                     Log("\"%s\"%s%s%s" % (folder_show if path else "Root Folder (show name will be taken from filename)", " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "", " grouped" if root_call else "") )
+  
+  ### Capture title from anidb.id or use folder name,  ###
+  guid, tvdb_mapping = "", {}
+  if not re.search(".*? ?\[(anidb|tvdb|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
+    for file in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tmdb.id", "Extras/tmdb.id", "tsdb.id", "Extras/tsdb.id", "imdb.id", "Extras/imdb.id"):
+      if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), file)):
+        with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
+          guid        = guid_file.read().strip()
+          folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file))[0], guid)
+        if guid and "tvdb" in file and not folder_season and not (root_call and path  and len(reverse_path)==2): 
+          try:
+            Log("TVDB season mode enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % guid)
+            tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
+            for episode in tvdbanime.xpath('Episode'):
+              SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
+              EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
+              absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
+              if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber))
+          except: Log("tvdb xml loading issue")
         break
-      if ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping);  continue
-      
-      ### Check for Regex: series_rx + anidb_rx ###
-      ep = clean_string(filename, False)  # restart matching from filename
-      for rx in series_rx + anidb_rx:
-        match = re.search(rx, ep, re.IGNORECASE)
-        if match:
-          if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:                show   = clean_string( match.group('show' ))  # Mainly if file at root or _ folder
-          if match.groupdict().has_key('title' ) and match.group('title' ):                             title  = clean_string( match.group('title'))
-          if match.groupdict().has_key('season') and match.group('season') and not season_from_folder:  season = int(match.group('season'))
-          if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):                             ep2    = match.group('ep2') 
-          if match.groupdict().has_key('ep'    ) and match.group('ep'    ):                             ep     = match.group('ep')
-          elif rx not in anidb_rx[:-1]:                                                                 movie_list[season], ep = movie_list[season]+1 if season in movie_list else 1, str(movie_list[season])  # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
-          else:                                                                                         ep     = "01"                                                             #No ep number, anidb usefull ?????
-          if rx in anidb_rx[:-1]:                                                                                                       ### AniDB Specials ################################################################
-            offset, season = AniDBOffset [ anidb_rx.index(rx) ], 0                                                                      # offset = 100 for OP, 150 for ED, etc... #Log("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
-            if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                    ### OP/ED with letter version Example: op2a
-              AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                    # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have here
-              ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
-            ep = str( offset + int(ep))                                                                                                 # Add episode number to the offset, 01 by default from the match group above
-          add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping); 
-          break
-      if match: continue  # next file iteration
-      
-      ### Ep no found, adding as season 0 episode 501+ ###
-      if "-" in ep and len(ep.split("-"))>1:  show, title = ep.split("-")[0].rstrip(), ep.split("-")[1]
-      for word in ep.split(" "):                                                      #
-        if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
-      counter = counter+1                                          #                    #
-      add_episode_into_plex(mediaList, file, root, path , show, 0, counter, ep.strip(), year, None, "")
-    Log("".ljust(157, '-'))
-    if not root_call:  break
+    else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+        
+  ### File main loop ###
+  movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
+  for file in files:
+    for rx in ignore_files_rx:                                                                                        # Filter trailers and sample files
+      match=re.match(rx, file, re.IGNORECASE)
+      if match:  Log("File:   '%s' match ignore_files_rx: '%s'" % (file, rx));  break
+    ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
+    if ext not in video_exts + ignore_exts and not match:   Log("File:   '%s' extension not in video_exts" % file)
+    if ext not in video_exts or ext=="ifo" and not file.upper()=="VIDEO_TS.IFO" or match:  continue
+    
+    filename, year                           = os.path.splitext(os.path.basename(file))[0] if not disc else ep, ""
+    show, season, ep, ep2, title, folder_use = folder_show, folder_season if folder_season else 1, clean_string(filename, False), None, "", False
+    if not path and " - Complete Movie" in ep:                                                                                     ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];                                    #If using WebAOM (anidb rename) and movie on root
+    elif ep==folder_show or len(files)==1 and ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title       = "01", folder_show            ### Movies ### 
+    elif folder_show:                                                                                                                                                             ### Remove folder name from file name to reduce complexity and favor folder name over filename ### (who put crappy folder names and clean filenames anyway?)  # if not at root and containing folder exist and has name different from "_" (scrubed to "")
+      if ep.lower().startswith(folder_show.lower()):  ep, folder_use = ep[len(folder_show):].lstrip(), True                                                                       #remove cleansed folder name from cleansed filename and remove potential space
+      if folder_season > 1:                                                                                                                                                       #
+        for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                                       #"%s %d " % (folder_show, folder_season), 
+          if ep.lower().startswith(prefix.lower()):                                              ep =  replace_insensitive(ep, prefix , "").lstrip()                                                                          # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
+      if ep.lower().startswith(("special", "picture drama", "omake")) or "omake" in ep.lower():  season, title  = 0, ep.title()                                                   ### If specials, season is 0 and if title empty use as title ### 
+    words, misc = filter(None, ep.split()), " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower()                                                           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+    for word in words:                                                                                                                                                            #
+      ep=word.lower().strip()                                                                                                                                                     # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
+      if "(" in ep and len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:5].isdigit():                        ep = ep [1:5]                                                        # remove parenthesis from year in parenthesis
+      if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                                                     # If separator in string
+        if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):      ep="Skip"; break                                                     # if multi ep: make it non digit and exit so regex takes care of it
+        ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1];                                                  # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
+      if ep.endswith(("v1", "v2", "v3", "v4")):                                                               ep=ep[:-2].rstrip('-')                                              # 
+      if ep.upper().startswith(("ed", "op", "ncop", "nced")):                                                 break                                                               # "OP/ED xx" goes to regex
+      if "trailer" in ep:                                                                                     season, ep, title = 0, "201",               "Trailer";       break  # remove ?
+      if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                          season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break  # ep 12.5 = "1" title "Special 12.5"
+      if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:1])==folder_season):  season, ep = int(ep[0:2]), ep[2:4]                                  # 1206 could be season 12 episode 06  #Get assigned from left ot right
+      elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                                            # take everything after supposed episode number
+      else:                                                                                                                                                                       # 
+        if ''.join(letter for letter in ep if letter.isdigit())=="": continue                                                                                                     #
+        if ep in ("", "-") or ''.join(letter for letter in ep if letter.isdigit())=="" or path and misc.count(ep)>=3 or ep in clean_string(folder_show, True) and clean_string(filename, True).count(ep)!=2:  continue
+        for prefix in ["ep", "e", "act", "s"]:                                                                                                                                    #
+          if ep.startswith(prefix) and len(ep)>len(prefix) and ep[len(prefix):].isdigit(): ep, season = ep[len(prefix):], 0 if prefix=="s" else season                            # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'" 
+      if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)  # root folder and 
+      title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                                              # take everything after supposed episode number
+      break
+    if ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping);  continue
+    
+    ### Check for Regex: series_rx + anidb_rx ###
+    ep = clean_string(filename, False)  # restart matching from filename
+    for rx in series_rx + anidb_rx:
+      match = re.search(rx, ep, re.IGNORECASE)
+      if match:
+        if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:                show   = clean_string( match.group('show' ))  # Mainly if file at root or _ folder
+        if match.groupdict().has_key('title' ) and match.group('title' ):                             title  = clean_string( match.group('title'))
+        if match.groupdict().has_key('season') and match.group('season') and not season_from_folder:  season = int(match.group('season'))
+        if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):                             ep2    = match.group('ep2') 
+        if match.groupdict().has_key('ep'    ) and match.group('ep'    ):                             ep     = match.group('ep')
+        elif rx not in anidb_rx[:-1]:                                                                 
+          movie_list[season] = movie_list[season]+1 if season in movie_list else 1  # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
+          ep                 = str(movie_list[season])
+        else:                                                                                         ep     = "01"                                                             #No ep number, anidb usefull ?????
+        if rx in anidb_rx[:-1]:                                                                                                       ### AniDB Specials ################################################################
+          offset, season = AniDBOffset [ anidb_rx.index(rx) ], 0                                                                      # offset = 100 for OP, 150 for ED, etc... #Log("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
+          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                    ### OP/ED with letter version Example: op2a
+            AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                    # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+            ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+          ep = str( offset + int(ep))                                                                                                 # Add episode number to the offset, 01 by default from the match group above
+        add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping); 
+        break
+    if match: continue  # next file iteration
+    
+    ### Ep no found, adding as season 0 episode 501+ ###
+    if "-" in ep and len(ep.split("-"))>1:  show, title = ep.split("-")[0].rstrip(), ep.split("-")[1]
+    for word in ep.split(" "):                                                      #
+      if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
+    counter = counter+1                                          #                    #
+    add_episode_into_plex(mediaList, file, root, path , show, 0, counter, ep.strip(), year, None, "")
+  Log("".ljust(157, '-'))
   Log("")
+ 
