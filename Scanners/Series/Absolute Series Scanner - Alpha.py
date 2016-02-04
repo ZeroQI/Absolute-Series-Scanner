@@ -202,19 +202,18 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
 
   global LOG_FILE_LIBRARY;  LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  ### Rename log file with library name if XML file can be accessed or token file present in log folder. LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
-  root_call = True if path == "" else False
-  if root_call :
+  if path == "" :
     Log(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
     Log("keep_zero_size_files: '%s'" % str(keep_zero_size_files))
     Log("no_timestamp:         '%s'" % str(no_timestamp        ))
     Log("season_from_folder:   '%s'" % str(season_from_folder  ))
     Log("".ljust(157, '='))
-  elif len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   Log("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log("".ljust(157, '='))  # Exit every other iteration than the root scan
   for subdir in subdirs:                                                    #
     for rx in ignore_dirs_rx:                                               # if initial scan and root folder
-      if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log("\"%s\" match ignore_dirs_rx: \"%s\"" % (path, rx));  break  #skip dirs to be ignored
+      if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log("\"%s\" match ignore_dirs_rx: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
   reverse_path = list(reversed(Utils.SplitPath(path)))
+  if len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
   ### bluray/DVD folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
   if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
@@ -235,15 +234,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         reverse_path.remove(last_folder);  break        # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
     if match and rx!=season_rx[-1]:  break              # cascade break if not skipped folder since season number found
     if len(reverse_path)>1 and path.count("/"):         #if grouping folders, skip and add them as additionnal folders
-      Log("Grouping folder: '%s'" % path);  
+      Log("Grouping folder: '%s' skipped, eed to be added as root folder if needed" % path);  
       Log("".ljust(157, '-'))
       return
-  
-  ### Display Serie name and skip grouped serie when path is not empty ###
   folder_show = reverse_path[0] if reverse_path else ""
-  if path=="":                              Log("Root Folder (show name will be taken from filename)")     
-  elif root_call and len(reverse_path)!=2:  del subdirs[:-0]; return  #root scan , folder at root or 1 level lower and season folder, anyhow not grouped, not sure it actually discard subfolder calls
-  else:                                     Log("\"%s\"%s%s%s" % (folder_show if path else "Root Folder (show name will be taken from filename)", " from foldername: \"%s\"" % path if path!=folder_show else "", ", Season: \"%d\"" % (folder_season) if folder_season is not None else "", " grouped" if root_call else "") )
   
   ### Capture title from anidb.id or use folder name,  ###
   guid, tvdb_mapping = "", {}
@@ -253,7 +247,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
           guid        = guid_file.read().strip()
           folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file))[0], guid)
-        if guid and "tvdb" in file and not folder_season and not (root_call and path  and len(reverse_path)==2): 
+        if guid and "tvdb" in file and not folder_season and not (path  and len(reverse_path)==2): 
           try:
             Log("TVDB season mode enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % guid)
             tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
