@@ -23,7 +23,7 @@ AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                    
   '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$']                  # 10 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '.plexignore']                                                       # Skipped files (samples, trailers)                                                          
-ignore_exts     = ['ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub', 'vob', 'bup', 'id']    # extensions dropped no warning (skipped list would be too long if showed)
+#ignore_exts     = ['ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub', 'vob', 'bup', 'id']    # extensions dropped no warning (skipped list would be too long if showed)
 video_exts      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', # DVD: 'ifo', 'bup', 'vob'
   'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']
 FILTER_CHARS    = "\\/:*?<>|~;_." #.                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
@@ -86,31 +86,13 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '/raid0/data/module/Plex/sys/Plex Media Server/Logs',                            # Thecus
                           '/raid0/data/PLEX_CONFIG/Plex Media Server/Logs',                                # Thecus Plex community version
                           '/config/Library/Application Support/Plex Media Server/Logs']}                   # Docker linuxserver/plex
-platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
-for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
-  if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
-  if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
-else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(absolute_path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
-LOG_FILE_LIBRARY = LOG_FILE = 'Plex Media Scanner (custom ASS).log'                # Log filename library will include the library name, LOG_FILE not and serve as reference
 
-no_timestamp         = os.path.isfile(os.path.join(LOG_PATH, "no_timestamp"        ))
-keep_zero_size_files = os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files"))
-season_from_folder   = os.path.isfile(os.path.join(LOG_PATH, "season_from_folder"  ))
-
+### Log message in log file #######################################################################################################################################
 def Log(entry, filename=None): 
   with open(os.path.join(LOG_PATH, filename if filename else LOG_FILE_LIBRARY), 'a') as file:
     file.write(("" if no_timestamp else time.strftime("%Y-%m-%d %H:%M:%S") + " ") + entry + "\n")
 
-PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/?X-Plex-Token=ACCOUNT_TOKEN_HERE"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
-if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):                                                    #Log("'X-Plex-Token.id' file present")
-  with open(os.path.join(LOG_PATH, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL = PLEX_LIBRARY_URL.replace("ACCOUNT_TOKEN_HERE", token_file.read().strip())  #Log("PLEX_LIBRARY_URL: '%s', token: '%s'" % (PLEX_LIBRARY_URL, token))
-try:
-  library_xml = etree.fromstring(urllib2.urlopen(PLEX_LIBRARY_URL).read())
-  for library in library_xml.iterchildren('Directory'):
-    for path in library.iterchildren('Location'):  PLEX_LIBRARY[path.get("path")] = library.get("title")
-except:  Log("Place correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
-
-### replace a string by another while retaining original string case ###############################################################################
+### replace a string by another while retaining original string case ##############################################################################################
 def replace_insensitive (ep, word, sep=" "):
   if ep.lower()==word.lower(): return ""
   position = ep.lower().find(word.lower())
@@ -180,10 +162,10 @@ def clean_string(string, no_parenthesis=False):
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}):
   file=os.path.join(root,path,file);                                                                                  #
   if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                     # do not keep dummy files by default unless this file present in Logs folder
-  if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):                   file = os.path.join(LOG_PATH,"dummy.mp4")  # with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
+  #if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):                   file = os.path.join(LOG_PATH,"dummy.mp4")  # with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
   if title==title.lower() or title==title.upper() and title.count(" ")>0:  title = title.title()                      # capitalise if all caps or all lowercase and one space at least
-  if not ep2 or ep > ep2:                                                  ep2                   = ep                 #  make ep2 same as ep for loop and tests
   if ep==0:                                                                season, ep, ep2       = 0, 1, 1            # s01e00 and S00e00 => s00e01
+  if not ep2 or ep > ep2:                                                  ep2                   = ep                 #  make ep2 same as ep for loop and tests
   if tvdb_mapping and ep  in tvdb_mapping:                                 season, ep  = tvdb_mapping[ep ]
   if tvdb_mapping and ep2 in tvdb_mapping:                                 season, ep2 = tvdb_mapping[ep2]
   for epn in range(ep, ep2+1):
@@ -201,7 +183,10 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
 
-  global LOG_FILE_LIBRARY;  LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  ### Rename log file with library name if XML file can be accessed or token file present in log folder. LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
+  global LOG_FILE_LIBRARY;
+  LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  ### Rename log file with library name if XML file can be accessed or token file present in log folder. LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
+  FILELIST = LOG_FILE_LIBRARY[:-4] + " - filelist " + os.path.basename(root) + LOG_FILE_LIBRARY[-4:] # custom log file per library root folder
+  if not path:  open(os.path.join(LOG_PATH, FILELIST), 'w').close  #Empty file for root folder call
   if path == "" :
     Log(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
     Log("keep_zero_size_files: '%s'" % str(keep_zero_size_files))
@@ -213,6 +198,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     for rx in ignore_dirs_rx:                                               # if initial scan and root folder
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log("\"%s\" match ignore_dirs_rx: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
   reverse_path = list(reversed(Utils.SplitPath(path)))
+  for file in files:
+    if os.path.splitext(file)[1].lstrip('.').lower() not in video_exts:  files.remove(file);  continue
+    for rx in ignore_files_rx:                                                                                        # Filter trailers and sample files
+      match=re.match(rx, file, re.IGNORECASE)
+      if match:  Log("File:   '%s' match ignore_files_rx: '%s'" % (file, rx)); files.remove(file);  break
+    else:
+      with open(os.path.join(LOG_PATH, FILELIST), 'a') as log_file:  log_file.write(file + "\n")
   if len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
   ### bluray/DVD folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
@@ -233,8 +225,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         if rx!=season_rx[-1]:  folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #get season number but Skip last entry in seasons (skipped folders)
         reverse_path.remove(last_folder);  break        # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
     if match and rx!=season_rx[-1]:  break              # cascade break if not skipped folder since season number found
+    Log("len rev path: '%s', path count /: '%s'" % (len(reverse_path), path.count("/")))
     if len(reverse_path)>1 and path.count("/"):         #if grouping folders, skip and add them as additionnal folders
-      Log("Grouping folder: '%s' skipped, eed to be added as root folder if needed" % path);  
+      Log("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path);  
       Log("".ljust(157, '-'))
       return
   folder_show = reverse_path[0] if reverse_path else ""
@@ -263,12 +256,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   ### File main loop ###
   movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
   for file in files:
-    for rx in ignore_files_rx:                                                                                        # Filter trailers and sample files
-      match=re.match(rx, file, re.IGNORECASE)
-      if match:  Log("File:   '%s' match ignore_files_rx: '%s'" % (file, rx));  break
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
-    if ext not in video_exts + ignore_exts and not match:   Log("File:   '%s' extension not in video_exts" % file)
-    if ext not in video_exts or ext=="ifo" and not file.upper()=="VIDEO_TS.IFO" or match:  continue
+    if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
     
     filename, year                           = os.path.splitext(os.path.basename(file))[0] if not disc else ep, ""
     show, season, ep, ep2, title, folder_use = folder_show, folder_season if folder_season else 1, clean_string(filename, False), None, "", False
@@ -313,10 +302,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         if match.groupdict().has_key('season') and match.group('season') and not season_from_folder:  season = int(match.group('season'))
         if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):                             ep2    = match.group('ep2') 
         if match.groupdict().has_key('ep'    ) and match.group('ep'    ):                             ep     = match.group('ep')
-        elif rx not in anidb_rx[:-1]:                                                                 
+        elif rx in anidb_rx[:-1]:                                                                     ep     = "01"
+        else:                                                                                                                                                      #No ep number, anidb usefull ?????
           movie_list[season] = movie_list[season]+1 if season in movie_list else 1  # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
           ep                 = str(movie_list[season])
-        else:                                                                                         ep     = "01"                                                             #No ep number, anidb usefull ?????
         if rx in anidb_rx[:-1]:                                                                                                       ### AniDB Specials ################################################################
           offset, season = AniDBOffset [ anidb_rx.index(rx) ], 0                                                                      # offset = 100 for OP, 150 for ED, etc... #Log("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
           if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                    ### OP/ED with letter version Example: op2a
@@ -335,4 +324,23 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, ep.strip(), year, None, "")
   Log("".ljust(157, '-'))
   Log("")
- 
+
+### Check config files on boot up then create library variables ###
+platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
+for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
+  if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
+  if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
+else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(absolute_path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
+LOG_FILE_LIBRARY = LOG_FILE = 'Plex Media Scanner (custom ASS).log'                # Log filename library will include the library name, LOG_FILE not and serve as reference
+no_timestamp         = os.path.isfile(os.path.join(LOG_PATH, "no_timestamp"        ))
+keep_zero_size_files = os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files"))
+season_from_folder   = os.path.isfile(os.path.join(LOG_PATH, "season_from_folder"  ))
+
+PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):                                                    #Log("'X-Plex-Token.id' file present")
+  with open(os.path.join(LOG_PATH, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL += "?X-Plex-Token=" + token_file.read().strip()  #Log("PLEX_LIBRARY_URL: '%s', token: '%s'" % (PLEX_LIBRARY_URL, token))
+try:
+  library_xml = etree.fromstring(urllib2.urlopen(PLEX_LIBRARY_URL).read())
+  for library in library_xml.iterchildren('Directory'):
+    for path in library.iterchildren('Location'):  PLEX_LIBRARY[path.get("path")] = library.get("title")
+except:  Log("Place correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
