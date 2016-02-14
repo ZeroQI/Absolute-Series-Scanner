@@ -198,13 +198,16 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     for rx in ignore_dirs_rx:                                               # if initial scan and root folder
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log("\"%s\" match ignore_dirs_rx: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
   reverse_path = list(reversed(Utils.SplitPath(path)))
+  files_to_remove = []
   for file in files:
-    if os.path.splitext(file)[1].lstrip('.').lower() not in video_exts:  files.remove(file);  continue
-    for rx in ignore_files_rx:                                                                                        # Filter trailers and sample files
-      match=re.match(rx, file, re.IGNORECASE)
-      if match:  Log("File:   '%s' match ignore_files_rx: '%s'" % (file, rx)); files.remove(file);  break
-    else:
-      with open(os.path.join(LOG_PATH, FILELIST), 'a') as log_file:  log_file.write(file + "\n")
+    ext = os.path.splitext(file)[1].lstrip('.').lower()
+    if ext in video_exts:
+      for rx in ignore_files_rx:                                                                                        # Filter trailers and sample files
+        if re.match(rx, file, re.IGNORECASE):  Log("File:   '%s' match ignore_files_rx: '%s'" % (file, rx)); files_to_remove.append(file);  break
+      else:  
+        with open(os.path.join(LOG_PATH, FILELIST), 'a') as log_file:  log_file.write(file + "\n")  #add to filelist
+    else:  Log("file: '%s', ext: '%s' not in video_ext" % (file, ext));  files_to_remove.append(file);  continue
+  for file in files_to_remove:  files.remove(file)
   if len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
   ### bluray/DVD folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
