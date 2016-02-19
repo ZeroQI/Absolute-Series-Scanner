@@ -200,13 +200,16 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   reverse_path = list(reversed(Utils.SplitPath(path)))
   files_to_remove = []
   for file in files:
-    ext = os.path.splitext(file)[1].lstrip('.').lower()
+    ext = os.path.splitext(os.path.basename(file))[1].lstrip('.').lower()
     if ext in video_exts:
       for rx in ignore_files_rx:                                                                                        # Filter trailers and sample files
         if re.match(rx, file, re.IGNORECASE):  Log("File:   '%s' match ignore_files_rx: '%s'" % (file, rx)); files_to_remove.append(file);  break
       else:  
         with open(os.path.join(LOG_PATH, FILELIST), 'a') as log_file:  log_file.write(file + "\n")  #add to filelist
-    else:  Log("file: '%s', ext: '%s' not in video_ext" % (file, ext));  files_to_remove.append(file);  continue
+    else:
+      Log("file: '%s', ext: '%s' not in video_ext" % (file, ext))
+      files_to_remove.append(file)
+      continue
   for file in files_to_remove:  files.remove(file)
   if len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
