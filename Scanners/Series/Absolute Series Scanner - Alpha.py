@@ -10,10 +10,10 @@ season_rx = [                                                                   
 series_rx = [                                                                                                                                                           ######### Series regex - "serie - xxx - title" ###
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[_\-][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                       #  0 # 1x01
   '(^|(?P<show>.*?)[ _\.\-]+)s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([ _\.\-]|(e|ep)|[ _\.\-](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*?)$)',#  1 # s01e01-02 | ep01-ep02 | e01-02
-  '(?P<title>.*?) [(]?(?P<season>(19|20)[0-9]{2})[)]$',                                                                                                                 #  2 # title (1932).ext
-  '[(]?(?P<season>(19|20)[0-9]{2})[)]?[ _\.\-]+(?P<title>.*?)$',                                                                                                        #  2 # (1932) title.ext
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  3 # 01 of 08 (no stacking for this one ?)
-  '^(?P<show>.*?) - (?P<ep>[0-9]{1,3}) - (?P<title>.*)$']                                                                                                               #  4 # Serie - xx - title.ext
+  '^(?P<show>.*?) - (?P<ep>[0-9]{1,3}) - (?P<title>.*)$',                                                                                                               #  4 # Serie - xx - title.ext
+  '[(]?(?P<season>(19|20)[0-9]{2})[)]?[ _\.\-]+(?P<title>.*?)$',                                                                                                        #  2 # (1932) title.ext
+  '(?P<title>.*?) [(]?(?P<season>(19|20)[0-9]{2})[)]$']                                                                                                                 #  5 # title (1932).ext
 AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                                                                                                            ######### AniDB Specials regex ### 
   '(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAV) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                      #  5 # 001-099 Specials
   '(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                      #  6 # 100-149 Openings
@@ -200,16 +200,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   reverse_path = list(reversed(Utils.SplitPath(path)))
   files_to_remove = []
   for file in files:
-    ext = os.path.splitext(os.path.basename(file))[1].lstrip('.').lower()
+    ext = os.path.splitext(file)[1].lstrip('.').lower()
     if ext in video_exts:
       for rx in ignore_files_rx:                                                                                        # Filter trailers and sample files
         if re.match(rx, file, re.IGNORECASE):  Log("File:   '%s' match ignore_files_rx: '%s'" % (file, rx)); files_to_remove.append(file);  break
       else:  
         with open(os.path.join(LOG_PATH, FILELIST), 'a') as log_file:  log_file.write(file + "\n")  #add to filelist
-    else:
-      Log("file: '%s', ext: '%s' not in video_ext" % (file, ext))
-      files_to_remove.append(file)
-      continue
+    else:  Log("file: '%s', ext: '%s' not in video_ext" % (file, ext));  files_to_remove.append(file);  continue
   for file in files_to_remove:  files.remove(file)
   if len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
