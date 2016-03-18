@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
-import sys, os, time, re, fnmatch, unicodedata, urllib2, Utils, VideoFiles, Media #import Stack ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
-from lxml import etree
+### Python library  ####### Functions and structures ###  #import Stack, VideoFiles, fnmatch ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
+import sys             # getdefaultencoding, getfilesystemencoding, platform
+import os              # path, listdir
+import time            # strftime
+import re              # match, compile, sub
+import unicodedata     # normalize
+import urllib2         # urlopen
+import Utils           # SplitPath
+import Media           # Episode
+from lxml import etree # fromstring
+
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 season_rx = [                                                                                                                                                           ### Seasons Folders 
  'Specials',                                                                                                                                                            # Specials (season 0)
@@ -23,14 +32,14 @@ AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                    
   '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$']                  # 10 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
 ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '.plexignore']                                                       # Skipped files (samples, trailers)                                                          
-#ignore_exts     = ['ssa', 'srt', 'ass', 'jpg', 'png', 'gif', 'mp3', 'wav', 'flac', 'pdf', 'db', 'nfo', 'ds_store', 'txt', 'zip', 'ini', "dvdmedia", "log", "bat", 'idx', 'sub', 'vob', 'bup', 'id']    # extensions dropped no warning (skipped list would be too long if showed)
-video_exts      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v', 'm4v', 'mkv', 'mov', 'mp4', # DVD: 'ifo', 'bup', 'vob'
-  'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', 'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']
-FILTER_CHARS    = "\\/:*?<>|~;_." #.                                                                             # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+video_exts      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',    #
+                    'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', #
+                    'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']                                                                 # DVD: 'ifo', 'bup', 'vob'
+FILTER_CHARS    = "\\/:*?<>|~;_."                                                                                                                                       # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', 
   'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
-  "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release", "By UniversalFreedom", 
-  "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
+  "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release",
+  "By UniversalFreedom", "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
   'xvid-saints', "XviD-T00NG0D", "XViD-ViCKY", "XviD-BiA", "XVID-FHW", "PROPER-LOL", "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "WEB_DL",
   "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
   "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
@@ -39,38 +48,35 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p.BluRay",
   "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)",
   "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
-  "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0",  "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5", "(Exiled_Destiny)",
-  "1080p", "720p", "480p", "_BD", ".XVID", "(xvid)", 
-  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "( )", "(  )", "(   )", "(    )", "(     )", "(_)", "%28", "%29", " (1)"] #include spaces, hyphens, dots, underscore, case insensitive
-whack = [ #lowercase                                                                                          ### Tags to remove ###
-  'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi",                                             # Video Codecs
-  'hi10', 'hi10p', '10bit', 'crf24', 'crf 24',                                                                #       color depth and encoding
-  '480p', '576p', '720p', '1080p', '1080i', '1920x1080','1280x720',                                           #       Resolution
-  '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                         # Refresh rate, Format
-  'mp3', 'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',  'qaac',                           # Audio Codecs, channels
-  'dc', 'se', 'extended', 'unrated', 'multi','multisubs', 'dubbed','subbed', "french", "fr", "dub",           # edition (dc = directors cut, se = special edition), subs and dubs
-  'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored",                       # format
-  'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix',      # misc 1
-  'fragment','ps3avchd','remux','fs','ws', "- copy", "reenc", "hom",                                          # misc 2
-  'retail', 'webrip','web-dl', 'wp','workprint', "mkv",  "v1", "v2", "v3", "v4",                              # release type: retail, web, work print
-  'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip', 'wsrip',                                   # Source: bluray
-  'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'sd', 'hd', 'dvb', "release",                       # DVD, VCD, S-VCD
-  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis", "NoRar",                  # dtv, stv
-  'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync', 'mp4',               # screener
-  "mthd", "thora", 'sickrage', 'brrip', 'ac3', "remastered", "yify", "tsr", "reidy", "(1280x720)", "(gerdhanse)", "(720p)", "(Commie)", #'limited', 
-  'rikou', 'HOMЯ', "iT00NZ", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "()", "(", ")", "(", ")", "[", "]", "{", "}"]   #
-CHARACTERS_MAP = { 14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀',                   #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
-  50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' , #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend'
-  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,                                                             #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
-  50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,             #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
-  50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,             #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
-  50067:'O' , 50068:'Ô' , 50072:'O' , 50099:'o' , 50100:'o' , 50102:'o' , 50573:'o' , 50578:'OE', 50579:'oe', #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
-  53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' ,                         #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3']
-  50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                                                 #'×' ['\xc3', '\x97'],
-  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½',              #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8']
-  52352:'', 52353:''}                                                                                         #'̀' ['\xcc', '\x80'] #	['\xcc', '\x81'] 
+  "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0",  "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
+  "(Exiled_Destiny)", "1080p", "720p", "480p", "_BD", ".XVID", "(xvid)", 
+  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "( )", "(  )", "(   )", "(    )", "(     )", "(_)", 
+  "%28", "%29", " (1)"]                                                                                                                                                 #include spaces, hyphens, dots, underscore, case insensitive
+whack = [ #lowercase                                                                                                                                                    ### Tags to remove ###
+  'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi", 'hi10', 'hi10p', '10bit', 'crf24', 'crf 24',                                                          # Video Codecs (color depth and encoding, Resolution)
+  '480p', '576p', '720p', '1080p', '1080i', '1920x1080','1280x720',                                                                                                     #       
+  '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                                                                                   # Refresh rate, Format
+  'mp3', 'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',  'qaac',                                                                                     # Audio Codecs, channels
+  'dc', 'se', 'extended', 'unrated', 'multi','multisubs', 'dubbed','subbed', "french", "fr", "dub",                                                                     # edition (dc = directors cut, se = special edition), subs and dubs
+  'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored",                                                                                 # format
+  'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix', 'fragment','ps3avchd','remux','fs','ws', "- copy","reenc","hom"# misc
+   'retail', 'webrip','web-dl', 'wp','workprint', "mkv",  "v1", "v2", "v3", "v4",                                                                                # release type: retail, web, work print
+  'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip', 'wsrip',                                                                                             # Source: bluray
+  'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'sd', 'hd', 'dvb', "release",                                                                                 # DVD, VCD, S-VCD
+  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis", "NoRar",                                                                            # dtv, stv
+  'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync', 'mp4',                                                                         # screener
+  "mthd", "thora", 'sickrage', 'brrip', 'ac3', "remastered", "yify", "tsr", "reidy", "(1280x720)", "(gerdhanse)", "(720p)", "(Commie)",                                 #'limited', 
+  'rikou', 'HOMЯ', "iT00NZ", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "()", "(", ")", "(", ")", "[", "]", "{", "}"]               #
+CHARACTERS_MAP = {
+  14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀',                                                                                               #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
+  50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' ,  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,          #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend' #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
+  50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,                                                                       #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
+  50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,                                                                       #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
+  50067:'O' , 50068:'Ô' , 50072:'O' , 50099:'o' , 50100:'o' , 50102:'o' , 50573:'o' , 50578:'OE', 50579:'oe',                                                           #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
+  53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' , 50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                       #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3'] #'×' ['\xc3', '\x97'],
+  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½', 52352:'', 52353:''}                                                    #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #	['\xcc', '\x81'] 
 
-### Log + LOG_PATH calculated once for all calls ###########################################################                        #platform = sys.platform.lower() if "platform" in dir(sys) and callable(getattr(sys,'platform')) else "" 
+### Log + LOG_PATH calculated once for all calls ###
 LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows Vista/7/8
                           '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ],    # Windows XP, 2003, Home Server
               'darwin': [ '$HOME/Library/Application Support/Plex Media Server/Logs' ],                    # LINE_FEED = "\r"
@@ -85,12 +91,32 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '/volume2/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, if migrated a second raid volume as unique volume in new box         
                           '/raid0/data/module/Plex/sys/Plex Media Server/Logs',                            # Thecus
                           '/raid0/data/PLEX_CONFIG/Plex Media Server/Logs',                                # Thecus Plex community version
-                          '/config/Library/Application Support/Plex Media Server/Logs']}                   # Docker linuxserver/plex
+                          '/config/Library/Application Support/Plex Media Server/Logs'] }                  # Docker linuxserver/plex
 
 ### Log message in log file #######################################################################################################################################
 def Log(entry, filename=None): 
   with open(os.path.join(LOG_PATH, filename if filename else LOG_FILE_LIBRARY), 'a') as file:
     file.write(("" if no_timestamp else time.strftime("%Y-%m-%d %H:%M:%S") + " ") + entry + "\n")
+
+### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
+platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
+for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
+  if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
+  if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
+else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(absolute_path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
+LOG_FILE_LIBRARY     = LOG_FILE = 'Plex Media Scanner (custom ASS).log'            # Log filename library will include the library name, LOG_FILE not and serve as reference
+no_timestamp         = os.path.isfile(os.path.join(LOG_PATH, "no_timestamp"        ))
+keep_zero_size_files = os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files"))
+season_from_folder   = os.path.isfile(os.path.join(LOG_PATH, "season_from_folder"  ))
+
+PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):                                                    #Log("'X-Plex-Token.id' file present")
+  with open(os.path.join(LOG_PATH, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL += "?X-Plex-Token=" + token_file.read().strip()  #Log("PLEX_LIBRARY_URL: '%s', token: '%s'" % (PLEX_LIBRARY_URL, token))
+try:
+  library_xml = etree.fromstring(urllib2.urlopen(PLEX_LIBRARY_URL).read())
+  for library in library_xml.iterchildren('Directory'):
+    for path in library.iterchildren('Location'):  PLEX_LIBRARY[path.get("path")] = library.get("title")
+except:  Log("Place correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
 
 ### replace a string by another while retaining original string case ##############################################################################################
 def replace_insensitive (ep, word, sep=" "):
@@ -152,12 +178,13 @@ def clean_string(string, no_parenthesis=False):
   for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ("), (")", ") ")]:
     if char in string:                                            string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
   if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string):   string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                            # CRCs removal
-  for rx in ("-", "_", "()", "[]", "{}"):                         string = string[len(rx):   ] if string.startswith(rx) else string                         # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
-  for rx in ("-", "_", "()", "[]", "{}", "- copy"):               string = string[ :-len(rx) ] if string.lower().endswith  (rx) else string                 # In python 2.2.3: string = string.strip(string, " -_")
   if string.endswith(", The"):                                    string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
   if string.endswith(", A"  ):                                    string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
-  return " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                     # remove double spaces + words present in "whack" list #filter(None, string.split())
-
+  string = " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                     # remove double spaces + words present in "whack" list #filter(None, string.split())
+  for rx in ("-", "_", "()", "[]", "{}"):                         string = string[len(rx):   ].strip() if string.startswith(rx) else string                         # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
+  for rx in ("-", "_", "()", "[]", "{}", "- copy"):               string = string[ :-len(rx) ].strip() if string.lower().endswith  (rx) else string                 # In python 2.2.3: string = string.strip(string, " -_")
+  return string
+  
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}):
   file=os.path.join(root,path,file);                                                                                  #
@@ -327,23 +354,3 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, ep.strip(), year, None, "")
   Log("".ljust(157, '-'))
   Log("")
-
-### Check config files on boot up then create library variables ###
-platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
-for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
-  if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
-  if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
-else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(absolute_path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
-LOG_FILE_LIBRARY = LOG_FILE = 'Plex Media Scanner (custom ASS).log'                # Log filename library will include the library name, LOG_FILE not and serve as reference
-no_timestamp         = os.path.isfile(os.path.join(LOG_PATH, "no_timestamp"        ))
-keep_zero_size_files = os.path.isfile(os.path.join(LOG_PATH, "keep_zero_size_files"))
-season_from_folder   = os.path.isfile(os.path.join(LOG_PATH, "season_from_folder"  ))
-
-PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
-if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):                                                    #Log("'X-Plex-Token.id' file present")
-  with open(os.path.join(LOG_PATH, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL += "?X-Plex-Token=" + token_file.read().strip()  #Log("PLEX_LIBRARY_URL: '%s', token: '%s'" % (PLEX_LIBRARY_URL, token))
-try:
-  library_xml = etree.fromstring(urllib2.urlopen(PLEX_LIBRARY_URL).read())
-  for library in library_xml.iterchildren('Directory'):
-    for path in library.iterchildren('Location'):  PLEX_LIBRARY[path.get("path")] = library.get("title")
-except:  Log("Place correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
