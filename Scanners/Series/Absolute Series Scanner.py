@@ -30,7 +30,7 @@ AniDBOffset = [0, 100, 150, 200, 300, 400, 0]; anidb_rx  = [                    
   '(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                          #  8 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
   '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                        # 09 # 400-499 Others
   '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$']                  # 10 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
-ignore_dirs_rx  = [ 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
+ignore_dirs_rx  = [ '@Recycle', '.@__thumb', 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
 ignore_files_rx = ['[-\._ ]sample', 'sample[-\._ ]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '.plexignore']                                                       # Skipped files (samples, trailers)                                                          
 video_exts      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',    #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', #
@@ -51,7 +51,7 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0",  "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
   "(Exiled_Destiny)", "1080p", "720p", "480p", "_BD", ".XVID", "(xvid)", 
   "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "( )", "(  )", "(   )", "(    )", "(     )", "(_)", 
-  "%28", "%29", " (1)"]                                                                                                                                                 #include spaces, hyphens, dots, underscore, case insensitive
+  "%28", "%29", " (1)", "(Clean)"]                                                                                                                                      #include spaces, hyphens, dots, underscore, case insensitive
 whack = [ #lowercase                                                                                                                                                    ### Tags to remove ###
   'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi", 'hi10', 'hi10p', '10bit', 'crf24', 'crf 24',                                                          # Video Codecs (color depth and encoding, Resolution)
   '480p', '576p', '720p', '1080p', '1080i', '1920x1080','1280x720',                                                                                                     #       
@@ -87,6 +87,7 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '${JAIL_ROOT}/var/db/plexdata/Plex Media Server/Logs/',                          # FreeNAS
                           '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   # ReadyNAS
                           '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # QNAP
+                          '/share/CACHEDEV1_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',    # QNAP
                           '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
                           '/volume2/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, if migrated a second raid volume as unique volume in new box         
                           '/raid0/data/module/Plex/sys/Plex Media Server/Logs',                            # Thecus
@@ -193,8 +194,8 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
   if title==title.lower() or title==title.upper() and title.count(" ")>0:  title = title.title()                      # capitalise if all caps or all lowercase and one space at least
   if ep==0:                                                                season, ep, ep2       = 0, 1, 1            # s01e00 and S00e00 => s00e01
   if not ep2 or ep > ep2:                                                  ep2                   = ep                 #  make ep2 same as ep for loop and tests
-  if tvdb_mapping and ep  in tvdb_mapping:                                 season, ep  = tvdb_mapping[ep ]
-  if tvdb_mapping and ep2 in tvdb_mapping:                                 season, ep2 = tvdb_mapping[ep2]
+  if tvdb_mapping and ep  in tvdb_mapping and season != 0:                 season, ep  = tvdb_mapping[ep ]
+  if tvdb_mapping and ep2 in tvdb_mapping and season != 0:                 season, ep2 = tvdb_mapping[ep2]
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log("Warning - show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
@@ -270,18 +271,41 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
           guid        = guid_file.read().strip()
           folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file))[0], guid)
-        if guid and "tvdb" in file and not folder_season and not (path  and len(reverse_path)==2): 
-          try:
-            Log("TVDB season mode enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % guid)
-            tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
-            for episode in tvdbanime.xpath('Episode'):
-              SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
-              EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
-              absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
-              if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber))
-          except: Log("tvdb xml loading issue")
         break
     else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+        
+  ### Capture if 'absolute_numbering' should be applied for all episode numbers  ###
+  guid = ""
+  if re.search(".*? ?\[(anidb|tvdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE): 
+    if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), "absolute_numbering.list")):
+      
+      Log("folder_show = '%s'" % folder_show)
+      if re.search(".*? ?\[tvdb-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
+        guid = folder_show.split("[tvdb-")[1].split("]")[0]
+        Log("tvdb id = '%s'" % guid)
+      
+      elif re.search(".*? ?\[anidb-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
+        anidb_guid = folder_show.split("[anidb-")[1].split("]")[0]
+        try:
+          Log("Pulling tvdb id from anidb id, url: 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'")
+          guid =  urllib2.urlopen('http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml').read().split("anime anidbid=\"%s\"" % anidb_guid)[1].split('"')[1]
+          Log("'anidb-%s' -> 'tvdb-%s'" % (anidb_guid, guid))
+        except: 
+          Log("url loading issue")
+          guid = ""
+          
+      if guid != "":
+        try:
+          Log("TVDB season mode enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % guid)
+          tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
+          for episode in tvdbanime.xpath('Episode'):
+            SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
+            EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
+            absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
+            if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber))
+        except:
+          Log("xml loading issue")
+          tvdbanime = {}
         
   ### File main loop ###
   movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
@@ -346,11 +370,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         break
     if match: continue  # next file iteration
     
-    ### Ep no found, adding as season 0 episode 501+ ###
-    if "-" in ep and len(ep.split("-"))>1:  show, title = ep.split("-")[0].rstrip(), ep.split("-")[1]
-    for word in ep.split(" "):                                                      #
-      if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
+    ### Ep not found, adding as season 0 episode 501+ ###
+    if " - " in ep and len(ep.split(" - "))>1:  title = " - ".join(ep.split(" - ")[1:])
+    #for word in ep.split(" "):                                                      #
+    #  if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
     counter = counter+1                                          #                    #
-    add_episode_into_plex(mediaList, file, root, path , show, 0, counter, ep.strip(), year, None, "")
+    add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log("".ljust(157, '-'))
   Log("")
