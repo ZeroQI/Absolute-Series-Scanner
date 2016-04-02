@@ -264,9 +264,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   folder_show = reverse_path[0] if reverse_path else ""
   
   ### Capture title from anidb.id or use folder name,  ###
-  guid, tvdb_mapping = "", {}
-  if not re.search(".*? ?\[(anidb|tvdb|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
-    for file in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tmdb.id", "Extras/tmdb.id", "tsdb.id", "Extras/tsdb.id", "imdb.id", "Extras/imdb.id"):
+  guid = ""
+  if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
+    for file in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tvdb2.id", "Extras/tvdb2.id", "tvdb3.id", "Extras/tvdb3.id", "tmdb.id", "Extras/tmdb.id", "tsdb.id", "Extras/tsdb.id", "imdb.id", "Extras/imdb.id"):
       if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), file)):
         with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
           guid        = guid_file.read().strip()
@@ -274,38 +274,27 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         break
     else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
         
-  ### Capture if 'absolute_numbering' should be applied for all episode numbers  ###
-  guid = ""
-  if re.search(".*? ?\[(anidb|tvdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE): 
-    if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), "absolute_numbering.list")):
-      
-      Log("folder_show = '%s'" % folder_show)
-      if re.search(".*? ?\[tvdb-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
-        guid = folder_show.split("[tvdb-")[1].split("]")[0]
-        Log("tvdb id = '%s'" % guid)
-      
-      elif re.search(".*? ?\[anidb-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
-        anidb_guid = folder_show.split("[anidb-")[1].split("]")[0]
-        try:
-          Log("Pulling tvdb id from anidb id, url: 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'")
-          guid =  urllib2.urlopen('http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml').read().split("anime anidbid=\"%s\"" % anidb_guid)[1].split('"')[1]
-          Log("'anidb-%s' -> 'tvdb-%s'" % (anidb_guid, guid))
-        except: 
-          Log("url loading issue")
-          guid = ""
-          
-      if guid != "":
-        try:
-          Log("TVDB season mode enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % guid)
-          tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
-          for episode in tvdbanime.xpath('Episode'):
-            SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
-            EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
-            absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
-            if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber))
-        except:
-          Log("xml loading issue")
-          tvdbanime = {}
+  ### Capture if absolute numbering should be applied for all episode numbers  ###
+  guid, tvdb_mode, tvdb_mapping = "", "", {}
+  if re.search(".*? ?\[(tvdb2|tvdb3)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE): 
+    # mode 1 normal, mode 2 season mode (ep reset to 1) mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
+    tvdb_mode = "3" if "[tvdb3-" in folder_show else "2" if "[tvdb2-" in folder_show else "1" if "[tvdb-" in folder_show else "0"
+
+    Log("folder_show = '%s'" % folder_show)
+    guid = folder_show.split("[tvdb")[1].split("-")[1].split("]")[0]
+    Log("tvdb id = '%s'" % guid)
+
+    try:
+      Log("TVDB season mode (%s) enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % (tvdb_mode, guid))
+      tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
+      for episode in tvdbanime.xpath('Episode'):
+        SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
+        EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
+        absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
+        if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
+    except:
+      Log("xml loading issue")
+      tvdbanime = {}
         
   ### File main loop ###
   movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
