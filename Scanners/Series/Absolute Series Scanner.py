@@ -8,6 +8,7 @@ import unicodedata     # normalize
 import urllib2         # urlopen
 import Utils           # SplitPath
 import Media           # Episode
+import copy            # deepcopy
 from lxml import etree # fromstring
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
@@ -289,11 +290,33 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     try:
       Log("TVDB season mode (%s) enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % (tvdb_mode, guid))
       tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
-      for episode in tvdbanime.xpath('Episode'):
-        SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
-        EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
-        absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
-        if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
+      tvdbanime2 = copy.deepcopy(tvdbanime)
+      ep_count, abs_manual_placement_status, abs_manual_placement_info, number_set = 0, "success", [], "no"
+      for episode in tvdbanime2.xpath('Episode'):
+        if episode.xpath('SeasonNumber')[0].text != '0':
+          ep_count = ep_count + 1
+          if not episode.xpath('absolute_number')[0].text or episode.xpath('absolute_number')[0].text == '':
+            episode.xpath('absolute_number')[0].text = str(ep_count)
+            number_set = "yes"
+            abs_manual_placement_info.append("s%se%s = abs %s" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text, episode.xpath('absolute_number')[0].text))
+          else:
+            if number_set == "no":
+              ep_count = int(episode.xpath('absolute_number')[0].text)
+            else:
+              Log("An abs number has been found on ep (s%se%s) after starting to manually place our own abs numbers" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text) )
+              abs_manual_placement_status = "failed"
+              break
+      
+      Log("abs_manual_placement_info = " + str(abs_manual_placement_info))
+      Log("abs_manual_placement_status = %s" % abs_manual_placement_status)
+      if abs_manual_placement_status == "success": tvdbanime = tvdbanime2
+      
+      if abs_manual_placement_status == "success":
+        for episode in tvdbanime.xpath('Episode'):
+          SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
+          EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
+          absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
+          if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
     except:
       Log("xml loading issue")
       tvdbanime = {}
