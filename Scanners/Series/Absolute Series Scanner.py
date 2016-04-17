@@ -81,6 +81,7 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ],    # Windows XP, 2003, Home Server
               'darwin': [ '$HOME/Library/Application Support/Plex Media Server/Logs' ],                    # LINE_FEED = "\r"
               'linux':  [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 # Linux
+                          '$PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR/Plex Media Server/Logs',             # Slack, Ubuntu
                           '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs',   # Debian, Fedora, CentOS, Ubuntu
                           '/usr/local/plexdata/Plex Media Server/Logs',                                    # FreeBSD
                           '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                # FreeNAS
