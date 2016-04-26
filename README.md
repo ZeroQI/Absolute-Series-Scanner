@@ -1,7 +1,7 @@
 Functionalities<BR>
 ===============
 <UL>
-      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2])</LI>
+      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2]), grouping folder need to be added as root folder</LI>
       <LI> Seasons folders with serie name afterwards (Season 1 Zero no tsukaima), including "Series" appelation</LI>
       <LI> Include all files not recognised as Season 0 episode 501+</LI>
       <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)</LI>
@@ -16,7 +16,17 @@ Functionalities<BR>
       <LI> support id files "anidb.id", "tvdb.id", "tmdb.id" (might have to make thetvdb serie id "tsdb.id")</LI>
       <LI> support id files in folder names like "tv show [anidb-12345]" or "Serie name [tvdb-1234567]"</LI>
   </UL>
-  
+
+Forcing the metadata id and display conversion without renaming files
+=====================================================================
+You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to force the id, or use the following at the end of the folder name, there is a space in front of the bracket
+<UL>
+      <LI>" [anidb-xxxxx]" for anime in absolute numbering</LI>
+      <LI>" [tvdb-xxxxx]" for tvdb season numbering</LI>
+      <LI>" [tvdb2-xxxxx]" for absolute numbering displayed as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online</LI>
+      <LI>" [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece</LI>
+</UL>
+
 Naming Conventions Rules<BR>
 ========================
 
