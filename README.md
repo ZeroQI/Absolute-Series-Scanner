@@ -19,7 +19,7 @@ Functionalities<BR>
 
 Forcing the metadata id and display conversion without renaming files
 =====================================================================
-You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to force the id, or use the following at the end of the folder name, there is a space in front of the bracket
+You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to force the id, or use the following at the end of the folder name: (there is a space in front of the bracket)
 <UL>
       <LI>" [anidb-xxxxx]" for anime in absolute numbering</LI>
       
