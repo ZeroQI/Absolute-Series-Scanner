@@ -22,11 +22,19 @@ Forcing the metadata id and display conversion without renaming files
 You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to force the id, or use the following at the end of the folder name, there is a space in front of the bracket
 <UL>
       <LI>" [anidb-xxxxx]" for anime in absolute numbering</LI>
-      <LI>" [tvdb-xxxxx]" for tvdb season numbering</LI>
-      <LI>" [tvdb2-xxxxx]" for absolute numbering displayed as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online</LI>
-      <LI>" [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece</LI>
+      
+      <LI>" [tvdb-xxxxx]" for tvdb season numbering. You can put separate sereis as seasons
+      SAO can be split into "Season 1 - Sword Art Online" (1-25), "Season 2 - Alfheim & Gun Gale Online (1-25)</LI>
+      
+      <LI>" [tvdb2-xxxxx]" for absolute numbering displayed as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online<BR>
+      SAO can be numbered 1-49, but will automatically be split into Season 1 (1-25) and Season 2 (1-25).</LI>
+      
+      <LI>" [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece<BR>
+      One Piece can be numbered 1-700+ and will be automatically split into seasons while keeping the ep number intact without havingto create seasons in the real folder</LI>
 </UL>
+tvdb2: SAO can be numbered 1-50, but will automatically be split into Season 1 (1-25) and Season 2 (1-25).
 
+tvdb3: One Piece can be numbered 1-700+ and will be automatically split into seasons. There is no need to separate the files into folders.
 Naming Conventions Rules<BR>
 ========================
 
