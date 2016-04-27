@@ -17,6 +17,22 @@ Functionalities<BR>
       <LI> support id files in folder names like "tv show [anidb-12345]" or "Serie name [tvdb-1234567]"</LI>
   </UL>
 
+Logs
+====
+List of configuration files, to put in logs folder.
+in releases > logs.7z you will find the blank config files.<BR>
+<UL>
+  <LI>no_timestamp: when present, remove timestamps from the scanner log</LI>
+  <LI>keep_zero_size_files: when present, accept empty files as valid</LI>
+  <LI>season_from_folder: when present, use the season from the folder instead of the file when a conflict arises</LI>
+</UL>
+
+List of logs files created by this scanner:
+<UL>
+  <LI>Plex Media Scanner (custom ASS) - Library_Name.log contain all folders and files processed in a readable fashion, perfect for troubleshooting scanner issues</LI>
+  <LI>Plex Media Scanner (custom ASS) - Library_Name - filelist Root_Folder_name.log contain all files in the root folder, so i can re-create your library with zero size files.</LI>
+</UL>
+
 Forcing the metadata id and display conversion without renaming files
 =====================================================================
 You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to force the id, or use the following at the end of the folder name: (there is a space in front of the bracket)
@@ -32,9 +48,7 @@ You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to 
       <LI>" [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece<BR>
       One Piece can be numbered 1-700+ and will be automatically split into seasons while keeping the ep number intact without havingto create seasons in the real folder</LI>
 </UL>
-tvdb2: SAO can be numbered 1-50, but will automatically be split into Season 1 (1-25) and Season 2 (1-25).
 
-tvdb3: One Piece can be numbered 1-700+ and will be automatically split into seasons. There is no need to separate the files into folders.
 Naming Conventions Rules<BR>
 ========================
 
@@ -48,9 +62,8 @@ Naming Conventions Rules<BR>
 
 How to name the file ?
 ======================
+<CODE>Example: Optional: Grouping Folder / Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE><BR>
 
-   <CODE>Example: Optional: Grouping Folder / Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE>
-   <BR>
 <TABLE>
 <THEAD>
 <TR> <TH> File naming convention </TH> <TH> Template / Folder </TH> <TH>Exemple </TH> </TR>
@@ -84,11 +97,10 @@ How to name the file ?
    
 Where to get the perfect title ?
 ================================
-
 <UL>
-  <LI> Series: TheTVDB.com or TVrage or TheMovieDB, TV database, will not store boxset specific files(nor sport or porn for tvdb)</LI>
-  <LI> Movies: TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
-  <LI> Anime:  AniDB.net, the Anime main title is generally the best, or romaji (x-jat) </LI>
+  <LI> Anime:     AniDB.net, the Anime main title is generally the best, or romaji (x-jat) </LI>
+  <LI> TV Series: TheTVDB.com or TVrage or TheMovieDB, TV database, will not store boxset specific files(nor sport or porn for tvdb)</LI>
+  <LI> Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
 </UL>
 
 Local metadata
