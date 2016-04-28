@@ -175,11 +175,12 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
 ### Allow to display ints even if equal to None at times ################################################
 def clean_string(string, no_parenthesis=False):
   if not string: return ""
-  if no_parenthesis and "(" in string:                            string = re.sub(r'\(.*?\)', ' ', string)                                                  # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
+  if no_parenthesis:
+    while re.match(".*\([^\(\)]*?\).*", string): string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                                             # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
   if "[" in string or "{" in string:                              string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
   string = encodeASCII(string)                                                                                                                              # Translate them
   for word in whack_pre_clean:                                    string = replace_insensitive(string, word) if word.lower() in string.lower() else string  #
-  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ("), (")", ") ")]:
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ("), ("( (", "(("), (")", ") "), (") )", "))")]:
     if char in string:                                            string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
   if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string):   string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                            # CRCs removal
   if string.endswith(", The"):                                    string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
