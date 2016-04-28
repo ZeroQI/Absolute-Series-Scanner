@@ -1,7 +1,7 @@
 Functionalities<BR>
 ===============
 <UL>
-      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2]), grouping folder need to be added as root folder</LI>
+      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2]), grouping folder need to be added as root folder, like "Root folder/grouping folder/Serie folder"</LI>
       <LI> Seasons folders with serie name afterwards (Season 1 Zero no tsukaima), including "Series" appelation</LI>
       <LI> Include all files not recognised as Season 0 episode 501+</LI>
       <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)</LI>
