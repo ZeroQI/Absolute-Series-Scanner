@@ -8,12 +8,10 @@ Functionalities<BR>
       <LI> Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")</LI>
       <LI> Movie files in Series libraries accepted if they have the same name as the folder (or 01|ep 01|s01e01)</LI>
       <LI> Console output supported if launched from command line</LI>
-      <LI> ".plexignore" file supported</LI>
       <LI> "keep_zero_size_files" file in logs folder to allow using zero size files, otherwise skip them</LI>
-      <LI> "X-Plex-Token.id"      file in logs folder to create a scanner log per library</LI>
       <LI> "Plex Media Scanner (custom ASS).log" in Plex Logs folder with one line for the serie folder and per file</LI>
       <LI> "Plex Media Scanner (custom ASS) - filelist.log" contain all filenames so i can reproduce your library with a batch file after converting to utf-8 with notepad</LI>
-      <LI> support id files "anidb.id", "tvdb.id", "tmdb.id" (might have to make thetvdb serie id "tsdb.id")</LI>
+      <LI> support id files "anidb.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tmdb.id"</LI>
       <LI> support id files in folder names like "tv show [anidb-12345]" or "Serie name [tvdb-1234567]"</LI>
   </UL>
 
@@ -25,6 +23,7 @@ in releases > logs.7z you will find the blank config files.<BR>
   <LI>no_timestamp: when present, remove timestamps from the scanner log</LI>
   <LI>keep_zero_size_files: when present, accept empty files as valid</LI>
   <LI>season_from_folder: when present, use the season from the folder instead of the file when a conflict arises</LI>
+  <LI>"X-Plex-Token.id: fill with plex token to create a scanner log per library</LI>
 </UL>
 
 List of logs files created by this scanner:
@@ -105,7 +104,7 @@ Where to get the perfect title ?
 
 Local metadata
 ==============
-Use local media assets. If it doen't work with Hama, please let me know <BR />
+Use local media assets and move it before Hama.<BR />
 https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
 Big Storage Folder Structure ?
