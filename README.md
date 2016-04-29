@@ -1,18 +1,18 @@
 Functionalities<BR>
 ===============<BR>
 <UL>
-      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2]), grouping folder need to be added as root folder, like "Root folder/grouping folder/Serie folder"</LI>
-      <LI> Seasons folders with serie name afterwards (Season 1 Zero no tsukaima), including "Series" appelation</LI>
+      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2]), grouping folder need to be added as root folder, like "D:/Anime/Dragon Ball/[2] Dragon Ball Z"</LI>
+      <LI> Seasons folders with serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")</LI>
+      <LI> Allow grouping in Ark xxxxx folders transparently</LI>
       <LI> Include all files not recognised as Season 0 episode 501+</LI>
-      <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...)</LI>
+      <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...) numbering is supported</LI>
       <LI> Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")</LI>
-      <LI> Movie files in Series libraries accepted if they have the same name as the folder (or 01|ep 01|s01e01)</LI>
-      <LI> Console output supported if launched from command line</LI>
+      <LI> Movie files in Series libraries accepted if they are in a folder with the same name (or 01|ep 01|s01e01, or " - Complete Movie" at the end)</LI>
+      <LI> support id files "anidb.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tmdb.id"</LI>
+      <LI> support id files in folder names like "tv show [anidb-12345]" or "Serie name [tvdb-1234567]"</LI>
       <LI> "keep_zero_size_files" file in logs folder to allow using zero size files, otherwise skip them</LI>
       <LI> "Plex Media Scanner (custom ASS).log" in Plex Logs folder with one line for the serie folder and per file</LI>
       <LI> "Plex Media Scanner (custom ASS) - filelist.log" contain all filenames so i can reproduce your library with a batch file after converting to utf-8 with notepad</LI>
-      <LI> support id files "anidb.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tmdb.id"</LI>
-      <LI> support id files in folder names like "tv show [anidb-12345]" or "Serie name [tvdb-1234567]"</LI>
   </UL>
 
 Logs<BR>
