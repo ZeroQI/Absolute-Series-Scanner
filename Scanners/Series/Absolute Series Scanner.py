@@ -175,19 +175,21 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
 ### Allow to display ints even if equal to None at times ################################################
 def clean_string(string, no_parenthesis=False):
   if not string: return ""
-  if no_parenthesis:
-    while re.match(".*\([^\(\)]*?\).*", string): string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                                             # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
+  if no_parenthesis:                                                                                                                                        # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
+    while re.match(".*\([^\(\)]*?\).*", string):                  string = re.sub(r'\([^\(\)]*?\)', ' ', string)
   if "[" in string or "{" in string:                              string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
   string = encodeASCII(string)                                                                                                                              # Translate them
   for word in whack_pre_clean:                                    string = replace_insensitive(string, word) if word.lower() in string.lower() else string  #
+  string = re.sub(r'(?P<a>[^0-9v])(?P<b>[0-9]{1,3})\.(?P<c>[0-9]{1,2})(?P<d>[^0-9])', '\g<a>\g<b>DoNoTfIlTeR\g<c>\g<d>', string)                            # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5)
   for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ("), ("( (", "(("), (")", ") "), (") )", "))")]:
-    if char in string:                                            string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
+    if char in string:                                            string = string.replace(char, subst)                                                      # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
+  string = string.replace("DoNoTfIlTeR", '.')
   if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string):   string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                            # CRCs removal
   if string.endswith(", The"):                                    string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
   if string.endswith(", A"  ):                                    string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
-  string = " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                     # remove double spaces + words present in "whack" list #filter(None, string.split())
-  for rx in ("-", "_", "()", "[]", "{}"):                         string = string[len(rx):   ].strip() if string.startswith(rx) else string                         # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
-  for rx in ("-", "_", "()", "[]", "{}", "- copy"):               string = string[ :-len(rx) ].strip() if string.lower().endswith  (rx) else string                 # In python 2.2.3: string = string.strip(string, " -_")
+  string = " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                   # remove double spaces + words present in "whack" list #filter(None, string.split())
+  for rx in ("-", "_", "()", "[]", "{}"):                         string = string[len(rx):   ].strip() if string.startswith(rx) else string                 # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
+  for rx in ("-", "_", "()", "[]", "{}", "- copy"):               string = string[ :-len(rx) ].strip() if string.lower().endswith  (rx) else string         # In python 2.2.3: string = string.strip(string, " -_")
   return string
   
 ### Add files into Plex database ########################################################################
@@ -348,6 +350,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       if ep.endswith(("v1", "v2", "v3", "v4")):                                                               ep=ep[:-2].rstrip('-')                                              # 
       if re.match("(ed|op|ncop|nced|sp|special)($|[0-9]{1,4}$)", ep):                                         break                                                               # "OP/ED xx" goes to regex
       if "trailer" in ep:                                                                                     season, ep, title = 0, "201",               "Trailer";       break  # remove ?
+      if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                          season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break  # ep 12.5 = "12" title "Special 12.5"
+      if "." in ep and ep.startswith("ep") and ep.split(".", 1)[0][2:].isdigit() and ep.split(".")[1].isdigit():  season, ep, title = 0, ep.split(".", 1)[0][2:], "Special " + ep[2:]; break  # ep EP12.5 = "12" title "Special 12.5"
       if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:1])==folder_season):  season, ep = int(ep[0:2]), ep[2:4]                                  # 1206 could be season 12 episode 06  #Get assigned from left ot right
       elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                                            # take everything after supposed episode number
       else:                                                                                                                                                                       # 
