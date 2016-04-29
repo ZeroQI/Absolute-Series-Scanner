@@ -1,5 +1,5 @@
 Functionalities<BR>
-===============
+===============<BR>
 <UL>
       <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2]), grouping folder need to be added as root folder, like "Root folder/grouping folder/Serie folder"</LI>
       <LI> Seasons folders with serie name afterwards (Season 1 Zero no tsukaima), including "Series" appelation</LI>
@@ -15,8 +15,8 @@ Functionalities<BR>
       <LI> support id files in folder names like "tv show [anidb-12345]" or "Serie name [tvdb-1234567]"</LI>
   </UL>
 
-Logs
-====
+Logs<BR>
+====<BR>
 List of configuration files, to put in logs folder.
 in releases > logs.7z you will find the blank config files.<BR>
 <UL>
@@ -32,8 +32,8 @@ List of logs files created by this scanner:
   <LI>Plex Media Scanner (custom ASS) - Library_Name - filelist Root_Folder_name.log contain all files in the root folder, so i can re-create your library with zero size files.</LI>
 </UL>
 
-Forcing the metadata id and display conversion without renaming files
-=====================================================================
+Forcing the metadata id and display conversion without renaming files<BR>
+=====================================================================<BR>
 You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to force the id, or use the following at the end of the folder name: (there is a space in front of the bracket)
 <UL>
       <LI>" [anidb-xxxxx]" for anime in absolute numbering</LI>
@@ -48,20 +48,18 @@ You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to 
       One Piece can be numbered 1-700+ and will be automatically split into seasons while keeping the ep number intact without havingto create seasons in the real folder</LI>
 </UL>
 
-Naming Conventions Rules<BR>
-========================
-
+Naming Conventions<BR>
+==================<BR>
+This scanner supports absolute and season numbering, but here are two references for guidelines
 <UL>
-  <LI> Naming convention for Plex: (which this scanner kinda improve allowing more)
-    <UL>
-      <LI> https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows</LI>
-    </UL>
+  <LI> Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows</LI>
   <LI> Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows</LI>
 </UL>
 
-How to name the file ?
-======================
-<CODE>Example: Optional: Grouping Folder / Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE><BR>
+<CODE>Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE>
+<CODE>Example: Show Name / Show Name EP001.ext</CODE>>
+
+If you use "Grouping folder / Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext" it will now be skipped, so you can just add it as additionnal root folder in the library: "D:/Anime/Jap sub En" and "D:/Anime/Jap sub En/grouping folder" for example
 
 <TABLE>
 <THEAD>
@@ -70,14 +68,28 @@ How to name the file ?
 <TBODY>
 <TR> <TD> Splitting folders:     </TD> <TD> 0-9                 </TD> <TD> 0-9, A,...,Z folder. Add EACH as folder. Do not use the parent folder </TD> </TR>
 <TR> <TD> Episode Name Pattern:  </TD> <TD> Season %S/%SN s%0Se%0E </TD> <TD> Season 2/Show Name s02e03.ext </TD> </TR>
-<TR> <TD> Multi-Episode style:   </TD> <TD> Extend              </TD> <TD> Season 2/Show Name s02e03-04-05.ext </TD> </TR>
+<TR> <TD> Multi-Episode style:   </TD> <TD> Extend              </TD> <TD> Season 2/Show Name s02e03-05.ext </TD> </TR>
 <TR> <TD> Multi-part episodes:   </TD> <TD> cdX, discX, diskX, dvdX, partX, ptX </TD> <TD> Season 2/Show Name s02e03 - pt1.ext </TD> </TR>
 <TR> <TD> Multi-Media Version:   </TD> <TD> Movie Name (year) - 1080p.ext </TD> <TD> Movie Name (year) - 1080p.ext </TD> </TR>
 <TR> <TD> Specials scrapped:     </TD> <TD> Specials, Season 0  </TD> <TD> s00e01/OP1/Ed3a/NCOP/S01/S1.ext </TD> </TR>
 <TR> <TD> Other non scrapped:    </TD> <TD> Extras              </TD> <TD> Extras/Show Name xxxx.ext </TD> </TR>
-<TR> <TD> BD rips                </TD> <TD> /path/to/series-library/Series Name Season 2 </TD> <TD> Series.Name.Disc1.S02.E01-E12/BDMV/STREAM </TD> </TR>
+<TR> <TD> BD rips                </TD> <TD> /path/to/series-library/Series Name Season 2 </TD> <TD>Series.Name.Disc1.S02.E01-E12/BDMV/STREAM </TD> </TR>
 </TBODY>
 </TABLE>
+
+   
+Where to get the perfect title ?<BR>
+================================<BR>
+<UL>
+  <LI> Anime:     AniDB.net, the Anime main title is generally the best, or romaji (x-jat). Hama use series titles from there as a base </LI>
+  <LI> TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files(nor sport or porn for tvdb)</LI>
+  <LI> Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
+</UL>
+
+Local metadata<BR>
+==============<BR>
+It is supported but through "local media assets" agent, add it and and put it before HAMA in the priority order.<BR />
+https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
 <TABLE>
 <THEAD>
@@ -93,23 +105,10 @@ How to name the file ?
 <TR> <TD> Plexignore files  </TD> <TD> .plexignore  </TD> <TD> </TD> <TR>
 </TBODY>
 </TABLE>
-   
-Where to get the perfect title ?
-================================
-<UL>
-  <LI> Anime:     AniDB.net, the Anime main title is generally the best, or romaji (x-jat) </LI>
-  <LI> TV Series: TheTVDB.com or TVrage or TheMovieDB, TV database, will not store boxset specific files(nor sport or porn for tvdb)</LI>
-  <LI> Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
-</UL>
 
-Local metadata
-==============
-Use local media assets and move it before Hama.<BR />
-https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
-
-Big Storage Folder Structure ?
-==============================
-I thought my folder structure could help many.
+Folder Structure for massive storages
+=====================================
+I thought my folder structure could help many, you can store anything in htere
 Implied is original language, folder named dubbed otherwise
 
 <UL>
@@ -173,8 +172,8 @@ Implied is original language, folder named dubbed otherwise
   <LI> Pictures </LI>
     <UL>
       <LI> Wallpapers </LI>
-      <LI> Maps </LI>
-      <LI> Textures </LI>
+      <LI> Maps       </LI>
+      <LI> Textures   </LI>
     </UL>
     
   <LI> Scans </LI>
@@ -182,5 +181,23 @@ Implied is original language, folder named dubbed otherwise
       <LI> Art Books </LI>
       <LI> Xx Comics </LI>
       <LI> Xx Mangas </LI>
+    </UL>
+
+  <LI> Software </LI>
+    <UL>
+      <LI> Computer                   </LI>
+        <UL>
+          <LI> 1977 Apple II          </LI>
+          <LI> Linux                  </LI>
+          <LI> Mac-OS                 </LI>
+          <LI> Synology DSM           </LI>
+          <LI> Windows                </LI>
+        </UL>
+      <LI> Console Cartridge          </LI>
+      <LI> Console CD                 </LI>
+      <LI> Console DVD                </LI>
+      <LI> Handheld                   </LI>
+      <LI> Multi-Systems (Mame, Mess) </LI>
+      <LI> Phone                      </LI>
     </UL>
 </UL>
