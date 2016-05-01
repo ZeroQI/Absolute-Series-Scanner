@@ -10,6 +10,7 @@ import Utils           # SplitPath
 import Media           # Episode
 import copy            # deepcopy
 from lxml import etree # fromstring
+import Stack
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 season_rx = [                                                                                                                                                           ### Seasons Folders 
@@ -396,3 +397,4 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log("".ljust(157, '-'))
   Log("")
+  Stack.Scan(path, files, mediaList, subdirs) 
