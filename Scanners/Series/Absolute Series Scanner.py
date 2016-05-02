@@ -356,8 +356,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         else:                                                                                                 continue
       if ep.endswith(("v1", "v2", "v3", "v4")):                                                               ep=ep[:-2].rstrip('-')                                              # 
       if re.match("((t|o)[0-9]{1,3}$|(sp|special|oav|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)($|[0-9]{1,3}$))", ep):  break                                       # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
-      if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                          season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break  # ep 12.5 = "12" title "Special 12.5"
-      if "." in ep and ep.startswith("ep") and ep.split(".", 1)[0][2:].isdigit() and ep.split(".")[1].isdigit():  season, ep, title = 0, ep.split(".", 1)[0][2:], "Special " + ep[2:]; break  # ep EP12.5 = "12" title "Special 12.5"
       if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:2])==folder_season):  season, ep = int(ep[0:2]), ep[2:4]                                  # 1206 could be season 12 episode 06  #Get assigned from left ot right
       elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));  continue                                                            # take everything after supposed episode number
       else:                                                                                                                                                                       # 
@@ -365,6 +363,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         if ep in ("", "-") or ''.join(letter for letter in ep if letter.isdigit())=="" or path and misc.count(ep)>=2 or ep in clean_string(folder_show, True).split() and clean_string(filename, True).split().count(ep)!=2:  continue
         for prefix in ["ep", "e", "act", "s"]:                                                                                                                                    #
           if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):   ep, season = ep[len(prefix):], 0 if prefix=="s" else season         # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
+      if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                          season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break  # ep 12.5 = "12" title "Special 12.5"
       if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)  # root folder and 
       title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                                              # take everything after supposed episode number
       break
