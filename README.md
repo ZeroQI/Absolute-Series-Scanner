@@ -77,7 +77,22 @@ If you use "Grouping folder / Show Name / Season 1 / Show Name s01e01-e02 - pt1.
 </TBODY>
 </TABLE>
 
-   
+You can put specials in "Specials" or "Season 0" folders. "Extras" gets ignored apart for the tvdb.id and anidb.id type files<BR />
+You can use Anidb numbering for specials (OP1a, NCOP, etc...) or explicitely label them as follow.<BR />
+Series with seasons will follow tvdb specials numbering while others will follow anidb specials numbering (unless specific guid forced). 
+
+<TABLE> 
+  <THEAD> <TR> <TH> Type </TH> <TH> Internal letter </TH> <TH>  Episode number </TH> </TR> </THEAD>
+<TBODY>
+<TR> <TD> OPs      </TD> <TD> C </TD> <TD>  Episodes 101-150 </TD> </TR>
+<TR> <TD> EDs      </TD> <TD> C </TD> <TD>  Episodes 151-200 </TD> </TR>
+<TR> <TD> Trailers </TD> <TD> T </TD> <TD>  Episodes 201-300 </TD> </TR>
+<TR> <TD> OPs/EDs  </TD> <TD> P </TD> <TD>  Episodes 301-400 </TD> </TR>
+<TR> <TD> Others   </TD> <TD> O </TD> <TD>  Episodes 401-500 </TD> </TR>
+<TR> <TD> unmapped </TD> <TD>   </TD> <TD>  Episodes 501-600 </TD> </TR>
+</TBODY>
+</TABLE>
+
 Where to get the perfect title ?<BR>
 ================================<BR>
 <UL>
