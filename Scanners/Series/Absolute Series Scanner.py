@@ -292,8 +292,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     Log("tvdb id = '%s'" % guid)
 
     try:
-      Log("TVDB season mode (%s) enabled, serie url: 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % (tvdb_mode, guid))
-      tvdbanime =  etree.fromstring( urllib2.urlopen('http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
+      Log("TVDB season mode (%s) enabled, serie url: 'https://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % (tvdb_mode, guid))
+      tvdbanime =  etree.fromstring( urllib2.urlopen('https://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
       tvdbanime2 = copy.deepcopy(tvdbanime)
       ep_count, abs_manual_placement_status, abs_manual_placement_info, number_set = 0, "success", [], "no"
       for episode in tvdbanime2.xpath('Episode'):
