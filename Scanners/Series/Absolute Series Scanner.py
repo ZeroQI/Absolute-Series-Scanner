@@ -333,6 +333,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     
     filename, year                           = os.path.splitext(os.path.basename(file))[0] if not disc else ep, ""
     show, season, ep, ep2, title, folder_use = folder_show, folder_season if folder_season else 1, clean_string(filename, False), None, "", False
+    #Log("Initial: show '%s', season '%s', ep '%s', filename '%s'" % (show, season, ep, filename))
     if not path and " - Complete Movie" in ep:                                                                                     ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
     elif ep==folder_show or len(files)==1 and ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):  ep, title       = "01", folder_show            ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
     elif ep==folder_show or len(files)==1 and "-m" in clean_string(folder_show).split():                                           ep, title       = "01", folder_show            ### Movies ### If only one file in the folder & contains '-m' in the folder name denoting a movie folder
@@ -343,6 +344,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                                       #"%s %d " % (folder_show, folder_season), 
           if ep.lower().startswith(prefix.lower()):                                              ep =  replace_insensitive(ep, prefix , "").lstrip()                                                                          # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
       if ep.lower().startswith(("special", "picture drama", "omake")) or "omake" in ep.lower():  season, title  = 0, ep.title()                                                   ### If specials, season is 0 and if title empty use as title ### 
+    #Log("Second Initial: show '%s', season '%s', ep '%s'" % (show, season, ep))
     words, misc = filter(None, ep.split()), filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())                                                           # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
     for word in words:                                                                                                                                                            #
       ep=word.lower().strip()                                                                                                                                                     # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
@@ -365,6 +367,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)  # root folder and 
       title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", False)                                                              # take everything after supposed episode number
       break
+    #Log("Words: " + str(words) + " : Loop broken on: '%s'" % ep)
     if ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping);  continue
   
     ### Check for Regex: series_rx + anidb_rx ###
