@@ -6,11 +6,11 @@ import time            # strftime
 import re              # match, compile, sub
 import unicodedata     # normalize
 import urllib2         # urlopen
-import Utils           # SplitPath
-import Media           # Episode
-import copy            # deepcopy
 from lxml import etree # fromstring
-import Stack
+import Utils           # SplitPath
+import Stack           # Scan
+import Media           # Episode
+#import copy            # deepcopy
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 season_rx = [                                                                                                                                                           ### Seasons Folders 
@@ -68,15 +68,15 @@ whack = [ #lowercase                                                            
   'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis", "NoRar",                                                                            # dtv, stv
   'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync', 'mp4',                                                                         # screener
   "mthd", "thora", 'sickrage', 'brrip', 'ac3', "remastered", "yify", "tsr", "reidy", "(1280x720)", "(gerdhanse)", "(720p)", "(Commie)",                                 #'limited', 
-  'rikou', 'HOMЯ', "iT00NZ", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "()", "(", ")", "(", ")", "[", "]", "{", "}"]               #
+  'rikou', 'HOM?', "iT00NZ", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "()", "(", ")", "(", ")", "[", "]", "{", "}"]               #
 CHARACTERS_MAP = {
-  14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀',                                                                                               #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
-  50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' ,  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,          #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend' #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
-  50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,                                                                       #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
-  50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,                                                                       #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
-  50067:'O' , 50068:'Ô' , 50072:'O' , 50099:'o' , 50100:'o' , 50102:'o' , 50573:'o' , 50578:'OE', 50579:'oe',                                                           #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
-  53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' , 50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                       #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3'] #'×' ['\xc3', '\x97'],
-  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½', 52352:'', 52353:''}                                                    #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #	['\xcc', '\x81'] 
+  14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'?',                                                                                               #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # ':' # 12770:'', # '? Gundam' no need #'´' ['\xc2', '\xb4']
+  50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' ,  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,          #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'a' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend' #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
+  50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,                                                                       #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'e' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
+  50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,                                                                       #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'i' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
+  50067:'O' , 50068:'Ô' , 50072:'O' , 50099:'o' , 50100:'o' , 50102:'o' , 50573:'o' , 50578:'OE', 50579:'oe',                                                           #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'o' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
+  53423:'?' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' , 50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                       #'?' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3'] #'×' ['\xc3', '\x97'],
+  49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½', 52352:'', 52353:''}                                                    #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'`' ['\xcc', '\x80'] #	['\xcc', '\x81'] 
 
 ### Log + LOG_PATH calculated once for all calls ###
 LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows Vista/7/8
@@ -175,32 +175,32 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
 
 ### Allow to display ints even if equal to None at times ################################################
 def clean_string(string, no_parenthesis=False):
-  if not string: return ""
-  if no_parenthesis:                                                                                                                                        # or not delete_parenthesis and not re.search('.*?\((19[0-9]{2}|20[0-2][0-9])\).*?', string, re.IGNORECASE) 
-    while re.match(".*\([^\(\)]*?\).*", string):                  string = re.sub(r'\([^\(\)]*?\)', ' ', string)
-  if "[" in string or "{" in string:                              string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
-  string = encodeASCII(string)                                                                                                                              # Translate them
-  for word in whack_pre_clean:                                    string = replace_insensitive(string, word) if word.lower() in string.lower() else string  #
-  string = re.sub(r'(?P<a>[^0-9Ssv])(?P<b>[0-9]{1,3})\.(?P<c>[0-9]{1,2})(?P<d>[^0-9])', '\g<a>\g<b>DoNoTfIlTeR\g<c>\g<d>', string)                          # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
-  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ("), ("( (", "(("), (")", ") "), (") )", "))")]:
-    if char in string:                                            string = string.replace(char, subst)                                                      # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')       
-  string = string.replace("DoNoTfIlTeR", '.')
-  if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string):   string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                            # CRCs removal
-  if string.endswith(", The"):                                    string = "The " + ''.join( string.split(", The", 1) )                                     # ", The" is rellocated in front
-  if string.endswith(", A"  ):                                    string = "A "   + ''.join( string.split(", A"  , 1) )                                     # ", A"   is rellocated in front
-  string = " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                   # remove double spaces + words present in "whack" list #filter(None, string.split())
-  for rx in ("-", "_", "()", "[]", "{}"):                         string = string[len(rx):   ].strip() if string.startswith(rx) else string                 # In python 2.2.3: string = string.strip(string, " -_")#if string.startswith(("-")): string=string[1:]
-  for rx in ("-", "_", "()", "[]", "{}", "- copy"):               string = string[ :-len(rx) ].strip() if string.lower().endswith  (rx) else string         # In python 2.2.3: string = string.strip(string, " -_")
+  if not string: return ""                                                                                                                                    # if empty return empty string
+  if no_parenthesis:                                                                                                                                          # delete parts between parenthesis if needed
+    while re.match(".*\([^\(\)]*?\).*", string):                 string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                               #   support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
+  if "[" in string or "{" in string:                             string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
+  string = encodeASCII(string)                                                                                                                                # Translate them
+  for word in whack_pre_clean:                                   string = replace_insensitive(string, word) if word.lower() in string.lower() else string     # Remove words present in pre-clean list
+  string = re.sub(r'(?P<a>[^0-9Ssv])(?P<b>[0-9]{1,3})\.(?P<c>[0-9]{1,2})(?P<d>[^0-9])', '\g<a>\g<b>DoNoTfIlTeR\g<c>\g<d>', string)                            # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ("), ("( (", "(("), (")", ") "), (") )", "))")]: # remove leftover parenthesis (work with code a bit above)
+    if char in string:                                           string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
+  string = string.replace("DoNoTfIlTeR", '.')                                                                                                                 # Replace 13DoNoTfIlTeR5 into 13.5 back
+  if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string):  string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                               # CRCs removal
+  if string.endswith(", The"):                                   string = "The " + ''.join( string.split(", The", 1) )                                        # ", The" is rellocated in front
+  if string.endswith(", A"  ):                                   string = "A "   + ''.join( string.split(", A"  , 1) )                                        # ", A"   is rellocated in front
+  string = " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                     # remove double spaces + words present in "whack" list #filter(None, string.split())
+  for rx in ("-", "_", "()", "[]", "{}"):                        string = string[len(rx):   ].strip() if string.startswith(rx)       else string              # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
+  for rx in ("-", "_", "()", "[]", "{}", "- copy"):              string = string[ :-len(rx) ].strip() if string.lower().endswith(rx) else string              # In python 2.2.3: string = string.strip(string, " -_")
   return string
   
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}):
-  file=os.path.join(root,path,file);                                                                                  #
-  if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                     # do not keep dummy files by default unless this file present in Logs folder
+  file=os.path.join(root,path,file);                                                                                   #
+  if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
   #if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):                   file = os.path.join(LOG_PATH,"dummy.mp4")  # with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
-  if title==title.lower() or title==title.upper() and title.count(" ")>0:  title = title.title()                      # capitalise if all caps or all lowercase and one space at least
-  if ep==0:                                                                season, ep, ep2       = 0, 1, 1            # s01e00 and S00e00 => s00e01
-  if not ep2 or ep > ep2:                                                  ep2                   = ep                 #  make ep2 same as ep for loop and tests
+  if title==title.lower() or title==title.upper() and title.count(" ")>0:  title = title.title()                       # capitalise if all caps or all lowercase and one space at least
+  if ep==0:                                                                season, ep, ep2       = 0, 1, 1             # s01e00 and S00e00 => s00e01
+  if not ep2 or ep > ep2:                                                  ep2                   = ep                  #  make ep2 same as ep for loop and tests
   if tvdb_mapping and ep  in tvdb_mapping and season != 0:                 season, ep  = tvdb_mapping[ep ]
   if tvdb_mapping and ep2 in tvdb_mapping and season != 0:                 season, ep2 = tvdb_mapping[ep2]
   for epn in range(ep, ep2+1):
@@ -220,8 +220,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
 
   global LOG_FILE_LIBRARY;
   LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  ### Rename log file with library name if XML file can be accessed or token file present in log folder. LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
-  FILELIST = LOG_FILE_LIBRARY[:-4] + " - filelist " + os.path.basename(root) + LOG_FILE_LIBRARY[-4:] # custom log file per library root folder
-  if not path:  open(os.path.join(LOG_PATH, FILELIST), 'w').close  #Empty file for root folder call
+  FILELIST = LOG_FILE_LIBRARY[:-4] + " - filelist " + os.path.basename(root) + LOG_FILE_LIBRARY[-4:]                   # custom log file per library root folder
+  if not path:  open(os.path.join(LOG_PATH, FILELIST), 'w').close                                                      #Empty file for root folder call
   if path == "" :
     Log(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
     Log("keep_zero_size_files: '%s'" % str(keep_zero_size_files))
@@ -245,7 +245,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   for file in files_to_remove:  files.remove(file)
   if len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
-  ### bluray/DVD folder management ###                                                                          # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
+  ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
   if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
     for temp in ['stream', 'bdmv', 'video_ts']:
       if reverse_path[0].lower() == temp:  reverse_path.pop(0)
@@ -265,12 +265,12 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if match and rx!=season_rx[-1]:  break              # cascade break if not skipped folder since season number found
     Log("len rev path: '%s', path count /: '%s'" % (len(reverse_path), path.count("/")))
     if len(reverse_path)>1 and path.count("/"):         #if grouping folders, skip and add them as additionnal folders
-      Log("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path);  
+      Log("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path)
       Log("".ljust(157, '-'))
       return
   folder_show = reverse_path[0] if reverse_path else ""
   
-  ### Capture title from anidb.id or use folder name,  ###
+  ### Capture guid from folder name or id file in serie or serie/Extras folder ###
   guid = ""
   if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
     for file in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tvdb2.id", "Extras/tvdb2.id", "tvdb3.id", "Extras/tvdb3.id", "tmdb.id", "Extras/tmdb.id", "tsdb.id", "Extras/tsdb.id", "imdb.id", "Extras/imdb.id"):
@@ -284,46 +284,32 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   ### Capture if absolute numbering should be applied for all episode numbers  ###
   guid, tvdb_mode, tvdb_mapping = "", "", {}
   if re.search(".*? ?\[(tvdb2|tvdb3)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE): 
-    # mode 1 normal, mode 2 season mode (ep reset to 1) mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
-    tvdb_mode = "3" if "[tvdb3-" in folder_show else "2" if "[tvdb2-" in folder_show else "1" if "[tvdb-" in folder_show else "0"
-
-    Log("folder_show = '%s'" % folder_show)
+    tvdb_mode = "3" if "[tvdb3-" in folder_show else "2" if "[tvdb2-" in folder_show else "1" if "[tvdb-" in folder_show else "0"  # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
     guid = folder_show.split("[tvdb")[1].split("-")[1].split("]")[0]
-    Log("tvdb id = '%s'" % guid)
-
-    try:
+    Log("folder_show: '%s', tvdb id: '%s'" % (folder_show, guid))
+    
+	try:
       Log("TVDB season mode (%s) enabled, serie url: 'https://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % (tvdb_mode, guid))
       tvdbanime =  etree.fromstring( urllib2.urlopen('https://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
-      tvdbanime2 = copy.deepcopy(tvdbanime)
-      ep_count, abs_manual_placement_status, abs_manual_placement_info, number_set = 0, "success", [], "no"
-      for episode in tvdbanime2.xpath('Episode'):
+      ep_count, abs_manual_placement_info, abs_manual_placement, number_set = 0, [], False, False
+      for episode in tvdbanime.xpath('Episode'):
         if episode.xpath('SeasonNumber')[0].text != '0':
           ep_count = ep_count + 1
-          if not episode.xpath('absolute_number')[0].text or episode.xpath('absolute_number')[0].text == '':
-            episode.xpath('absolute_number')[0].text = str(ep_count)
-            number_set = "yes"
+          if not episode.xpath('absolute_number')[0].text:
+            episode.xpath('absolute_number')[0].text, number_set, abs_manual_placement = str(ep_count), True, True
             abs_manual_placement_info.append("s%se%s = abs %s" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text, episode.xpath('absolute_number')[0].text))
+          elif not number_set:  ep_count, abs_manual_placement = int(episode.xpath('absolute_number')[0].text), True
           else:
-            if number_set == "no":
-              ep_count = int(episode.xpath('absolute_number')[0].text)
-            else:
-              Log("An abs number has been found on ep (s%se%s) after starting to manually place our own abs numbers" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text) )
-              abs_manual_placement_status = "failed"
-              break
-      
-      Log("abs_manual_placement_info = " + str(abs_manual_placement_info))
-      Log("abs_manual_placement_status = %s" % abs_manual_placement_status)
-      if abs_manual_placement_status == "success": tvdbanime = tvdbanime2
-      
-      if abs_manual_placement_status == "success":
+            Log("An abs number has been found on ep (s%se%s) after starting to manually place our own abs numbers" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text) )
+            break
+      Log("abs_manual_placement_info: '%s', abs_manual_placement: '%s'" % (str(abs_manual_placement_info), str(abs_manual_placement)))
+      if abs_manual_placement:
         for episode in tvdbanime.xpath('Episode'):
           SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
           EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
           absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
           if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
-    except:
-      Log("xml loading issue")
-      tvdbanime = {}
+    except:  Log("xml loading issue")
         
   ### File main loop ###
   movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
@@ -395,9 +381,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if match: continue  # next file iteration
     
     ### Ep not found, adding as season 0 episode 501+ ###
-    if " - " in ep and len(ep.split(" - "))>1:  title = " - ".join(ep.split(" - ")[1:])
-    #for word in ep.split(" "):                                                      #
-    #  if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
+    if " - " in ep and len(ep.split(" - "))>1:  title = " - ".join(ep.split(" - ")[1:])  #for word in ep.split(" "): # if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
     counter = counter+1                                          #                    #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log("".ljust(157, '-'))
