@@ -8,9 +8,8 @@ import unicodedata     # normalize
 import urllib2         # urlopen
 from lxml import etree # fromstring
 import Utils           # SplitPath
-import Stack           # Scan
 import Media           # Episode
-#import copy            # deepcopy
+#import Stack           # Scan ###crash ###
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 season_rx = [                                                                                                                                                           ### Seasons Folders 
@@ -387,4 +386,4 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log("".ljust(157, '-'))
   Log("")
-  Stack.Scan(path, files, mediaList, subdirs) 
+  Stack.Scan(path, files, mediaList, subdirs) if "Scan" in dir(Stack) else Log("Stack.Scan() doesn't exists")
