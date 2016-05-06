@@ -9,7 +9,7 @@ import urllib2         # urlopen
 from lxml import etree # fromstring
 import Utils           # SplitPath
 import Media           # Episode
-#import Stack           # Scan ###crash ###
+import Stack           # Scan
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 season_rx = [                                                                                                                                                           ### Seasons Folders 
@@ -386,4 +386,4 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log("".ljust(157, '-'))
   Log("")
-  Stack.Scan(path, files, mediaList, subdirs) if "Scan" in sys.modules else Log("Stack.Scan() doesn't exists")
+  Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log("Stack.Scan() doesn't exists")
