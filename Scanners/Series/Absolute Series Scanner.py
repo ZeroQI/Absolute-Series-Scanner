@@ -386,4 +386,4 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log("".ljust(157, '-'))
   Log("")
-  Stack.Scan(path, files, mediaList, subdirs) if "Scan" in dir(Stack) else Log("Stack.Scan() doesn't exists")
+  Stack.Scan(path, files, mediaList, subdirs) if "Scan" in sys.modules else Log("Stack.Scan() doesn't exists")
