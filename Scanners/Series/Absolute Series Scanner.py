@@ -37,7 +37,7 @@ video_exts      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'biv
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', #
                     'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']                                                                 # DVD: 'ifo', 'bup', 'vob'
 FILTER_CHARS    = "\\/:*?<>|~;_."                                                                                                                                       # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
-whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', 
+whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC", 
   'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
   "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release",
   "By UniversalFreedom", "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
@@ -45,29 +45,29 @@ whack_pre_clean = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
   "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
   "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
-  "(BD 1280x720 Hi10P)", "(DVD_480p)","(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", "x264-RedBlade",
+  "(BD 1280x720 Hi10P)", "(DVD_480p)", "(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", "x264-RedBlade",
   "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p.BluRay",
   "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)",
-  "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV","SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
-  "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0",  "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
-  "(Exiled_Destiny)", "1080p", "720p", "480p", "_BD", ".XVID", "(xvid)", 
-  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "( )", "(  )", "(   )", "(    )", "(     )", "(_)", 
+  "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV", "SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
+  "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0", "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
+  "(Exiled_Destiny)", "1080p", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub sub ja+ ru+", "dub sub en ja", "dub en",
+  "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5",
   "%28", "%29", " (1)", "(Clean)"]                                                                                                                                      #include spaces, hyphens, dots, underscore, case insensitive
 whack = [ #lowercase                                                                                                                                                    ### Tags to remove ###
-  'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi", 'hi10', 'hi10p', '10bit', 'crf24', 'crf 24',                                                          # Video Codecs (color depth and encoding, Resolution)
-  '480p', '576p', '720p', '1080p', '1080i', '1920x1080','1280x720',                                                                                                     #       
-  '24fps', '25fps', 'ntsc','pal', 'ntsc-u', 'ntsc-j',                                                                                                                   # Refresh rate, Format
-  'mp3', 'ogg','ogm', 'vorbis','aac','dts', 'ac3', '5.1ch','5.1', '7.1ch',  'qaac',                                                                                     # Audio Codecs, channels
-  'dc', 'se', 'extended', 'unrated', 'multi','multisubs', 'dubbed','subbed', "french", "fr", "dub",                                                                     # edition (dc = directors cut, se = special edition), subs and dubs
-  'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored",                                                                                 # format
-  'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix', 'fragment','ps3avchd','remux','fs','ws', "- copy","reenc","hom"# misc
-   'retail', 'webrip','web-dl', 'wp','workprint', "mkv",  "v1", "v2", "v3", "v4",                                                                                # release type: retail, web, work print
-  'bdrc','bdrip','bluray','bd','brrip','hdrip','hddvd','hddvdrip', 'wsrip',                                                                                             # Source: bluray
-  'ddc','dvdrip','dvd','r1','r3','r5',"dvd",'svcd','vcd', 'sd', 'hd', 'dvb', "release",                                                                                 # DVD, VCD, S-VCD
-  'dsr','dsrip','hdtv','pdtv','ppv','stv','tvrip','complete movie',"Hiei", "Metis", "NoRar",                                                                            # dtv, stv
-  'cam','bdscr','dvdscr','dvdscreener','scr','screener','tc','telecine','ts','telesync', 'mp4',                                                                         # screener
-  "mthd", "thora", 'sickrage', 'brrip', 'ac3', "remastered", "yify", "tsr", "reidy", "(1280x720)", "(gerdhanse)", "(720p)", "(Commie)",                                 #'limited', 
-  'rikou', 'HOMЯ', "iT00NZ", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "()", "(", ")", "(", ")", "[", "]", "{", "}"]               #
+  'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi", '8bit', '8-bit', 'hi10', 'hi10p', '10bit', '10-bit', 'crf24', 'crf 24', 'hevc',                       # Video Codecs (color depth and encoding, Resolution)
+  '480p', '576p', '720p', '1080p', '1080i',                                                                                                                             #       
+  '24fps', '25fps', 'ntsc', 'pal', 'ntsc-u', 'ntsc-j',                                                                                                                  # Refresh rate, Format
+  'mp3', 'ogg', 'ogm', 'vorbis', 'aac', 'dts', 'ac3', 'ac-3', '5.1ch', '5.1', '7.1ch',  'qaac',                                                                         # Audio Codecs, channels
+  'dc', 'se', 'extended', 'unrated', 'multi', 'multisubs', 'dubbed', 'dub', 'subbed', 'sub', 'engsub', 'eng', 'french', 'fr', 'jap',                                    # edition (dc = directors cut, se = special edition), subs and dubs
+  'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored", 'unc', 'cen',                                                                   # format
+  'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix', 'fragment', 'ps3avchd', 'remux', 'fs', 'ws', "- copy", "reenc", "hom",# misc
+  'retail', 'webrip', 'web-dl', 'wp', 'workprint', "mkv",  "v1", "v2", "v3", "v4",                                                                                      # release type: retail, web, work print
+  'bdrc', 'bdrip', 'bluray', 'bd', 'brrip', 'hdrip', 'hddvd', 'hddvdrip', 'wsrip',                                                                                      # Source: bluray
+  'ddc', 'dvdrip', 'dvd', 'r1', 'r3', 'r5', "dvd", 'svcd', 'vcd', 'sd', 'hd', 'dvb', "release",                                                                         # DVD, VCD, S-VCD
+  'dsr', 'dsrip', 'hdtv', 'pdtv', 'ppv', 'stv', 'tvrip', 'complete movie', "hiei", "metis", "norar",                                                                    # dtv, stv
+  'cam', 'bdscr', 'dvdscr', 'dvdscreener', 'scr', 'screener', 'tc', 'telecine', 'ts', 'telesync', 'mp4',                                                                # screener
+  "mthd", "thora", 'sickrage', 'brrip', "remastered", "yify", "tsr", "reidy", "gerdhanse",                                                                              #'limited', 
+  'rikou', 'homЯ', "it00nz", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a"]                                                             #
 CHARACTERS_MAP = {
   14844057:"'", 14844051:'-', 14844070:'...', 15711386:':', 14846080:'∀',                                                                                               #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
   50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' ,  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,          #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend' #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
@@ -173,25 +173,30 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
   return ''.join(string)
 
 ### Allow to display ints even if equal to None at times ################################################
-def clean_string(string, no_parenthesis=False):
+def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
   if not string: return ""                                                                                                                                    # if empty return empty string
   if no_parenthesis:                                                                                                                                          # delete parts between parenthesis if needed
     while re.match(".*\([^\(\)]*?\).*", string):                 string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                               #   support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
-  if "[" in string or "{" in string:                             string = re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string).replace("[", '').replace("]", '')    # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
+  if re.search("(\[|\]|\{|\})", string):                         string = re.sub("(\[|\]|\{|\})", "", re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string))  # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
   string = encodeASCII(string)                                                                                                                                # Translate them
-  for word in whack_pre_clean:                                   string = replace_insensitive(string, word) if word.lower() in string.lower() else string     # Remove words present in pre-clean list
+  if not no_whack:
+    for word in whack_pre_clean:                                 string = replace_insensitive(string, word) if word.lower() in string.lower() else string     # Remove words present in pre-clean list
   string = re.sub(r'(?P<a>[^0-9Ssv])(?P<b>[0-9]{1,3})\.(?P<c>[0-9]{1,2})(?P<d>[^0-9])', '\g<a>\g<b>DoNoTfIlTeR\g<c>\g<d>', string)                            # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
-  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ("), ("( (", "(("), (")", ") "), (") )", "))")]: # remove leftover parenthesis (work with code a bit above)
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ( "), (")", " ) ")]:                             # remove leftover parenthesis (work with code a bit above)
     if char in string:                                           string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
   string = string.replace("DoNoTfIlTeR", '.')                                                                                                                 # Replace 13DoNoTfIlTeR5 into 13.5 back
   if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string):  string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                               # CRCs removal
+  if re.search("[0-9]{3,4} ?[Xx] ?[0-9]{3,4}", string):          string = re.sub('[0-9]{3,4} ?[Xx] ?[0-9]{3,4}', ' ', string)                                 # Video size ratio removal
   if string.endswith(", The"):                                   string = "The " + ''.join( string.split(", The", 1) )                                        # ", The" is rellocated in front
   if string.endswith(", A"  ):                                   string = "A "   + ''.join( string.split(", A"  , 1) )                                        # ", A"   is rellocated in front
-  string = " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()                                                     # remove double spaces + words present in "whack" list #filter(None, string.split())
-  for rx in ("-", "_", "()", "[]", "{}"):                        string = string[len(rx):   ].strip() if string.startswith(rx)       else string              # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
-  for rx in ("-", "_", "()", "[]", "{}", "- copy"):              string = string[ :-len(rx) ].strip() if string.lower().endswith(rx) else string              # In python 2.2.3: string = string.strip(string, " -_")
+  if not no_whack:                                               string = " ".join([word for word in filter(None, string.split()) if word.lower() not in whack]).strip()  # remove double spaces + words present in "whack" list #filter(None, string.split())
+  if no_dash:                                                    string = re.sub("-", " ", string)                                                            # replace the dash '-'
+  string = re.sub(r'\([-Xx]?\)', '', re.sub(r'\( *(?P<internal>[^\(\)]*?) *\)', '(\g<internal>)', string))                                                    # Remove internal spaces in parenthesis then remove empty parenthesis
+  string = " ".join([word for word in filter(None, string.split())]).strip()                                                                                  # remove multiple spaces
+  for rx in ("-"):                                               string = string[len(rx):   ].strip() if string.startswith(rx)       else string              # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
+  for rx in ("-", "- copy"):                                     string = string[ :-len(rx) ].strip() if string.lower().endswith(rx) else string              # In python 2.2.3: string = string.strip(string, " -_")
   return string
-  
+
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}):
   file=os.path.join(root,path,file);                                                                                   #
