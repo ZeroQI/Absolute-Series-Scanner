@@ -326,7 +326,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     show, season, ep, ep2, title, folder_use = folder_show, folder_season if folder_season else 1, clean_string(filename, False), None, "", False
     #Log("Initial: show '%s', season '%s', ep '%s', filename '%s'" % (show, season, ep, filename))
     if not path and " - Complete Movie" in ep:                                                                                     ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
-    elif ep==folder_show:                                                                                      ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
+    elif clean_string(filename, True, no_dash=True)==clean_string(folder_show, True, no_dash=True):            ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
     elif len(files)==1:
       if   ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):                 ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
       elif "-m" in clean_string(folder_show).split():                                                          ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '-m' in the folder name denoting a movie folder
