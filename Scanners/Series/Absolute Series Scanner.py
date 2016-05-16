@@ -361,7 +361,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):      ep, season = ep[len(prefix):], 0 if prefix=="s" else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
       if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                           season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break # ep 12.5 = "12" title "Special 12.5"
       if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)  # root folder and 
-      title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "", True)                                                              # take everything after supposed episode number
+      title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "")                                                              # take everything after supposed episode number
       break
     #Log("Words: " + str(words) + " : Loop broken on: '%s'" % ep)
     if ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping);  continue
@@ -372,7 +372,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
         if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:                show   = clean_string( match.group('show' ))  # Mainly if file at root or _ folder
-        if match.groupdict().has_key('title' ) and match.group('title' ):                             title  = clean_string( match.group('title'), True)
+        if match.groupdict().has_key('title' ) and match.group('title' ):                             title  = clean_string( match.group('title'))
         if match.groupdict().has_key('season') and match.group('season') and not season_from_folder:  season = int(match.group('season'))
         if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):                             ep2    = match.group('ep2') 
         if match.groupdict().has_key('ep'    ) and match.group('ep'    ):                             ep     = match.group('ep')
@@ -391,7 +391,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if match: continue  # next file iteration
     
     ### Ep not found, adding as season 0 episode 501+ ###
-    if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]), True)  #for word in ep.split(" "): # if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
+    if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]))  #for word in ep.split(" "): # if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
     counter = counter+1                                          #                    #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log("".ljust(157, '-'))
