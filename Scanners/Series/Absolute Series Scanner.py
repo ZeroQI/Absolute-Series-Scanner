@@ -315,7 +315,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
           absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
           if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
-    except Exception as e:  Log("xml loading issue"); Log(e)
+    except Exception as e:  Log("xml loading issue"); Log(str(e))
         
   ### File main loop ###
   movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
