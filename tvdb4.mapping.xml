@@ -2,9 +2,11 @@
 <tvdb4entries>
   <anime tvdbid="88031" name="Dragon Ball Kai">
     01|001|016|Saiyan Saga
-    02|017|054|Freiza Saga
-    04|055|067|Android Saga
-    05|068|098|Cell Saga
+    02|017|054|Frieza Saga
+    03|055|067|Androids Saga
+    04|068|098|Cell Saga
+    05|099|133|Majin Buu Saga
+    06|134|159|Evil Buu Saga
   </anime>
   <anime tvdbid="133341" name="Durarara!!">
     01|001|024|Durarara!!
