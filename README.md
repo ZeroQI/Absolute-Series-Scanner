@@ -1,5 +1,13 @@
+<UL> A Plex series scanner choose the following from the folders and file names:
+<LI>Serie name</LI>
+<LI>Season number</LI>
+<LI>Episode number</LI>
+<LI>Episode title (not filled by plex default series scanner, until the metadata agent refreshes it)</LI>
+<LI>Episode year</LI>
+The files choosen by the scanner will be showing in Plex. If a file is not showing in plex it is the scanner responsability.<BR>
+
 Functionalities<BR>
-===============<BR>
+---------------<BR>
 <UL>
       <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2]), grouping folder need to be added as root folder, like "D:/Anime/Dragon Ball/[2] Dragon Ball Z"</LI>
       <LI> Seasons folders with serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")</LI>
@@ -14,6 +22,62 @@ Functionalities<BR>
       <LI> "Plex Media Scanner (custom ASS).log" in Plex Logs folder with one line for the serie folder and per file</LI>
       <LI> "Plex Media Scanner (custom ASS) - filelist.log" contain all filenames so i can reproduce your library with a batch file after converting to utf-8 with notepad</LI>
   </UL>
+
+Forcing the series ID
+---------------------
+You can specify the guid to use the following way:
+   . In custom search serie name by adding " [guid_type-id_number]" at the end
+   . In Serie folder name by adding " [guid_type-id_number]" at the end
+   . guid_type.id file inside the serie folder or the "Extras" folder inside it
+
+Hama supports the following guid_type:
+   . anidb for AniDB.net
+   . tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
+   . tmdb  For TheMovieDB.net (and the serie part of TheMovieDB: tsdb)
+   . imdb  For the International Movie DataBase (ids starts with "tt...")
+
+You can have <u>absolutely numbered series</u> (i.e. without season number apart from Specials/season 0) being <u>displayed in Plex with seasons</u> without the need to rename the files with season numbering or creating season folders and moving absolutely numbered episodes inside by using the following custom modes, and episodes will be displayed as:
+
+<TABLE>
+<THEAD> <TR> <TH> guid_type </TH> <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
+<TBODY> <TR> <TD> tvdb2     </TD> <TD> TVDB                </TD> <TD>Season            </TD> <TD>Multiple single season series (Sword Art online)</TD> </TR>
+        <TR> <TD> tvdb3     </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan)</TD> </TR>
+        <TR> <TD> tvdb4     </TD> <TD> Custom/Arc database </TD> <TD>Absolute          </TD> <TD>Long series with arc (one piece, dragon ball)</TD> </TR>
+</TBODY>
+</TABLE>
+
+<UL>Examples:
+      <LI>" [anidb-xxxxx]" for anime in absolute numbering</LI>
+      
+      <LI>" [tvdb-xxxxx]" for tvdb season numbering. You can put separate sereis as seasons
+      SAO can be split into "Season 1 - Sword Art Online" (1-25), "Season 2 - Alfheim & Gun Gale Online (1-25)</LI>
+      
+      <LI>" [tvdb2-xxxxx]" for absolute numbering displayed as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online<BR>
+      SAO can be numbered 1-49, but will automatically be split into Season 1 (1-25) and Season 2 (1-25).</LI>
+      
+      <LI>" [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece<BR>
+      One Piece can be numbered 1-700+ and will be automatically split into seasons while keeping the ep number intact without havingto create seasons in the real folder</LI>
+      
+      <LI>" [tvdb4-xxxxx]" for absolute numbering episodes displayed using series arc as season but keeping the absolute
+      episode number (aka Hybrid numbering) for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end').<BR>
+      The arc definition can be done using:
+       <UL>
+         <LI>Seasons folders manually created with absolute numbered episodes inside</LI>
+         <LI>in a local "tvdb.mapping" file inside the serie folder or "Extras" folder inside it<BR>
+             FORMAT: <season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)</LI>
+         <LI>the online arc database (https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)<BR>
+             Format:<BR>
+<PRE><CODE>
+&lt;tvdb4entries&gt;
+&lt;anime tvdbid="289906" name="Seraph of the End"&gt;
+01|001|012|Vampire Reign
+02|013|024|Battle in Nagoya
+&lt;/anime&gt;
+</CODE></PRE>
+        </UL>
+      </LI>
+</UL>
+<P>
 
 Logs<BR>
 ====<BR>
@@ -30,22 +94,6 @@ List of logs files created by this scanner:
 <UL>
   <LI>Plex Media Scanner (custom ASS) - Library_Name.log contain all folders and files processed in a readable fashion, perfect for troubleshooting scanner issues</LI>
   <LI>Plex Media Scanner (custom ASS) - Library_Name - filelist Root_Folder_name.log contain all files in the root folder, so i can re-create your library with zero size files.</LI>
-</UL>
-
-Forcing the metadata id and display conversion without renaming files<BR>
-=====================================================================<BR>
-You can use anidb|tvdb|tvdb2|tvdb3.id in serie folder or serie Extras folder to force the id, or use the following at the end of the folder name: (there is a space in front of the bracket)
-<UL>
-      <LI>" [anidb-xxxxx]" for anime in absolute numbering</LI>
-      
-      <LI>" [tvdb-xxxxx]" for tvdb season numbering. You can put separate sereis as seasons
-      SAO can be split into "Season 1 - Sword Art Online" (1-25), "Season 2 - Alfheim & Gun Gale Online (1-25)</LI>
-      
-      <LI>" [tvdb2-xxxxx]" for absolute numbering displayed as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online<BR>
-      SAO can be numbered 1-49, but will automatically be split into Season 1 (1-25) and Season 2 (1-25).</LI>
-      
-      <LI>" [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece<BR>
-      One Piece can be numbered 1-700+ and will be automatically split into seasons while keeping the ep number intact without havingto create seasons in the real folder</LI>
 </UL>
 
 Naming Conventions<BR>
