@@ -41,20 +41,19 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 </TBODY>
 </TABLE>
 
-Examples:
-- " [anidb-xxxxx]" for anime in absolute numbering
-- " [tvdb-xxxxxx]" for tvdb season numbering. You can put separate series as seasons.
-      SAO can be split into "Season 1 - Sword Art Online" [1-25], "Season 2 - Alfheim & Gun Gale Online [1-25]".
-- " [tvdb2-xxxxx]" for absolute numbering displayed as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online(numbered 1-49, but will automatically be split into Season 1 [1-25] and Season 2 [1-25])
-- " [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece (numbered 1-700+, will be automatically split into seasons while keeping the (absolute numbering) episode number intact without having to create seasons in the real folder
-- " [tvdb4-xxxxx]" for absolute numbering episodes displayed using series arc as season but keeping the absolute
-      episode number (aka Hybrid numbering) for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end' numbered 1-24 splitted into 2 seasons).<BR>
-      The arc definition to split into seasons the absolute numbering can be done using:
-      - Seasons folders manually created with absolute numbered episodes inside
-      - in a local "tvdb.mapping" file inside the serie folder or "Extras" folder inside it
-             FORMAT: <season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)
-      - the online arc database (https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
-        Format:<PRE><CODE>
+Examples of force  guid in all modes and their applications:
+- " [anidb-xxxxx]" for anime in absolute numbering. Force the anidb serie id
+- " [tvdb-xxxxxx]" for tvdb season numbering. You can put separate anidb series as seasons as per tvdb numbering.
+    SAO can be split at file level into "Season 1 - Sword Art Online" [1-25], "Season 2 - Alfheim & Gun Gale Online [1-25]".
+- " [tvdb2-xxxxx]" for absolute numbering displayed virtually as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online(1-50, will be split into Season 1 [1-25] and Season 2 [1-25])
+- " [tvdb3-xxxxx]" for absolute numbering episodes displayed virtually using tvdb season numbering for long running series like One piece (1-700+, will be split into seasons while keeping the absolute episode number intact without having to create seasons in the real folder
+- " [tvdb4-xxxxx]" for absolute numbering episodes displayed using series arc as season for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end' numbered 1-24 splitted into 2 seasons).
+  The arc definition to split into seasons the absolute numbering is done using the following order:
+    - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
+    - in a local "tvdb.mapping" file inside serie folder or "Extras" folder inside it
+      FORMAT: <season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)
+    - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
+      Format:<PRE><CODE>
 &lt;tvdb4entries&gt;
 &lt;anime tvdbid="289906" name="Seraph of the End"&gt;
 01|001|012|Vampire Reign
