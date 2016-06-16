@@ -140,13 +140,14 @@ List of configuration files, to put in logs folder, can be found the (blank) con
 - no_timestamp: when present, remove timestamps from the scanner log
 - keep_zero_size_files: when present, accept empty (zero size) files as valid, good when reproducing issues with a fake library
 - season_from_folder: when present, use the season from the folder instead of the file when a conflict arises
-- "X-Plex-Token.id: Fill with plex token to create a scanner log per library
+- "X-Plex-Token.id: Allow to get the library name to get a log per library (optional). Fill with plex token by following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token. **_Do not share that file when uploading the whole Logs folders_**
 
 ###Task list
-- [ ] no_timestamp: should we remove the file and put no timestamp ?
+- [ ] no_timestamp: should we remove the file and put no timestamp by default in the source?
 - [ ] keep_zero_size_files: should we accept that as the default (use it a lot for reproducing issues) ?
 - [ ] season_from_folder: when present, use the season from the folder instead of the file when a conflict arises. Remove ?
 - [ ] Support .Disc files ?
+- [ ] Shall i write a Movie scanner using hte same code? The Plex default movie scanner does an good job i believe ?
 
 ###Folder Structure for massive storages
 I thought my folder structure could help many, you can store anything in htere
