@@ -1,20 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <tvdb4entries>
   <anime tvdbid="88031" name="Dragon Ball Kai">
-    1|001|016|Saiyan Saga
-    2|017|030|Namek Saga
-    3|031|054|Freiza Saga
-    4|055|067|Android Saga
-    5|068|098|Cell Saga
+    01|001|016|Saiyan Saga
+    02|017|054|Freiza Saga
+    04|055|067|Android Saga
+    05|068|098|Cell Saga
   </anime>
+  <anime tvdbid="133341" name="Durarara!!">
+    01|001|024|Durarara!!
+    02|026|037|Durarara!!x2 Shō
+    03|038|049|Durarara!!x2 Ten
+    04|050|061|Durarara!!x2 Ketsu
+    </anime>
   <anime tvdbid="252322" name="Hunter x Hunter (2011)">
-    1|001|031|Hunter Exam Arc
-    2|032|036|Zoldyck Family Arc
-    3|037|044|Heavens Arena Arc
-    4|045|070|Yorknew City Arc
-    5|071|092|Greed Island Arc
-    6|093|136|Chimera Ant Arc
-    7|137|148|13th Hunter Chairman Arc
+    01|001|031|Hunter Exam Arc
+    02|032|036|Zoldyck Family Arc
+    03|037|044|Heavens Arena Arc
+    04|045|070|Yorknew City Arc
+    05|071|092|Greed Island Arc
+    06|093|136|Chimera Ant Arc
+    07|137|148|13th Hunter Chairman Arc
   </anime>
   <anime tvdbid="289906" name="Seraph of the End">
     01|001|012|Vampire Reign
