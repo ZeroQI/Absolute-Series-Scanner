@@ -1,3 +1,4 @@
+#Absolute Series Scanner
 
 A Plex series scanner choose the following from the folders and file names:
 - Serie name
@@ -139,7 +140,7 @@ List of configuration files, to put in logs folder, can be found the (blank) con
 - no_timestamp: when present, remove timestamps from the scanner log
 - keep_zero_size_files: when present, accept empty (zero size) files as valid, good when reproducing issues with a fake library
 - season_from_folder: when present, use the season from the folder instead of the file when a conflict arises
-- "X-Plex-Token.id: fill with plex token to create a scanner log per library
+- "X-Plex-Token.id: Fill with plex token to create a scanner log per library
 
 ###Task list
 - [ ] no_timestamp: should we remove the file and put no timestamp ?
