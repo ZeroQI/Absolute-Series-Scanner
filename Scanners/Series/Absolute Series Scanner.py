@@ -277,8 +277,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   
   ### Capture guid from folder name or id file in serie or serie/Extras folder ###
   guid = ""
-  if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
-    for file in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tvdb2.id", "Extras/tvdb2.id", "tvdb3.id", "Extras/tvdb3.id", "tmdb.id", "Extras/tmdb.id", "tsdb.id", "Extras/tsdb.id", "imdb.id", "Extras/imdb.id"):
+  if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tvdb4|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
+    for file in ("anidb.id", "Extras/anidb.id", "tvdb.id", "Extras/tvdb.id", "tvdb2.id", "Extras/tvdb2.id", "tvdb3.id", "Extras/tvdb3.id", "tvdb4.id", "Extras/tvdb4.id", "tmdb.id", "Extras/tmdb.id", "tsdb.id", "Extras/tsdb.id", "imdb.id", "Extras/imdb.id"):
       if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), file)):
         with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
           guid        = guid_file.read().strip()
@@ -287,15 +287,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
         
   ### Capture if absolute numbering should be applied for all episode numbers  ###
-  guid, tvdb_mode, tvdb_mapping = "", "", {}
-  if re.search(".*? ?\[(tvdb2|tvdb3)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE): 
-    tvdb_mode = "3" if "[tvdb3-" in folder_show else "2" if "[tvdb2-" in folder_show else "1" if "[tvdb-" in folder_show else "0"  # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
-    guid = folder_show.split("[tvdb")[1].split("-")[1].split("]")[0]
-    Log("folder_show: '%s', tvdb id: '%s'" % (folder_show, guid))
-    
+  tvdb_mode, tvdb_guid, tvdb_mapping = "", "", {}
+  tvdb_mode_search = re.search(".*? ?\[tvdb(?P<mode>(2|3|4))-(tt)?(?P<guid>[0-9]{1,7})\]", folder_show, re.IGNORECASE)
+  if tvdb_mode_search: tvdb_mode, tvdb_guid = tvdb_mode_search.group('mode').lower(), tvdb_mode_search.group('guid').lower(); Log("folder_show: '%s', folder_season: '%s', tvdb mode: '%s', tvdb id: '%s'" % (folder_show, folder_season, tvdb_mode, tvdb_guid)) # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
+  if tvdb_mode in ["2", "3"]: 
     try:
-      Log("TVDB season mode (%s) enabled, serie url: 'https://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % (tvdb_mode, guid))
-      tvdbanime =  etree.fromstring( urllib2.urlopen('https://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % guid).read() )
+      Log("TVDB season mode (%s) enabled, serie url: 'https://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'" % (tvdb_mode, tvdb_guid))
+      tvdbanime =  etree.fromstring( urllib2.urlopen('https://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml' % tvdb_guid).read() )
       ep_count, abs_manual_placement_info, abs_manual_placement_worked, number_set = 0, [], True, False
       for episode in tvdbanime.xpath('Episode'):
         if episode.xpath('SeasonNumber')[0].text != '0':
@@ -316,7 +314,30 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
           if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
     except Exception as e:  Log("xml loading issue"); Log(str(e))
-        
+  elif tvdb_mode=="4" and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
+    file_array, tvdb4_mapping_content = [], ""
+    for mapping_file in ("tvdb4.mapping", "Extras/tvdb4.mapping"): ###local tvdb4.mapping file loading###
+      if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), mapping_file)):
+        tvdb4_mapping_content = open(os.path.join(root, "/".join(reversed(reverse_path)), mapping_file)).read().strip()
+    if not tvdb4_mapping_content: ###load remote tvdb4 mapping file since no season folders, no local files###
+      try:
+        Log("TVDB season mode (%s) enabled, serie url: 'https://raw.githubusercontent.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'" % tvdb_mode)
+        tvdb4_anime = etree.fromstring( urllib2.urlopen('https://raw.githubusercontent.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml').read() )
+        tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % tvdb_guid)[0].text.strip()
+      except Exception as e:
+        if str(e) == "list index out of range": Log("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
+        else: Log("Error opening remote tvdb4.mapping"); Log(str(e))
+    if tvdb4_mapping_content:
+      for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
+        file_array.append(line.strip().split("|"))
+    if file_array:
+      try:
+        for season in file_array:
+          for absolute_episode in range(int(season[1]), int(season[2])+1):
+            tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
+      except Exception as e: tvdb_mapping = {}; Log("mapping parsing issue"); Log(str(e))
+  if tvdb_mapping: Log("tvdb_mapping: " + str(tvdb_mapping))
+
   ### File main loop ###
   movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
   for file in files:
