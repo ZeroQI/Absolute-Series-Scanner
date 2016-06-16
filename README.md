@@ -146,8 +146,8 @@ List of configuration files, to put in logs folder, can be found the (blank) con
 - [ ] no_timestamp: should we remove the file and put no timestamp by default in the source?
 - [ ] keep_zero_size_files: should we accept that as the default (use it a lot for reproducing issues) ?
 - [ ] season_from_folder: when present, use the season from the folder instead of the file when a conflict arises. Remove ?
-- [ ] Support .Disc files ?
-- [ ] Shall i write a Movie scanner using hte same code? The Plex default movie scanner does an good job i believe ?
+- [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
+- [ ] Shall i write a Movie scanner using the same code? The Plex default movie scanner does an good job i believe ?
 
 ###Folder Structure for massive storages
 I thought my folder structure could help many, you can store anything in htere
@@ -215,4 +215,4 @@ Implied is original language, folder named dubbed otherwise
     - Multi-Systems (Mame, Mess)
     - Phone
 
-Reference: https://help.github.com/articles/basic-writing-and-formatting-syntax/
+Reference: [Link to Markdown](https://guides.github.com/features/mastering-markdown/) or https://help.github.com/articles/basic-writing-and-formatting-syntax/
