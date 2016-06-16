@@ -1,42 +1,36 @@
-<UL> A Plex series scanner choose the following from the folders and file names:
-<LI>Serie name</LI>
-<LI>Season number</LI>
-<LI>Episode number</LI>
-<LI>Episode title (not filled by plex default series scanner, until the metadata agent refreshes it)</LI>
-<LI>Episode year</LI>
-The files choosen by the scanner will be showing in Plex. If a file is not showing in plex it is the scanner responsability.<BR>
 
-Functionalities<BR>
----------------<BR>
-<UL>
-      <LI> Grouping folders in parent directory and brackets with number to order series chronologically ([1], [2]), grouping folder need to be added as root folder, like "D:/Anime/Dragon Ball/[2] Dragon Ball Z"</LI>
-      <LI> Seasons folders with serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")</LI>
-      <LI> Allow grouping in Ark xxxxx folders transparently</LI>
-      <LI> Include all files not recognised as Season 0 episode 501+</LI>
-      <LI> AniDB Specials (OP, NCOP, ED, NCED, Sxx, etc...) numbering is supported</LI>
-      <LI> Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")</LI>
-      <LI> Movie files in Series libraries accepted if they are in a folder with the same name (or 01|ep 01|s01e01, or " - Complete Movie" at the end)</LI>
-      <LI> support id files "anidb.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tmdb.id"</LI>
-      <LI> support id files in folder names like "tv show [anidb-12345]" or "Serie name [tvdb-1234567]"</LI>
-      <LI> "keep_zero_size_files" file in logs folder to allow using zero size files, otherwise skip them</LI>
-      <LI> "Plex Media Scanner (custom ASS).log" in Plex Logs folder with one line for the serie folder and per file</LI>
-      <LI> "Plex Media Scanner (custom ASS) - filelist.log" contain all filenames so i can reproduce your library with a batch file after converting to utf-8 with notepad</LI>
-  </UL>
+A Plex series scanner choose the following from the folders and file names:
+- Serie name
+- Season number
+- Episode number
+- Episode title (not filled by plex default series scanner, until the metadata agent refreshes it)
+- Episode year
 
-Forcing the series ID
----------------------
+The files choosen by the scanner will be showing in Plex.
+The Plex metadata agent will find metadata for files showing.
+
+###Which Metadata/Title source to select?
+- Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" serie). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
+- TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniBD.net, but they do not carry porn series so no metadata for this type.
+- Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
+
+Grouping folder
+- If you use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
+  You can just add it as additionnal root folder in the library: "D:/Anime/Dragon Ball/" for "D:/Anime/Dragon Ball/[2] Dragon Ball Z" folder for example...
+
+###Forcing the series ID
 You can specify the guid to use the following way:
-   . In custom search serie name by adding " [guid_type-id_number]" at the end
-   . In Serie folder name by adding " [guid_type-id_number]" at the end
-   . guid_type.id file inside the serie folder or the "Extras" folder inside it
+- In custom search serie name by adding " [guid_type-id_number]" at the end
+- In Serie folder name by adding " [guid_type-id_number]" at the end
+- guid_type.id file inside the serie folder or the "Extras" folder inside it
 
 Hama supports the following guid_type:
-   . anidb for AniDB.net
-   . tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
-   . tmdb  For TheMovieDB.net (and the serie part of TheMovieDB: tsdb)
-   . imdb  For the International Movie DataBase (ids starts with "tt...")
+- anidb for AniDB.net
+- tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
+- tmdb  For TheMovieDB.net (and the serie part of TheMovieDB: tsdb)
+- imdb  For the International Movie DataBase (ids starts with "tt...")
 
-You can have <u>absolutely numbered series</u> (i.e. without season number apart from Specials/season 0) being <u>displayed in Plex with seasons</u> without the need to rename the files with season numbering or creating season folders and moving absolutely numbered episodes inside by using the following custom modes, and episodes will be displayed as:
+You can have **absolutely numbered series** (i.e. without season number apart from Specials/season 0) being **displayed in Plex with seasons** without the need to rename the files with season numbering or creating season folders and moving absolutely numbered episodes inside by using the following custom modes, and episodes will be displayed as:
 
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
@@ -46,68 +40,55 @@ You can have <u>absolutely numbered series</u> (i.e. without season number apart
 </TBODY>
 </TABLE>
 
-<UL>Examples:
-      <LI>" [anidb-xxxxx]" for anime in absolute numbering</LI>
-      
-      <LI>" [tvdb-xxxxx]" for tvdb season numbering. You can put separate sereis as seasons
-      SAO can be split into "Season 1 - Sword Art Online" (1-25), "Season 2 - Alfheim & Gun Gale Online (1-25)</LI>
-      
-      <LI>" [tvdb2-xxxxx]" for absolute numbering displayed as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online<BR>
-      SAO can be numbered 1-49, but will automatically be split into Season 1 (1-25) and Season 2 (1-25).</LI>
-      
-      <LI>" [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece<BR>
-      One Piece can be numbered 1-700+ and will be automatically split into seasons while keeping the ep number intact without havingto create seasons in the real folder</LI>
-      
-      <LI>" [tvdb4-xxxxx]" for absolute numbering episodes displayed using series arc as season but keeping the absolute
-      episode number (aka Hybrid numbering) for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end').<BR>
-      The arc definition can be done using:
-       <UL>
-         <LI>Seasons folders manually created with absolute numbered episodes inside</LI>
-         <LI>in a local "tvdb.mapping" file inside the serie folder or "Extras" folder inside it<BR>
-             FORMAT: <season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)</LI>
-         <LI>the online arc database (https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)<BR>
-             Format:<BR>
-<PRE><CODE>
+Examples:
+- " [anidb-xxxxx]" for anime in absolute numbering
+- " [tvdb-xxxxxx]" for tvdb season numbering. You can put separate series as seasons.
+      SAO can be split into "Season 1 - Sword Art Online" [1-25], "Season 2 - Alfheim & Gun Gale Online [1-25]".
+- " [tvdb2-xxxxx]" for absolute numbering displayed as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online(numbered 1-49, but will automatically be split into Season 1 [1-25] and Season 2 [1-25])
+- " [tvdb3-xxxxx]" for absolute numbering episodes displayed using tvdb season numbering but keeping the absolute episode number (aka Hybrid numbering) for long running series like One piece (numbered 1-700+, will be automatically split into seasons while keeping the (absolute numbering) episode number intact without having to create seasons in the real folder
+- " [tvdb4-xxxxx]" for absolute numbering episodes displayed using series arc as season but keeping the absolute
+      episode number (aka Hybrid numbering) for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end' numbered 1-24 splitted into 2 seasons).<BR>
+      The arc definition to split into seasons the absolute numbering can be done using:
+      - Seasons folders manually created with absolute numbered episodes inside
+      - in a local "tvdb.mapping" file inside the serie folder or "Extras" folder inside it
+             FORMAT: <season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)
+      - the online arc database (https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
+        Format:<PRE><CODE>
 &lt;tvdb4entries&gt;
 &lt;anime tvdbid="289906" name="Seraph of the End"&gt;
 01|001|012|Vampire Reign
 02|013|024|Battle in Nagoya
 &lt;/anime&gt;
 </CODE></PRE>
-        </UL>
-      </LI>
-</UL>
-<P>
 
-Logs<BR>
-====<BR>
-List of configuration files, to put in logs folder.
-in releases > logs.7z you will find the blank config files.<BR>
-<UL>
-  <LI>no_timestamp: when present, remove timestamps from the scanner log</LI>
-  <LI>keep_zero_size_files: when present, accept empty files as valid</LI>
-  <LI>season_from_folder: when present, use the season from the folder instead of the file when a conflict arises</LI>
-  <LI>"X-Plex-Token.id: fill with plex token to create a scanner log per library</LI>
-</UL>
+Series
+- Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
+- Movie files in Series libraries accepted if they are in a folder with the same name (or 01|ep 01|s01e01, or " - Complete Movie" at the end)
 
-List of logs files created by this scanner:
-<UL>
-  <LI>Plex Media Scanner (custom ASS) - Library_Name.log contain all folders and files processed in a readable fashion, perfect for troubleshooting scanner issues</LI>
-  <LI>Plex Media Scanner (custom ASS) - Library_Name - filelist Root_Folder_name.log contain all files in the root folder, so i can re-create your library with zero size files.</LI>
-</UL>
+Season folders
+- Seasons folders can have serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")
+- Files in "Extras" folders will be ignored apart for the tvdb.id and anidb.id type files.
+- Allow grouping in Ark xxxxx folders transparently with seasons folders inside, or within a season folder
+- Specials go in "Specials" or "Season 0" folders.
+  - Single seasons series will follow anidb specials numbering (unless specific tvdb guid forced).
+  - Multiple seasons series will follow tvdb specials numbering
+  - You can use Anidb numbering for specials (OP1a, NCOP, etc...) or explicitely label them as follow (s00e101, etc...).
+  - Include all files not recognised as Season 0 episode 501+
 
-Naming Conventions<BR>
-==================<BR>
+<TABLE> 
+<THEAD> <TR> <TH> Type     </TH> <TH> Internal letter </TH> <TH>  Episode number   </TH> </TR> </THEAD>
+<TBODY> <TR> <TD> OPs      </TD> <TD> C               </TD> <TD>  Episodes 101-150 </TD> </TR>
+        <TR> <TD> EDs      </TD> <TD> C               </TD> <TD>  Episodes 151-200 </TD> </TR>
+        <TR> <TD> Trailers </TD> <TD> T               </TD> <TD>  Episodes 201-300 </TD> </TR>
+        <TR> <TD> OPs/EDs  </TD> <TD> P               </TD> <TD>  Episodes 301-400 </TD> </TR>
+        <TR> <TD> Others   </TD> <TD> O               </TD> <TD>  Episodes 401-500 </TD> </TR>
+        <TR> <TD> unmapped </TD> <TD>                 </TD> <TD>  Episodes 501-600 </TD> </TR> </TBODY>
+</TABLE>
+
+###File Naming Conventions
 This scanner supports absolute and season numbering, but here are two references for guidelines
-<UL>
-  <LI> Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows</LI>
-  <LI> Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows</LI>
-</UL>
-
-<CODE>Example: Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext</CODE>
-<CODE>Example: Show Name / Show Name EP001.ext</CODE>>
-
-If you use "Grouping folder / Show Name / Season 1 / Show Name s01e01-e02 - pt1.ext" it will now be skipped, so you can just add it as additionnal root folder in the library: "D:/Anime/Jap sub En" and "D:/Anime/Jap sub En/grouping folder" for example
+- Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
+- Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
 
 <TABLE>
 <THEAD>
@@ -125,32 +106,7 @@ If you use "Grouping folder / Show Name / Season 1 / Show Name s01e01-e02 - pt1.
 </TBODY>
 </TABLE>
 
-You can put specials in "Specials" or "Season 0" folders. "Extras" gets ignored apart for the tvdb.id and anidb.id type files<BR />
-You can use Anidb numbering for specials (OP1a, NCOP, etc...) or explicitely label them as follow.<BR />
-Series with seasons will follow tvdb specials numbering while others will follow anidb specials numbering (unless specific guid forced). 
-
-<TABLE> 
-  <THEAD> <TR> <TH> Type </TH> <TH> Internal letter </TH> <TH>  Episode number </TH> </TR> </THEAD>
-<TBODY>
-<TR> <TD> OPs      </TD> <TD> C </TD> <TD>  Episodes 101-150 </TD> </TR>
-<TR> <TD> EDs      </TD> <TD> C </TD> <TD>  Episodes 151-200 </TD> </TR>
-<TR> <TD> Trailers </TD> <TD> T </TD> <TD>  Episodes 201-300 </TD> </TR>
-<TR> <TD> OPs/EDs  </TD> <TD> P </TD> <TD>  Episodes 301-400 </TD> </TR>
-<TR> <TD> Others   </TD> <TD> O </TD> <TD>  Episodes 401-500 </TD> </TR>
-<TR> <TD> unmapped </TD> <TD>   </TD> <TD>  Episodes 501-600 </TD> </TR>
-</TBODY>
-</TABLE>
-
-Where to get the perfect title ?<BR>
-================================<BR>
-<UL>
-  <LI> Anime:     AniDB.net, the Anime main title is generally the best, or romaji (x-jat). Hama use series titles from there as a base </LI>
-  <LI> TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files(nor sport or porn for tvdb)</LI>
-  <LI> Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
-</UL>
-
-Local metadata<BR>
-==============<BR>
+###Local metadata
 It is supported but through "local media assets" agent, add it and and put it before HAMA in the priority order.<BR />
 https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
@@ -159,7 +115,7 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 <TR> <TH> Data type </TH> <TH> Source                </TH> <TH>           Comment </TH> </TR>
 </THEAD>
 <TBODY>
-<TR> <TD> fanart    </TD> <TD> art/backdrop/background/fanart-1.ext</TD> <TD> -1 can be ommited (same level as Video TS) </TD> </TR>
+<TR> <TD> fanart  </TD> <TD> art/backdrop/background/fanart-1.ext</TD> <TD> -1 can be ommited (same level as Video TS) </TD> </TR>
 <TR> <TD> Serie poster </TD> <TD> Serie folder: Show name-1/folder/poster/show.ext</TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>
 <TR> <TD> Season poster</TD> <TD> Season folder: Season01a.ext </TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>          
 <TR> <TD> Banner    </TD> <TD> banner/banner-1.jpg  </TD> <TD> </TD> </TR>
@@ -169,98 +125,92 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 </TBODY>
 </TABLE>
 
-Folder Structure for massive storages
-=====================================
+###Logs
+Absolute series Scanner uses a pre-made list of folders to try to locate Plex Logs folder. 
+If custom logs are not present, then either you created a library using default Plex scanner and not my "Absolute Series Scanner" or you have an unknown Logs folder location and will need to forward me the path to add in the source code...
+If the scanner crash, you will get either no files (library creation) or no change (library already created) and will need to attach the Plex log "Plex Media Scanner.log"
+
+List of logs files:
+- Plex Media Scanner (custom ASS) - Library_Name.log contain all folders and files processed in a readable fashion, perfect for troubleshooting scanner issues.
+- Plex Media Scanner (custom ASS) - Library_Name - filelist Root_Folder_name.log contain all files in the root folder, so i can re-create your library with zero size files. I use a batch file to recreate a user's library after converting to utf-8 with notepad
+- Plex Media Scanner.log - Standard Plex Scanner Log, contain crash error in case of a bug in the scanner code
+
+List of configuration files, to put in logs folder, can be found the (blank) config files in GitHub > ASS > releases > logs.7z
+- no_timestamp: when present, remove timestamps from the scanner log
+- keep_zero_size_files: when present, accept empty (zero size) files as valid, good when reproducing issues with a fake library
+- season_from_folder: when present, use the season from the folder instead of the file when a conflict arises
+- "X-Plex-Token.id: fill with plex token to create a scanner log per library
+
+###Task list
+- [ ] no_timestamp: should we remove the file and put no timestamp ?
+- [ ] keep_zero_size_files: should we accept that as the default (use it a lot for reproducing issues) ?
+- [ ] season_from_folder: when present, use the season from the folder instead of the file when a conflict arises. Remove ?
+- [ ] Support .Disc files ?
+
+###Folder Structure for massive storages
 I thought my folder structure could help many, you can store anything in htere
 Implied is original language, folder named dubbed otherwise
 
-<UL>
-  <LI> Series </LI>
-    <UL>
-      <LI> Xx (En/Fr/Sp/Jap sub En/...)</LI>
-      <LI> Xx Reality-Shows </LI>
-      <LI> Xx Stand-Up Comedy </LI>
-      <LI> Xx Dubbed </LI>
-    </UL>
+- Series
+  - Xx (En/Fr/Sp/Jap sub En/...)
+  - Xx Reality-Shows
+  - Xx Stand-Up Comedy
+  - Xx Dubbed
 
-  <LI> Movies </LI>
-    <UL>
-      <LI> Xx (En/Fr/Sp/Jap sub En/...)</LI>
-      <LI> Xx Reality-Shows </LI>
-      <LI> Xx Stand-Up Comedy </LI>
-    </UL>
-    
-  <LI> Anime </LI>
-    <UL>
-      <LI> Xx (Jap sub En)</LI>
-      <LI> Xx Movies (En/Fr/...)</LI>
-      <LI> Xx Series (En/Fr/...)</LI>
-    </UL>
-    
-  <LI> Knowledge </LI>
-    <UL>
-      <LI> Documentaries </LI>
-      <LI> Hobbies </LI>
-      <LI> Litterature </LI>
-      <LI> Trainings </LI>
-    </UL>
-    
-  <LI> Music </LI>
-    <UL>
-      <LI> Albums [\Group\Album (Year)] </LI>
-        <UL>
-          <LI> Compilations </LI>
-          <LI> Karaoke </LI>
-          <LI> Soundtracks </LI>
-            <UL>
-              <LI> Ads </LI>
-              <LI> Anime </LI>
-              <LI> Movies </LI>
-              <LI> Series </LI>
-            </UL>
-        </UL>
-      <LI> Videos </LI>
-        <UL>
-          <LI> Xx </LI>
-          <LI> Xx Concerts </LI>
-        </UL>
-      <LI> Games </LI>
-        <UL>
-          <LI> Karaoke </LI>
-          <LI> Guitar </LI>
-          <LI> Stepmania </LI>
-        </UL>
-    </UL>
-    
-  <LI> Pictures </LI>
-    <UL>
-      <LI> Wallpapers </LI>
-      <LI> Maps       </LI>
-      <LI> Textures   </LI>
-    </UL>
-    
-  <LI> Scans </LI>
-    <UL>
-      <LI> Art Books </LI>
-      <LI> Xx Comics </LI>
-      <LI> Xx Mangas </LI>
-    </UL>
+- Movies
+  - Xx (En/Fr/Sp/Jap sub En/...)
+  - Xx Reality-Shows
+  - Xx Stand-Up Comedy
 
-  <LI> Software </LI>
-    <UL>
-      <LI> Computer                   </LI>
-        <UL>
-          <LI> 1977 Apple II          </LI>
-          <LI> Linux                  </LI>
-          <LI> Mac-OS                 </LI>
-          <LI> Synology DSM           </LI>
-          <LI> Windows                </LI>
-        </UL>
-      <LI> Console Cartridge          </LI>
-      <LI> Console CD                 </LI>
-      <LI> Console DVD                </LI>
-      <LI> Handheld                   </LI>
-      <LI> Multi-Systems (Mame, Mess) </LI>
-      <LI> Phone                      </LI>
-    </UL>
-</UL>
+- Anime
+  - Xx (Jap sub En)
+  - Xx Movies (En/Fr/...)
+  - Xx Series (En/Fr/...)
+
+- Knowledge
+  - Documentaries
+  - Hobbies
+  - Litterature
+  - Trainings
+
+- Music
+  - Albums [\Group\Album (Year)]
+  - Compilations
+  - Soundtracks
+    - Ads
+    - Anime
+    - Movies
+    - Series
+  - Videos
+    - Xx
+    - Xx Concerts
+  - Games
+    - Karaoke
+    - Guitar
+    - DDR
+
+  - Pictures
+    - Wallpapers
+    - Maps
+    - Textures
+
+  - Scans
+    - Art Books
+    - Xx Comics
+    - Xx Mangas
+
+  - Software
+    - Computer
+      - 1977 Apple II
+      - Linux
+      - Mac-OS
+      - Synology DSM
+      - Windows
+    - Console Cartridge
+    - Console CD
+    - Console DVD
+    - Handheld
+    - Multi-Systems (Mame, Mess)
+    - Phone
+
+Reference: https://help.github.com/articles/basic-writing-and-formatting-syntax/
