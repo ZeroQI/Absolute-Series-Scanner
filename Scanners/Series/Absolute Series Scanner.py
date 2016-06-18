@@ -199,15 +199,20 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
   return string
 
 ### Add files into Plex database ########################################################################
-def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}):
+def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False):
   file=os.path.join(root,path,file);                                                                                   #
   if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
   #if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):                   file = os.path.join(LOG_PATH,"dummy.mp4")  # with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
   if title==title.lower() or title==title.upper() and title.count(" ")>0:  title = title.title()                       # capitalise if all caps or all lowercase and one space at least
   if ep==0:                                                                season, ep, ep2       = 0, 1, 1             # s01e00 and S00e00 => s00e01
   if not ep2 or ep > ep2:                                                  ep2                   = ep                  #  make ep2 same as ep for loop and tests
-  if tvdb_mapping and ep  in tvdb_mapping and season != 0:                 season, ep  = tvdb_mapping[ep ]
-  if tvdb_mapping and ep2 in tvdb_mapping and season != 0:                 season, ep2 = tvdb_mapping[ep2]
+  if tvdb_mapping and season > 0 :
+    max_ep_num    = max(tvdb_mapping.keys())
+    season_buffer = 0 if unknown_series_length else 1
+    if   ep  in tvdb_mapping:               season, ep  = tvdb_mapping[ep ]
+    elif ep  > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
+    if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
+    elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log("Warning - show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
@@ -287,7 +292,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
         
   ### Capture if absolute numbering should be applied for all episode numbers  ###
-  tvdb_mode, tvdb_guid, tvdb_mapping = "", "", {}
+  tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length = "", "", {}, False
   tvdb_mode_search = re.search(".*? ?\[tvdb(?P<mode>(2|3|4))-(tt)?(?P<guid>[0-9]{1,7})\]", folder_show, re.IGNORECASE)
   if tvdb_mode_search: tvdb_mode, tvdb_guid = tvdb_mode_search.group('mode').lower(), tvdb_mode_search.group('guid').lower(); Log("folder_show: '%s', folder_season: '%s', tvdb mode: '%s', tvdb id: '%s'" % (folder_show, folder_season, tvdb_mode, tvdb_guid)) # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
   if tvdb_mode in ["2", "3"]: 
@@ -335,8 +340,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         for season in file_array:
           for absolute_episode in range(int(season[1]), int(season[2])+1):
             tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
+        if "(unknown length)" in season[3].lower(): unknown_series_length = True
       except Exception as e: tvdb_mapping = {}; Log("mapping parsing issue"); Log(str(e))
-  if tvdb_mapping: Log("tvdb_mapping: " + str(tvdb_mapping))
+  if tvdb_mapping: Log("unknown_series_length: %s, tvdb_mapping: %s" % (unknown_series_length, str(tvdb_mapping)))
 
   ### File main loop ###
   movie_list, AniDB_op, counter = {}, {}, 500;  files.sort(key=natural_sort_key)
@@ -385,7 +391,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "")                                                              # take everything after supposed episode number
       break
     #Log("Words: " + str(words) + " : Loop broken on: '%s'" % ep)
-    if ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping);  continue
+    if ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping, unknown_series_length);  continue
   
     ### Check for Regex: series_rx + anidb_rx ###
     ep = clean_string(filename, False)  # restart matching from filename
@@ -407,7 +413,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
             AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                    # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
             ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
           ep = str( offset + int(ep))                                                                                                 # Add episode number to the offset, 01 by default from the match group above
-        add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping); 
+        add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length); 
         break
     if match: continue  # next file iteration
     
