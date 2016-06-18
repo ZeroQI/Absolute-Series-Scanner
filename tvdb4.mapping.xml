@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <tvdb4entries>
+  <anime tvdbid="[tvdbid]" name="[Series Name]" note="Example entry for complete series">
+    [Season Num]|[First Ep Num]|[Last Ep Num]|[Season Name]
+    01|001|012|The First Barrage
+    02|013|024|The Second Barrage
+  </anime>
+  <anime tvdbid="[tvdbid]" name="[Series Name]" note="Example entry for ongoing series">
+    [Season Num]|[First Ep Num]|[First Ep Num]|[Season Name] (unknown length)
+    01|001|012|The First Barrage
+    02|013|013|The Second Barrage (unknown length)
+  </anime>
   <anime tvdbid="79604" name="Black Lagoon">
     01|001|012|The First Barrage
     02|013|024|The Second Barrage
@@ -29,7 +39,7 @@
     02|026|037|Durarara!!x2 Shō
     03|038|049|Durarara!!x2 Ten
     04|050|061|Durarara!!x2 Ketsu
-    </anime>
+  </anime>
   <anime tvdbid="252322" name="Hunter x Hunter (2011)">
     01|001|031|Hunter Exam Arc
     02|032|036|Zoldyck Family Arc
