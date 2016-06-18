@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tvdb4entries>
+  <posters tvdbid="[tvdbid]" name="[Series Name]" note="Example Entry">
+    [Season Num]|[URL]
+  </posters>
+  <posters tvdbid="88031" name="Dragon Ball Kai">
+    01|https://image.tmdb.org/t/p/original/6WtCy228qbkpW5Eo71akpI8XJKi.jpg
+    02|https://image.tmdb.org/t/p/original/2o9tF5qIXVIc6cKV2uSLhXQyVox.jpg
+    03|https://image.tmdb.org/t/p/original/lvMz2kyfZ9K08EyHa57T1rah900.jpg
+    04|https://image.tmdb.org/t/p/original/25rCwuPit2QlgLJ31Jdu6eKOXit.jpg
+    05|https://image.tmdb.org/t/p/original/jDcTbOo2SOL7GH6tC7rRYzr2A2B.jpg
+    06|https://image.tmdb.org/t/p/original/wTccnUmJPEJXQQqjFfWNHTDcm8W.jpg
+  
+    01|https://image.tmdb.org/t/p/original/aBFXBZugTCfnIDQTYl4vAoP9jE4.jpg
+    02|https://image.tmdb.org/t/p/original/3wj0YJWY8B3pzfvfk3tGXs4OQdc.jpg
+    03|https://image.tmdb.org/t/p/original/56mZEizhYsTwmtEkGDwWZfadYXq.jpg
+    04|https://image.tmdb.org/t/p/original/cQWHSKlZjQgXbRwtm7x1o6esW7v.jpg
+  
+    01|https://walter.trakt.us/images/seasons/000/024/495/posters/original/53d58090f9.jpg
+    02|https://walter.trakt.us/images/seasons/000/024/497/posters/original/6a6c3f82a6.jpg
+    03|https://walter.trakt.us/images/seasons/000/024/498/posters/original/cd8aea9289.jpg
+    04|https://walter.trakt.us/images/seasons/000/024/499/posters/original/c8fc2e5e36.jpg
+    04|https://walter.trakt.us/images/seasons/000/024/500/posters/original/892d9a4b8f.jpg
+    05|https://walter.trakt.us/images/seasons/000/024/502/posters/original/a28d0ef148.jpg
+    06|https://walter.trakt.us/images/seasons/000/024/503/posters/original/a11d4d9c36.jpg
+  </posters>
+</tvdb4entries>
