@@ -23,7 +23,7 @@ Grouping folder
 You can specify the guid to use the following way:
 - In custom search serie name by adding " [guid_type-id_number]" at the end
 - In Serie folder name by adding " [guid_type-id_number]" at the end
-- guid_type.id file inside the serie folder or the "Extras" folder inside it
+- guid_type.id file inside the serie folder or the "Extras" folder inside it with the tvdbid in it, ex: "114801" withotu double quotes
 
 Hama supports the following guid_type:
 - anidb for AniDB.net
