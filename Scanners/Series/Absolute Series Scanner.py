@@ -321,7 +321,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     except Exception as e:  Log("xml loading issue"); Log(str(e))
   elif tvdb_mode=="4" and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
     file_array, tvdb4_mapping_content = [], ""
-    for mapping_file in ("tvdb4.mapping", "Extras/tvdb4.mapping"): ###local tvdb4.mapping file loading###
+    for mapping_file in ["tvdb4.mapping"]: ###local tvdb4.mapping file loading###
       if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), mapping_file)):
         tvdb4_mapping_content = open(os.path.join(root, "/".join(reversed(reverse_path)), mapping_file)).read().strip()
     if not tvdb4_mapping_content: ###load remote tvdb4 mapping file since no season folders, no local files###
