@@ -23,7 +23,7 @@ Grouping folder
 You can specify the guid to use the following way:
 - In custom search serie name by adding " [guid_type-id_number]" at the end
 - In Serie folder name by adding " [guid_type-id_number]" at the end
-- guid_type.id file inside the serie folder with the tvdbid in it, ex: "114801" without double quotes
+- In guid_type.id inside serie folder with the id in it (ex: tvdb.id file with tvdbid "114801" without double quotes in it)
 
 Hama supports the following guid_type:
 - anidb for AniDB.net
@@ -50,7 +50,7 @@ Examples of force  guid in all modes and their applications:
 - " [tvdb4-xxxxx]" for absolute numbering episodes displayed using series arc as season for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end' numbered 1-24 splitted into 2 seasons).
   The arc definition to split into seasons the absolute numbering is done using the following order:
     - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
-    - in a local "tvdb.mapping" file inside serie folder inside it
+    - in a local "tvdb.mapping" file inside serie folder
       FORMAT: <season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)
     - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
       Format:<PRE><CODE>
