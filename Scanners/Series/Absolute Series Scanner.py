@@ -237,7 +237,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     Log("keep_zero_size_files: '%s'" % str(keep_zero_size_files))
     Log("no_timestamp:         '%s'" % str(no_timestamp        ))
     Log("season_from_folder:   '%s'" % str(season_from_folder  ))
-    Log("".ljust(157, '='))
+  Log("".ljust(157, '='))
   Log("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log("".ljust(157, '='))  # Exit every other iteration than the root scan
   for subdir in subdirs:                                                    #
     for rx in ignore_dirs_rx:                                               # if initial scan and root folder
