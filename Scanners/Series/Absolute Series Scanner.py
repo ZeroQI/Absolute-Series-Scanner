@@ -239,6 +239,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     Log("season_from_folder:   '%s'" % str(season_from_folder  ))
   Log("".ljust(157, '='))
   Log("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log("".ljust(157, '='))  # Exit every other iteration than the root scan
+  if path:
+    for rx in ignore_dirs_rx:
+      if re.match(rx, path, re.IGNORECASE): Log("root \"%s\" match ignore_dirs_rx: \"%s\"" % (path, rx)); Log("".ljust(157, '-')); return
   for subdir in subdirs:                                                    #
     for rx in ignore_dirs_rx:                                               # if initial scan and root folder
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log("\"%s\" match ignore_dirs_rx: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
