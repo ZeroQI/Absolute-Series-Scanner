@@ -388,7 +388,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):      ep, season = ep[len(prefix):], 0 if prefix=="s" else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
       if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                           season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break # ep 12.5 = "12" title "Special 12.5"
       if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)    # root folder and 
-      title = clean_string( " ".join(words)[" ".join(words).index(ep)+len(ep):] )                                                                                   # take everything after supposed episode number
+      title = clean_string( " ".join(words)[" ".join(words).lower().index(ep)+len(ep):] )                                                                           # take everything after supposed episode number
       break
     #Log("Words: " + str(words) + " : Loop broken on: '%s'" % ep)
     if ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping, unknown_series_length);  continue
