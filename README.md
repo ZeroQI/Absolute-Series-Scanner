@@ -156,7 +156,7 @@ Symptoms for scanner related issues:
 - file or series not geting into the GUI
 - library doesn't add new content (after scanner update) then most likelly the scanner is crashing and revert any changed to the library
 - scanner not listed in scanner list
-- 
+
 Include the following logs then:
 - [...]/Plex Media Server/Logs/Plex Media Scanner.log                       (scanner crash info)
 - [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log          (episodes info)
