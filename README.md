@@ -141,6 +141,30 @@ List of configuration files, to put in logs folder, can be found the (blank) con
 - season_from_folder: when present, use the season from the folder instead of the file when a conflict arises
 - "X-Plex-Token.id: Allow to get the library name to get a log per library (optional). Fill with plex token by following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token. **_Do not share that file when uploading the whole Logs folders_**
 
+Install
+=======
+Put latest scanner file from:
+- https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/Scanners/Series/Absolute%20Series%20Scanner.py
+Into:
+- [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
+
+Troubleshooting:
+================
+Symptoms for scanner related issues:
+- nothing is scanned
+- episodes are missing
+- file or series not geting into the GUI
+- library doesn't add new content (after scanner update) then most likelly the scanner is crashing and revert any changed to the library
+- scanner not listed in scanner list
+- 
+Include the following logs then:
+- [...]/Plex Media Server/Logs/Plex Media Scanner.log                       (scanner crash info)
+- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log          (episodes info)
+- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS) filelist.log (library file list)
+
+Support thread for Scanner: https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
+Github issue page:          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
+
 ###Task list
 - [ ] no_timestamp: should we remove the file and put no timestamp by default in the source?
 - [ ] keep_zero_size_files: should we accept that as the default (use it a lot for reproducing issues) ?
