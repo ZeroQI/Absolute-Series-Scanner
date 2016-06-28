@@ -150,20 +150,21 @@ Into:
 
 Troubleshooting:
 ================
-Symptoms for scanner related issues:
+If you have these or similar symptoms:
+- scanner not listed in scanner list
 - nothing is scanned
 - episodes are missing
-- file or series not geting into the GUI
+- Series are missing
 - library doesn't add new content (after scanner update) then most likelly the scanner is crashing and revert any changed to the library
-- scanner not listed in scanner list
 
 Include the following logs then:
 - [...]/Plex Media Server/Logs/Plex Media Scanner.log                       (scanner crash info)
 - [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log          (episodes info)
 - [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS) filelist.log (library file list)
 
-Support thread for Scanner: https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
-Github issue page:          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
+ANd post in:
+- Support thread for Scanner (you are unsure): https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
+- Github issue page (you have a bug):          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
 
 ###Task list
 - [ ] no_timestamp: should we remove the file and put no timestamp by default in the source?
