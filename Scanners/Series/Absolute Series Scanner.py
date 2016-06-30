@@ -271,7 +271,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   
   ### Capture guid from folder name or id file in serie or serie/Extras folder ###
   guid = ""
-  if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tvdb4|tmdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
+  if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
     for file in ("anidb.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tmdb.id", "tsdb.id", "imdb.id"):
       if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), file)):
         with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
