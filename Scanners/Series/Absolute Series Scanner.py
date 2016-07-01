@@ -116,8 +116,9 @@ if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):
   with open(os.path.join(LOG_PATH, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL += "?X-Plex-Token=" + token_file.read().strip()
 try:
   library_xml = etree.fromstring(urlopen(PLEX_LIBRARY_URL).read())
-  PLEX_LIBRARY[path.get("path")] = library.get("title") for path in library.iterchildren('Location') for library in library_xml.iterchildren('Directory')
-except:  Log("Place  correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
+  for library in library_xml.iterchildren('Directory'):
+    for path in library.iterchildren('Location'):  PLEX_LIBRARY[path.get("path")] = library.get("title")
+except:  Log("Place correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
 
 ### replace a string by another while retaining original string case ##############################################################################################
 def replace_insensitive (ep, word, sep=" "):
@@ -227,7 +228,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   if not path:
     open(os.path.join(LOG_PATH, FILELIST), 'w').close                                                      #Empty file for root folder call
     Log(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
-    Log("".ljust(157, '='))
+  Log("".ljust(157, '='))
   Log("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log("".ljust(157, '='))  # Exit every other iteration than the root scan
   for subdir in subdirs:                                                    #
     for rx in ignore_dirs_rx:                                               # if initial scan and root folder
@@ -323,7 +324,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):  file_array.append(line.strip().split("|"))
     if file_array:
       try:
-        tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) for absolute_episode in range(int(season[1]), int(season[2])+1) for season in file_array
+        for season in file_array:
+          for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
         if "(unknown length)" in season[3].lower(): unknown_series_length = True
       except Exception as e: tvdb_mapping = {}; Log("mapping parsing issue"); Log(str(e))
   if tvdb_mapping: Log("unknown_series_length: %s, tvdb_mapping: %s" % (unknown_series_length, str(tvdb_mapping)))
@@ -371,8 +373,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
         if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):      ep, season = ep[len(prefix):], 0 if prefix=="s" else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
       if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                           season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break # ep 12.5 = "12" title "Special 12.5"
-      if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)  # root folder and 
-      title = clean_string( " ".join(words[ words.index(word)+1:]) if len(words)-words.index(word)>1 else "")                                                              # take everything after supposed episode number
+      if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)    # root folder and 
+      title = clean_string( " ".join(words)[" ".join(words).lower().index(ep)+len(ep):] )                                                                           # take everything after supposed episode number
       break
     #Log("Words: " + str(words) + " : Loop broken on: '%s'" % ep)
     if ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping, unknown_series_length);  continue
@@ -382,7 +384,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     for rx in series_rx + anidb_rx:
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
-        if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show' )) # Mainly if file at root or _ folder
+        if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show' ))  # Mainly if file at root or _ folder
         if match.groupdict().has_key('title' ) and match.group('title' ):               title  = clean_string( match.group('title'))
         if match.groupdict().has_key('season') and match.group('season'):               season = int(match.group('season'))
         if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):               ep2    = match.group('ep2') 
@@ -407,4 +409,3 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log("".ljust(157, '-')); Log("")
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log("Stack.Scan() doesn't exists")
-  
