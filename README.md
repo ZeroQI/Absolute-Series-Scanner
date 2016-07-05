@@ -51,7 +51,7 @@ Examples of force  guid in all modes and their applications:
   The arc definition to split into seasons the absolute numbering is done using the following order:
     - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
     - in a local "tvdb.mapping" file inside serie folder
-      FORMAT: <season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)
+      FORMAT: <CODE><season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)</CODE>
     - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
       Format:<PRE><CODE>
 &lt;tvdb4entries&gt;
