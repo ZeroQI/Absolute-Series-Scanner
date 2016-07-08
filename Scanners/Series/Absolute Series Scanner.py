@@ -331,7 +331,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   if tvdb_mapping: Log("unknown_series_length: %s, tvdb_mapping: %s" % (unknown_series_length, str(tvdb_mapping)))
 
   ### File main loop ###
-  movie_list, AniDB_op, counter, misc = {}, {}, 500;  files.sort(key=natural_sort_key), filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())                       # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+  files.sort(key=natural_sort_key)
+  movie_list, AniDB_op, counter, misc = {}, {}, 500, filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())              # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
   for file in files:
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
