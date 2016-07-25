@@ -7,13 +7,8 @@ A Plex series scanner choose the following from the folders and file names:
 - Episode title (not filled by plex default series scanner, until the metadata agent refreshes it)
 - Episode year
 
-The files choosen by the scanner will be showing in Plex.
-The Plex metadata agent will find metadata for files showing.
-
-###Which Metadata/Title source to select?
-- Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" serie). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
-- TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniBD.net, but they do not carry porn series so no metadata for this type.
-- Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
+The files choosen by the scanner will be showing in Plex, if not showing in Plex it is a scanner issue
+The Plex metadata agent will find metadata for files showing in Plex. Missing posters or metadata is an Agent issue
 
 Grouping folder
 - If you use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
@@ -61,6 +56,58 @@ Examples of force  guid in all modes and their applications:
 &lt;/anime&gt;
 </CODE></PRE>
 
+Advanced modes for when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
+
+" [anidb2-xxxxx]"
+will find the season & eposide offset defiend in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
+" [tvdb/2/3/4-xxxxx-sY]"
+episode numbers found in the files are left alone and added to season Y
+" [tvdb/2/3/4-xxxxx-eZ]"
+episode numbers found in the files are adjusted (epNum+Z-1)
+" [tvdb/2/3/4-xxxxx-sYeZ]"
+episode numbers found in the files are adjusted (epNum+Z-1) and added to season Y
+Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
+
+!!IMPORTANT NOTES FOR ADVANCED MODES!! When defining you modes on your folders:
+If you don't use the same mode or compatiable modes for all separate folders for a series, you will run into issues.
+"anidb2", "tvdb", & "tvdb2" will work together
+You might have to manually merge Plex series if "anidb2"/"tvdb2" or "tvdb"/"tvdb2" are both used.
+- "anidb2"/"tvdb" should automatically merge (but Plex is not perfect so you still might have to manually merge)
+- "tvdb3" will not work correctly with any other modes so all folders of a series will have to have this mode
+- "tvdb4" will not work correctly with any other modes so all folders of a series will have to have this mode
+
+Examples:
+
+== Example 1 ==
+"Bakuman [anidb2-7251]"
+"Bakuman 2011 [anidb2-8150]"
+"Bakuman 2012 [anidb2-8836]"
+
+== Example 2 ==
+"Bakuman [tvdb-193811]"  (or "[tvdb-193811-s1]")
+"Bakuman 2011 [tvdb-193811-s2]"
+"Bakuman 2012 [tvdb-193811-s3]"
+
+== Example 3 ==
+"Sailor Moon Crystal [tvdb2-275039]"
+"Sailor Moon Crystal Season 3 [anidb2-11665]"  (or "[tvdb-275039-s3]" or "[tvdb2-275039-s3]")
+
+== Example 4 ==
+"Bleach [tvdb3-74796]"
+"Bleach movie 1 Memories in the Rain [tvdb3-74796-s0e3]"
+"Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
+
+== Example 5 ==
+https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml
+  <anime tvdbid="79604" name="Black Lagoon">
+    01|001|012|The First Barrage
+    02|013|024|The Second Barrage
+    03|025|029|Roberta's Blood Trail
+  </anime>
+"Black Lagoon [tvdb4-79604]"  (or "[tvdb4-79604-s1]")
+"Black Lagoon - The Second Barrage [tvdb4-79604-s2]"
+"Black Lagoon - Roberta`s Blood Trail [tvdb4-79604-s3]"
+
 Series
 - Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
 - Movie files in Series libraries accepted if they are in a folder with the same name (or 01|ep 01|s01e01, or " - Complete Movie" at the end)
@@ -85,46 +132,6 @@ Season folders
         <TR> <TD> unmapped </TD> <TD>                 </TD> <TD>  Episodes 501-600 </TD> </TR> </TBODY>
 </TABLE>
 
-###File Naming Conventions
-This scanner supports absolute and season numbering, but here are two references for guidelines
-- Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
-- Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
-
-<TABLE>
-<THEAD>
-<TR> <TH> File naming convention </TH> <TH> Template / Folder </TH> <TH>Exemple </TH> </TR>
-</THEAD>
-<TBODY>
-<TR> <TD> Splitting folders:     </TD> <TD> 0-9                 </TD> <TD> 0-9, A,...,Z folder. Add EACH as folder. Do not use the parent folder </TD> </TR>
-<TR> <TD> Episode Name Pattern:  </TD> <TD> Season %S/%SN s%0Se%0E </TD> <TD> Season 2/Show Name s02e03.ext </TD> </TR>
-<TR> <TD> Multi-Episode style:   </TD> <TD> Extend              </TD> <TD> Season 2/Show Name s02e03-05.ext </TD> </TR>
-<TR> <TD> Multi-part episodes:   </TD> <TD> cdX, discX, diskX, dvdX, partX, ptX </TD> <TD> Season 2/Show Name s02e03 - pt1.ext </TD> </TR>
-<TR> <TD> Multi-Media Version:   </TD> <TD> Movie Name (year) - 1080p.ext </TD> <TD> Movie Name (year) - 1080p.ext </TD> </TR>
-<TR> <TD> Specials scrapped:     </TD> <TD> Specials, Season 0  </TD> <TD> s00e01/OP1/Ed3a/NCOP/S01/S1.ext </TD> </TR>
-<TR> <TD> Other non scrapped:    </TD> <TD> Extras              </TD> <TD> Extras/Show Name xxxx.ext </TD> </TR>
-<TR> <TD> BD rips                </TD> <TD> /path/to/series-library/Series Name Season 2 </TD> <TD>Series.Name.Disc1.S02.E01-E12/BDMV/STREAM </TD> </TR>
-</TBODY>
-</TABLE>
-
-###Local metadata
-It is supported but through "local media assets" agent, add it and and put it before HAMA in the priority order.<BR />
-https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
-
-<TABLE>
-<THEAD>
-<TR> <TH> Data type </TH> <TH> Source                </TH> <TH>           Comment </TH> </TR>
-</THEAD>
-<TBODY>
-<TR> <TD> fanart  </TD> <TD> art/backdrop/background/fanart-1.ext</TD> <TD> -1 can be ommited (same level as Video TS) </TD> </TR>
-<TR> <TD> Serie poster </TD> <TD> Serie folder: Show name-1/folder/poster/show.ext</TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>
-<TR> <TD> Season poster</TD> <TD> Season folder: Season01a.ext </TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>          
-<TR> <TD> Banner    </TD> <TD> banner/banner-1.jpg  </TD> <TD> </TD> </TR>
-<TR> <TD> Theme song</TD> <TD> theme.mp3  </TD> <TD> </TD> <TR>
-<TR> <TD> Subtitles </TD> <TD> file name.ext (srt, smi, ssa, ass)  </TD> <TD> </TD><TR>
-<TR> <TD> Plexignore files  </TD> <TD> .plexignore  </TD> <TD> </TD> <TR>
-</TBODY>
-</TABLE>
-
 ###Logs
 Absolute series Scanner uses a pre-made list of folders to try to locate Plex Logs folder. 
 If custom logs are not present, then either you created a library using default Plex scanner and not my "Absolute Series Scanner" or you have an unknown Logs folder location and will need to forward me the path to add in the source code...
@@ -136,9 +143,6 @@ List of logs files:
 - Plex Media Scanner.log - Standard Plex Scanner Log, contain crash error in case of a bug in the scanner code
 
 List of configuration files, to put in logs folder, can be found the (blank) config files in GitHub > ASS > releases > logs.7z
-- no_timestamp: when present, remove timestamps from the scanner log
-- keep_zero_size_files: when present, accept empty (zero size) files as valid, good when reproducing issues with a fake library
-- season_from_folder: when present, use the season from the folder instead of the file when a conflict arises
 - "X-Plex-Token.id: Allow to get the library name to get a log per library (optional). Fill with plex token by following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token. **_Do not share that file when uploading the whole Logs folders_**
 
 Install
@@ -166,12 +170,63 @@ ANd post in:
 - Support thread for Scanner (you are unsure): https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
 - Github issue page (you have a bug):          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
 
-###Task list
-- [ ] no_timestamp: should we remove the file and put no timestamp by default in the source?
-- [ ] keep_zero_size_files: should we accept that as the default (use it a lot for reproducing issues) ?
-- [ ] season_from_folder: when present, use the season from the folder instead of the file when a conflict arises. Remove ?
-- [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
-- [ ] Shall i write a Movie scanner using the same code? The Plex default movie scanner does an good job i believe ?
+On windows, if you get in "Plex Media Scanner.log" the following error:
+<PRE><CODE>
+Jul 23, 2016 12:55:54.558 [5288] ERROR - Error scanning directory .
+Jul 23, 2016 12:55:54.574 [5288] ERROR - No module in Absolute Series Scanner
+Jul 23, 2016 12:55:54.574 [5288] ERROR - Error in Python: Looking up module:
+Traceback (most recent call last):
+File "C:\Users\Administrator\AppData\Local\Plex Media Server\Scanners\Series\Absolute Series Scanner.py", line 8, in 
+from lxml import etree # fromstring
+ImportError: DLL load failed: The specified module could not be found.
+</CODE></PRE>
+
+Try to install the following, try again and report which solved the issue
+- https://www.microsoft.com/en-us/download/details.aspx?id=48145
+- https://www.microsoft.com/en-us/download/details.aspx?id=5555
+- https://www.microsoft.com/en-us/download/details.aspx?id=40784
+Source:
+- http://stackoverflow.com/questions/7228229/lxml-dll-load-failed-the-specified-module-could-not-be-found
+
+###Local metadata
+It is supported but through "local media assets" agent, add it and and put it before HAMA in the priority order.<BR />
+https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
+
+<TABLE>
+<THEAD>
+<TR> <TH> Data type </TH> <TH> Source                </TH> <TH>           Comment </TH> </TR>
+</THEAD>
+<TBODY>
+<TR> <TD> fanart  </TD> <TD> art/backdrop/background/fanart-1.ext</TD> <TD> -1 can be ommited (same level as Video TS) </TD> </TR>
+<TR> <TD> Serie poster </TD> <TD> Serie folder: Show name-1/folder/poster/show.ext</TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>
+<TR> <TD> Season poster</TD> <TD> Season folder: Season01a.ext </TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>          
+<TR> <TD> Banner    </TD> <TD> banner/banner-1.jpg  </TD> <TD> </TD> </TR>
+<TR> <TD> Theme song</TD> <TD> theme.mp3  </TD> <TD> </TD> <TR>
+<TR> <TD> Subtitles </TD> <TD> file name.ext (srt, smi, ssa, ass)  </TD> <TD> </TD><TR>
+<TR> <TD> Plexignore files  </TD> <TD> .plexignore  </TD> <TD> </TD> <TR>
+</TBODY>
+</TABLE>
+
+###File Naming Conventions
+This scanner supports absolute and season numbering, but here are two references for guidelines
+- Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
+- Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
+
+<TABLE>
+<THEAD>
+<TR> <TH> File naming convention </TH> <TH> Template / Folder </TH> <TH>Exemple </TH> </TR>
+</THEAD>
+<TBODY>
+<TR> <TD> Splitting folders:     </TD> <TD> 0-9                 </TD> <TD> 0-9, A,...,Z folder. Add EACH as folder. Do not use the parent folder </TD> </TR>
+<TR> <TD> Episode Name Pattern:  </TD> <TD> Season %S/%SN s%0Se%0E </TD> <TD> Season 2/Show Name s02e03.ext </TD> </TR>
+<TR> <TD> Multi-Episode style:   </TD> <TD> Extend              </TD> <TD> Season 2/Show Name s02e03-05.ext </TD> </TR>
+<TR> <TD> Multi-part episodes:   </TD> <TD> cdX, discX, diskX, dvdX, partX, ptX </TD> <TD> Season 2/Show Name s02e03 - pt1.ext </TD> </TR>
+<TR> <TD> Multi-Media Version:   </TD> <TD> Movie Name (year) - 1080p.ext </TD> <TD> Movie Name (year) - 1080p.ext </TD> </TR>
+<TR> <TD> Specials scrapped:     </TD> <TD> Specials, Season 0  </TD> <TD> s00e01/OP1/Ed3a/NCOP/S01/S1.ext </TD> </TR>
+<TR> <TD> Other non scrapped:    </TD> <TD> Extras              </TD> <TD> Extras/Show Name xxxx.ext </TD> </TR>
+<TR> <TD> BD rips                </TD> <TD> /path/to/series-library/Series Name Season 2 </TD> <TD>Series.Name.Disc1.S02.E01-E12/BDMV/STREAM </TD> </TR>
+</TBODY>
+</TABLE>
 
 ###Folder Structure for massive storages
 I thought my folder structure could help many, you can store anything in htere
@@ -238,5 +293,14 @@ Implied is original language, folder named dubbed otherwise
     - Handheld
     - Multi-Systems (Mame, Mess)
     - Phone
+
+###Which Metadata/Title source to select?
+- Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" serie). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
+- TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniBD.net, but they do not carry porn series so no metadata for this type.
+- Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
+
+###Task list
+- [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
+- [ ] Shall i write a Movie scanner using the same code? The Plex default movie scanner does an good job i believe ?
 
 Reference: [Link to Markdown](https://guides.github.com/features/mastering-markdown/) or https://help.github.com/articles/basic-writing-and-formatting-syntax/
