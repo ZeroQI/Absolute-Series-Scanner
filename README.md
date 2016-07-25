@@ -36,7 +36,9 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 </TBODY>
 </TABLE>
 
-Examples of force  guid in all modes and their applications:
+Examples of force guid in all modes and their applications:
+
+When you have all episodes of a series in a single parent folder:
 - " [anidb-xxxxx]" for anime in absolute numbering. Force the anidb serie id
 - " [tvdb-xxxxxx]" for tvdb season numbering. You can put separate anidb series as seasons as per tvdb numbering.
     SAO can be split at file level into "Season 1 - Sword Art Online" [1-25], "Season 2 - Alfheim & Gun Gale Online [1-25]".
@@ -46,10 +48,9 @@ Examples of force  guid in all modes and their applications:
   The arc definition to split into seasons the absolute numbering is done using the following order:
     - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
     - in a local "tvdb.mapping" file inside serie folder
-      FORMAT: <CODE><season_num>|<starting_ep_num>|<ending_ep_num>|<freeform_text_naming_the_season>(optional)</CODE>
+      FORMAT: <CODE>\<season_num\>|\<starting_ep_num\>|\<ending_ep_num\>|\<freeform_text_naming_the_season\>(optional)</CODE>
     - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
-      Format:<PRE><CODE>
-&lt;tvdb4entries&gt;
+      Format:<PRE><CODE>&lt;tvdb4entries&gt;
 &lt;anime tvdbid="289906" name="Seraph of the End"&gt;
 01|001|012|Vampire Reign
 02|013|024|Battle in Nagoya
@@ -57,56 +58,51 @@ Examples of force  guid in all modes and their applications:
 </CODE></PRE>
 
 Advanced modes for when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
+- " [anidb2-xxxxx]"
+  - will find the season & eposide offset defiend in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
+- " [tvdb/2/3/4-xxxxx-sY]"
+  - episode numbers found in the files are left alone and added to season Y
+- " [tvdb/2/3/4-xxxxx-eZ]"
+  - episode numbers found in the files are adjusted (epNum+Z-1)
+- " [tvdb/2/3/4-xxxxx-sYeZ]" 
+  - episode numbers found in the files are adjusted (epNum+Z-1) and added to season Y
+  - Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
+- **!!IMPORTANT NOTES FOR ADVANCED MODES!!**
+  - When defining you modes on your folders:
+    - If you don't use the same mode or compatiable modes for all separate folders for a series, you will run into issues.
+      - "anidb2", "tvdb", & "tvdb2" will work together
+    - You might have to manually merge Plex series if "anidb2"/"tvdb2" or "tvdb"/"tvdb2" are both used.
+    - "anidb2"/"tvdb" should automatically merge (but Plex is not perfect so you still might have to manually merge)
+    - "tvdb3" will not work correctly with any other modes so all folders of a series will have to have this mode
+    - "tvdb4" will not work correctly with any other modes so all folders of a series will have to have this mode
 
-" [anidb2-xxxxx]"
-will find the season & eposide offset defiend in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
-" [tvdb/2/3/4-xxxxx-sY]"
-episode numbers found in the files are left alone and added to season Y
-" [tvdb/2/3/4-xxxxx-eZ]"
-episode numbers found in the files are adjusted (epNum+Z-1)
-" [tvdb/2/3/4-xxxxx-sYeZ]"
-episode numbers found in the files are adjusted (epNum+Z-1) and added to season Y
-Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
-
-!!IMPORTANT NOTES FOR ADVANCED MODES!! When defining you modes on your folders:
-If you don't use the same mode or compatiable modes for all separate folders for a series, you will run into issues.
-"anidb2", "tvdb", & "tvdb2" will work together
-You might have to manually merge Plex series if "anidb2"/"tvdb2" or "tvdb"/"tvdb2" are both used.
-- "anidb2"/"tvdb" should automatically merge (but Plex is not perfect so you still might have to manually merge)
-- "tvdb3" will not work correctly with any other modes so all folders of a series will have to have this mode
-- "tvdb4" will not work correctly with any other modes so all folders of a series will have to have this mode
-
-Examples:
-
+  Examples: <PRE><CODE>
 == Example 1 ==
-"Bakuman [anidb2-7251]"
-"Bakuman 2011 [anidb2-8150]"
-"Bakuman 2012 [anidb2-8836]"
-
+  "Bakuman [anidb2-7251]"
+  "Bakuman 2011 [anidb2-8150]"
+  "Bakuman 2012 [anidb2-8836]"
 == Example 2 ==
-"Bakuman [tvdb-193811]"  (or "[tvdb-193811-s1]")
-"Bakuman 2011 [tvdb-193811-s2]"
-"Bakuman 2012 [tvdb-193811-s3]"
-
+  "Bakuman [tvdb-193811]"  (or "[tvdb-193811-s1]")
+  "Bakuman 2011 [tvdb-193811-s2]"
+  "Bakuman 2012 [tvdb-193811-s3]"
 == Example 3 ==
-"Sailor Moon Crystal [tvdb2-275039]"
-"Sailor Moon Crystal Season 3 [anidb2-11665]"  (or "[tvdb-275039-s3]" or "[tvdb2-275039-s3]")
-
+  "Sailor Moon Crystal [tvdb2-275039]"
+  "Sailor Moon Crystal Season 3 [anidb2-11665]"  (or "[tvdb-275039-s3]" or "[tvdb2-275039-s3]")
 == Example 4 ==
-"Bleach [tvdb3-74796]"
-"Bleach movie 1 Memories in the Rain [tvdb3-74796-s0e3]"
-"Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
-
+  "Bleach [tvdb3-74796]"
+  "Bleach movie 1 Memories in the Rain [tvdb3-74796-s0e3]"
+  "Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
 == Example 5 ==
-https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml
-  <anime tvdbid="79604" name="Black Lagoon">
-    01|001|012|The First Barrage
-    02|013|024|The Second Barrage
-    03|025|029|Roberta's Blood Trail
-  </anime>
-"Black Lagoon [tvdb4-79604]"  (or "[tvdb4-79604-s1]")
-"Black Lagoon - The Second Barrage [tvdb4-79604-s2]"
-"Black Lagoon - Roberta`s Blood Trail [tvdb4-79604-s3]"
+  https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml
+    \<anime tvdbid="79604" name="Black Lagoon"\>
+      01|001|012|The First Barrage
+      02|013|024|The Second Barrage
+      03|025|029|Roberta's Blood Trail
+    \</anime\>
+  "Black Lagoon [tvdb4-79604]"  (or "[tvdb4-79604-s1]")
+  "Black Lagoon - The Second Barrage [tvdb4-79604-s2]"
+  "Black Lagoon - Roberta`s Blood Trail [tvdb4-79604-s3]"
+</CODE></PRE>
 
 Series
 - Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
