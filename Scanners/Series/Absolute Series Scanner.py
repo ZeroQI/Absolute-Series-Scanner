@@ -2,6 +2,7 @@
 ### Python library  ####### Functions and structures ###  #import Stack, VideoFiles, fnmatch ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 import sys                                              # getdefaultencoding, getfilesystemencoding, platform
 import os                                               # path, listdir
+import tempfile                                         # NamedTemporaryFile
 import time                                             # strftime
 import re                                               # match, compile, sub
 import unicodedata                                      # normalize
@@ -196,8 +197,12 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
   return string
 
 ### Add files into Plex database ########################################################################
-def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False):
-  #Log("file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length) )
+def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
+  #Log("Initial: file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
+  ep_orig = "s%se%s" % (season, ep)
+  if 's%se%s' % (season, int(ep)) in mappingList: season, ep, ep2 = mappingList['s%se%s' % (season, ep)][1:].split("e") + [None]; season, ep = int(season), int(ep)
+  elif season > 0:                                season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
+  #Log("Initial2: file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
   file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
   #if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):                  file = os.path.join(LOG_PATH,"dummy.mp4")   # with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
   if title==title.lower() or title==title.upper() and title.count(" ")>0:  title                 = title.title()       # capitalise if all caps or all lowercase and one space at least
@@ -209,6 +214,8 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
     elif ep  > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
     if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
     elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
+  #Log("Initial3: file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
+  ep_final = "s%se%s" % (season, ep)
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log("Warning - show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
@@ -219,7 +226,28 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
       else:  tv_show.parts.append(file)
       mediaList.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = str(series_rx.index(rx)) if rx in series_rx else str(anidb_rx.index(rx)+len(series_rx)) if rx in anidb_rx else ""  # rank of the regex used from 0
-  Log("\"%s\" s%04de%03d%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))
+  Log("\"%s\" s%04de%03d%s%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, " (Orig: %s)" % ep_orig if ep_orig!=ep_final else "", os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))
+
+### Get the tvdbId from the AnimeId #######################################################################################################################
+def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidb_id):
+  poster_id_array, mappingList = {}, {}
+  for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree else []:
+    anidbid, tvdbid, tmdbid, imdbid, defaulttvdbseason, mappingList['episodeoffset'] = anime.get("anidbid"), anime.get('tvdbid'), anime.get('tmdbid'), anime.get('imdbid'), anime.get('defaulttvdbseason'), anime.get('episodeoffset')
+    if tvdbid.isdigit():  poster_id_array [tvdbid] = poster_id_array [tvdbid] + 1 if tvdbid in poster_id_array else 0  # Count posters to have a unique poster per anidbid
+    if anidbid == anidb_id: #manage all formats latter
+      name = anime.xpath("name")[0].text 
+      if tvdbid.isdigit():
+        try: ### mapping list ###
+          for season in anime.iter('mapping') if anime else []:
+            if anime.get("offset"):  mappingList[ 's'+season.get("tvdbseason")] = [anime.get("start"), anime.get("end"), anime.get("offset")]
+            for string2 in filter(None, season.text.split(';')):  mappingList [ 's' + season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1]
+        except: Log("anidbTvdbMapping() - mappingList creation exception")
+      elif tvdbid in ("", "unknown"):  Log("anidbid: %s | Title: '%s' | Has no matching tvdbid ('%s') in mapping file | " % (anidb_id, name, tvdbid))
+      Log("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s'" % (anidbid, tvdbid, defaulttvdbseason, name) )
+      return tvdbid, defaulttvdbseason, mappingList
+  else:
+    Log("anidbTvdbMapping() - anidbid '%s' not found in file" % anidb_id)
+    return "", "", []
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
@@ -273,8 +301,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   
   ### Capture guid from folder name or id file in serie or serie/Extras folder ###
   guid = ""
-  if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]", folder_show, re.IGNORECASE):
-    for file in ("anidb.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tmdb.id", "tsdb.id", "imdb.id"):
+  if not re.search(".*? ?\[(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]", folder_show, re.IGNORECASE):
+    for file in ("anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tmdb.id", "tsdb.id", "imdb.id"):
       if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), file)):
         with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
           guid         = guid_file.read().strip()
@@ -342,6 +370,36 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
     if offset_season != 0 or offset_episode != 0:  Log("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
 
+  mappingList, anidb2_match = {}, re.search(".*? ?\[anidb2-(?P<guid>[0-9]{1,7})\]", folder_show, re.IGNORECASE)
+  if anidb2_match:
+    anidb_id = anidb2_match.group('guid').lower()
+    tmp_file = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
+    scudlee_master_list_url, scudlee_filename, scudlee_file_new = 'http://rawgithub.com/ScudLee/anime-lists/master/anime-list-master.xml', tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml'), False
+    try:
+      if not os.path.exists(scudlee_filename):
+        Log("Creating: "+ scudlee_filename)
+        scudlee_file = open(tmp_filename, mode='w'); scudlee_file.write( urlopen( scudlee_master_list_url ).read() ); scudlee_file.close()
+        os.rename(tmp_filename, scudlee_filename)
+      elif int(time.time() - os.path.getmtime(scudlee_filename)) > 86400:
+        Log("Updating: '%s' from '%s'" % (scudlee_filename, scudlee_master_list_url))
+        scudlee_file = open(tmp_filename, mode='w'); scudlee_file.write( urlopen( scudlee_master_list_url ).read() ); scudlee_file.close()
+        os.rename(tmp_filename, scudlee_filename)
+      else:
+        Log("Exists: " + scudlee_filename); del tmp_file
+    except Exception as e:
+      Log("Error downloading ScudLee's file from GitHub '%s'" % scudlee_master_list_url); Log(str(e))
+    else:
+      try:
+        scudlee_file   = open(scudlee_filename, mode='r'); scudlee_mapping_content = etree.fromstring( scudlee_file.read() ); scudlee_file.close()
+      except Exception as e:
+        Log("Error parsing ScudLee's file from local '%s'" % scudlee_filename); Log(str(e))
+      else:
+        a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
+        offset_season  = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason.isdigit()         else 0
+        offset_episode = int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
+        folder_show    = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
+        Log("mappingList: %s" % mappingList)
+
   ### File main loop ###
   files.sort(key=natural_sort_key)
   movie_list, AniDB_op, counter, misc = {}, {}, 500, filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())              # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
@@ -393,10 +451,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       loop_completed = True
     #Log("Words: " + str(words) + " : Loop broken on: '%s'" % ep)
     if not loop_completed and ep.isdigit():  
-      new_season, new_ep, new_ep2 = season+offset_season if offset_season >= 0 else 0, int(ep)+offset_episode, int(ep2)+offset_episode if ep2 and ep2.isdigit() else None
-      if offset_season != 0 or offset_episode != 0:  Log("Old: s%se%s->%s, New: s%se%s->%s" % (season, ep, ep2, new_season, new_ep, new_ep2))
-      add_episode_into_plex(mediaList, file, root, path, show, new_season, new_ep, title, year, new_ep2, "None", tvdb_mapping, unknown_series_length);  continue
-  
+      add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  continue
+
     ### Check for Regex: series_rx + anidb_rx ###
     ep = clean_string(filename, False)  # restart matching from filename
     for rx in series_rx + anidb_rx:
@@ -418,9 +474,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
             AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                    # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
             ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
           ep = str( offset + int(ep))                                                                                                 # Add episode number to the offset, 01 by default from the match group above
-        new_season, new_ep, new_ep2 = season+offset_season if offset_season >= 0 else 0, int(ep)+offset_episode, int(ep2)+offset_episode if ep2 and ep2.isdigit() else None
-        if offset_season != 0 or offset_episode != 0:  Log("Old: s%se%s->%s, New: s%se%s->%s" % (season, ep, ep2, new_season, new_ep, new_ep2))
-        add_episode_into_plex(mediaList, file, root, path, show, new_season, new_ep, title, year, new_ep2, rx, tvdb_mapping, unknown_series_length); 
+        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
         break
     if match: continue  # next file iteration
     
