@@ -10,6 +10,7 @@ from lxml import etree                                  # fromstring
 import Utils                                            # SplitPath
 import Media                                            # Episode
 import Stack                                            # Scan
+import logging, logging.handlers                        #
 try:                 from urllib.request import urlopen # urlopen Python 3.0 and later
 except ImportError:  from urllib2        import urlopen # urlopen Python 2.x #import urllib2 # urlopen
 
@@ -107,9 +108,18 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '/raid0/data/PLEX_CONFIG/Plex Media Server/Logs',                                # Thecus Plex community version
                           '/config/Library/Application Support/Plex Media Server/Logs'] }                  # Docker linuxserver/plex
 
-### Log message in log file #######################################################################################################################################
-def Log(entry, filename=None): 
-  with open(os.path.join(LOG_PATH, filename if filename else LOG_FILE_LIBRARY), 'a') as file:  file.write(time.strftime("%Y-%m-%d %H:%M:%S ") + entry + "\n") #file.write(("" if no_timestamp else time.strftime("%Y-%m-%d %H:%M:%S") + " ") + entry + "\n")
+RootLogger,     RootHandler,     RootFormatting     = logging.getLogger('main'),           None, logging.Formatter('%(asctime)-15s - ASS - %(message)s')
+FileListLogger, FileListHandler, FileListFormatting = logging.getLogger('FileListLogger'), None, logging.Formatter('%(message)s')
+RootLogger.setLevel(logging.DEBUG); FileListLogger.setLevel(logging.DEBUG)
+Log, LogFileList = RootLogger.info, FileListLogger.info
+def set_logging(instance, filename):
+  global RootLogger, RootHandler, RootFormatting, FileListLogger, FileListHandler, FileListFormatting
+  logger, handler, formatting, backup_count = [RootLogger, RootHandler, RootFormatting, 9] if instance=="Root" else [FileListLogger, FileListHandler, FileListFormatting, 1]
+  if handler: logger.removeHandler(handler)
+  handler = logging.handlers.RotatingFileHandler(os.path.join(LOG_PATH, filename), maxBytes=10*1024*1024, backupCount=backup_count)    #handler = logging.FileHandler(os.path.join(LOG_PATH, filename), mode)
+  handler.setFormatter(formatting)
+  handler.setLevel(logging.DEBUG)
+  logger.addHandler(handler)
 
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
 platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
@@ -118,7 +128,7 @@ for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join
   if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
 else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(absolute_path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
 LOG_FILE_LIBRARY     = LOG_FILE = 'Plex Media Scanner (custom ASS).log'            # Log filename library will include the library name, LOG_FILE not and serve as reference
-
+set_logging("Root", LOG_FILE_LIBRARY)
 PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):
   Log("'X-Plex-Token.id' file present")
@@ -261,9 +271,10 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidb_id):
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
   global LOG_FILE_LIBRARY;
   LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  ### Rename log file with library name if XML file can be accessed or token file present in log folder. LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
+  if LOG_FILE_LIBRARY != LOG_FILE:  set_logging("Root", LOG_FILE_LIBRARY)
   FILELIST         = LOG_FILE_LIBRARY[:-4] + " - filelist " + os.path.basename(root) + LOG_FILE_LIBRARY[-4:]           # custom log file per library root folder
   if not path:
-    open(os.path.join(LOG_PATH, FILELIST), 'w').close                                                      #Empty file for root folder call
+    set_logging("FileList", FILELIST)
     Log(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
   Log("".ljust(157, '='))
   Log("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log("".ljust(157, '='))  # Exit every other iteration than the root scan
@@ -277,7 +288,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       for rx in IGNORE_FILES_RX:                                                                                        # Filter trailers and sample files
         if re.match(rx, file, re.IGNORECASE):  Log("File:   '%s' match IGNORE_FILES_RX: '%s'" % (file, rx)); files_to_remove.append(file);  break
       else:  
-        with open(os.path.join(LOG_PATH, FILELIST), 'a') as log_file:  log_file.write(file + "\n")  #add to filelist
+        LogFileList(file)  #add to filelist
     else:  Log("file: '%s', ext: '%s' not in video_ext" % (file, ext));  files_to_remove.append(file);  continue
   for file in files_to_remove:  files.remove(file)
   if len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
