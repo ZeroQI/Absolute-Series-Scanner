@@ -197,6 +197,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False):
+  #Log("file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length) )
   file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
   #if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):                  file = os.path.join(LOG_PATH,"dummy.mp4")   # with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
   if title==title.lower() or title==title.upper() and title.count(" ")>0:  title                 = title.title()       # capitalise if all caps or all lowercase and one space at least
@@ -272,7 +273,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   
   ### Capture guid from folder name or id file in serie or serie/Extras folder ###
   guid = ""
-  if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}\]", folder_show, re.IGNORECASE):
+  if not re.search(".*? ?\[(anidb|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]", folder_show, re.IGNORECASE):
     for file in ("anidb.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tmdb.id", "tsdb.id", "imdb.id"):
       if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), file)):
         with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
@@ -280,9 +281,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           folder_show  = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file))[0], guid)
         break
     else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
-        
+  
   ### Capture if absolute numbering should be applied for all episode numbers  ###
-  tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(".*? ?\[tvdb(?P<mode>(2|3|4))-(tt)?(?P<guid>[0-9]{1,7})\]", folder_show, re.IGNORECASE)
+  tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(".*? ?\[tvdb(?P<mode>(2|3|4))-(tt)?(?P<guid>[0-9]{1,7})-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]", folder_show, re.IGNORECASE)
   if tvdb_mode_search:
     tvdb_mode, tvdb_guid = tvdb_mode_search.group('mode').lower(), tvdb_mode_search.group('guid').lower();
     Log("folder_show: '%s', folder_season: '%s', tvdb mode: '%s', tvdb id: '%s'" % (folder_show, folder_season, tvdb_mode, tvdb_guid)) # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
@@ -329,6 +330,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         if "(unknown length)" in season[3].lower(): unknown_series_length = True
       except Exception as e: tvdb_mapping = {}; Log("mapping parsing issue"); Log(str(e))
   if tvdb_mapping: Log("unknown_series_length: %s, tvdb_mapping: %s" % (unknown_series_length, str(tvdb_mapping)))
+
+  offset_season, offset_episode, offset_match = 0, 0, re.search(".*? ?\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]", folder_show, re.IGNORECASE)
+  if offset_match:
+    match_source, match_season, match_episode = offset_match.group('source'), "", ""
+    if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
+    if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-1
+    if tvdb_mapping and match_season!='s0': 
+      season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if match_source in ['tvdb3','tvdb4'] else 1
+      offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
+    folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
+    if offset_season != 0 or offset_episode != 0:  Log("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
 
   ### File main loop ###
   files.sort(key=natural_sort_key)
@@ -380,13 +392,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     else: 
       loop_completed = True
     #Log("Words: " + str(words) + " : Loop broken on: '%s'" % ep)
-    if not loop_completed and ep.isdigit():  add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping, unknown_series_length);  continue
+    if not loop_completed and ep.isdigit():  
+      new_season, new_ep, new_ep2 = season+offset_season if offset_season >= 0 else 0, int(ep)+offset_episode, int(ep2)+offset_episode if ep2 and ep2.isdigit() else None
+      if offset_season != 0 or offset_episode != 0:  Log("Old: s%se%s->%s, New: s%se%s->%s" % (season, ep, ep2, new_season, new_ep, new_ep2))
+      add_episode_into_plex(mediaList, file, root, path, show, new_season, new_ep, title, year, new_ep2, "None", tvdb_mapping, unknown_series_length);  continue
   
     ### Check for Regex: series_rx + anidb_rx ###
     ep = clean_string(filename, False)  # restart matching from filename
     for rx in series_rx + anidb_rx:
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
+        #Log("rx match = %s" % match.groupdict())
         if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show' ))  # Mainly if file at root or _ folder
         if match.groupdict().has_key('title' ) and match.group('title' ):               title  = clean_string( match.group('title'))
         if match.groupdict().has_key('season') and match.group('season'):               season = int(match.group('season'))
@@ -402,7 +418,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
             AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                    # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
             ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
           ep = str( offset + int(ep))                                                                                                 # Add episode number to the offset, 01 by default from the match group above
-        add_episode_into_plex(mediaList, file, root, path , show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length); 
+        new_season, new_ep, new_ep2 = season+offset_season if offset_season >= 0 else 0, int(ep)+offset_episode, int(ep2)+offset_episode if ep2 and ep2.isdigit() else None
+        if offset_season != 0 or offset_episode != 0:  Log("Old: s%se%s->%s, New: s%se%s->%s" % (season, ep, ep2, new_season, new_ep, new_ep2))
+        add_episode_into_plex(mediaList, file, root, path, show, new_season, new_ep, title, year, new_ep2, rx, tvdb_mapping, unknown_series_length); 
         break
     if match: continue  # next file iteration
     
