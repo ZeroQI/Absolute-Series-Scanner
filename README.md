@@ -295,6 +295,36 @@ Implied is original language, folder named dubbed otherwise
 - TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniBD.net, but they do not carry porn series so no metadata for this type.
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
 
+###Japanese Media Manager###
+It uses anidb as source and uses hash info from file to determine what the show is (release included) and where it goes.
+So this means that shows like SOA/Fate stay night..etc are all in there own folder for each part of the series.
+Movies are also in there own folder since anidb treats every movie as its own show.
+http://jmediamanager.org/jmm-desktop/utilities/file-renaming/
+
+Renaming Script:
+IF I(eng) DO ADD '%eng'
+IF I(ann);I(!eng) DO ADD '%ann'
+DO REPLACE '[' ''
+DO REPLACE ']' ''
+IF T(!Movie);H(!S);T(!OVA) DO ADD ' - %enr - '
+IF H(S),T(OVA),T(Movie) DO ADD ' - %enr - '
+DO ADD '%epr '
+DO ADD '[%grp]'
+
+// Replace all illegal file name characters
+DO REPLACE '<' '('
+DO REPLACE '>' ')'
+DO REPLACE ':' ' -'
+DO REPLACE '"' '`'
+DO REPLACE '/' '-'
+DO REPLACE '\' '_'
+DO REPLACE '|' '_'
+DO REPLACE '?' ''
+DO REPLACE '*' '+'
+//DO REPLACE 'S0' '0'
+DO REPLACE '[%grp]' ''
+
+
 ###Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
 - [ ] Shall i write a Movie scanner using the same code? The Plex default movie scanner does an good job i believe ?
