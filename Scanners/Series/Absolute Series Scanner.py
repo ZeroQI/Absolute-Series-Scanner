@@ -274,7 +274,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   if LOG_FILE_LIBRARY != LOG_FILE:  set_logging("Root", LOG_FILE_LIBRARY)
   FILELIST         = LOG_FILE_LIBRARY[:-4] + " - filelist " + os.path.basename(root) + LOG_FILE_LIBRARY[-4:]           # custom log file per library root folder
   if not path:
-    set_logging("FileList", FILELIST); LogFileList("".ljust(157, '=')); LogFileList("==== Starting File Scan ===="); LogFileList("".ljust(157, '='))
+    set_logging("FileList", FILELIST)
     Log.info(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
   Log.info("".ljust(157, '='));  Log.info("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log.info("".ljust(157, '='))  # Exit every other iteration than the root scan
   for subdir in subdirs:                                                    #
