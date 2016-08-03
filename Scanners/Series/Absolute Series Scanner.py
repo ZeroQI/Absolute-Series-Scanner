@@ -276,7 +276,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   if LOG_FILE_LIBRARY != LOG_FILE:  set_logging("Root", LOG_FILE_LIBRARY)
   FILELIST         = LOG_FILE_LIBRARY[:-4] + " - filelist " + os.path.basename(root) + LOG_FILE_LIBRARY[-4:]           # custom log file per library root folder
   if not path:
-    set_logging("FileList", FILELIST)
+    set_logging("FileList", FILELIST); LogFileList("".ljust(157, '=')); LogFileList("==== Starting File Scan (root:%s) ====" % root); LogFileList("".ljust(157, '='))
     Log.info(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
   Log.info("".ljust(157, '='));  Log.info("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log.info("".ljust(157, '='))  # Exit every other iteration than the root scan
   for subdir in subdirs:                                                    #
@@ -284,12 +284,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log.info("\"%s\" match IGNORE_DIRS_RX: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
   reverse_path, files_to_remove = list(reversed(Utils.SplitPath(path))), []
   for file in files:
+    LogFileList(file)  #add to filelist
     ext = os.path.splitext(file)[1].lstrip('.').lower()
     if ext in VIDEO_EXTS:
       for rx in IGNORE_FILES_RX:                                                                                        # Filter trailers and sample files
         if re.match(rx, file, re.IGNORECASE):  Log.info("File:   '%s' match IGNORE_FILES_RX: '%s'" % (file, rx)); files_to_remove.append(file);  break
-      else:  
-        LogFileList(file)  #add to filelist
     else:  Log.info("file: '%s', ext: '%s' not in video_ext" % (file, ext));  files_to_remove.append(file);  continue
   for file in files_to_remove:  files.remove(file)
   if len(files)==0:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
