@@ -120,6 +120,8 @@ def set_logging(instance, filename):
   handler.setFormatter(formatting)
   handler.setLevel(logging.DEBUG)
   logger.addHandler(handler)
+  if instance=="Root":  RootHandler     = handler
+  else:                 FileListHandler = handler
 
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
 platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
