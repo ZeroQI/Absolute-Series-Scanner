@@ -1,14 +1,14 @@
 #Absolute Series Scanner
 
+The files choosen by the scanner will be showing in Plex, if not showing in Plex it is a scanner issue
+The Plex metadata agent will find metadata for files showing in Plex. Missing posters or metadata is an Agent issue
+
 A Plex series scanner choose the following from the folders and file names:
 - Serie name
 - Season number
 - Episode number
 - Episode title (not filled by plex default series scanner, until the metadata agent refreshes it)
 - Episode year
-
-The files choosen by the scanner will be showing in Plex, if not showing in Plex it is a scanner issue
-The Plex metadata agent will find metadata for files showing in Plex. Missing posters or metadata is an Agent issue
 
 Grouping folder
 - If you use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
@@ -21,7 +21,7 @@ You can specify the guid to use the following way:
 - In guid_type.id inside serie folder with the id in it (ex: tvdb.id file with tvdbid "114801" without double quotes in it)
 
 Hama supports the following guid_type:
-- anidb for AniDB.net
+- anidb for AniDB.net (and and the behaviour changing mode anibd2)
 - tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
 - tmdb  For TheMovieDB.net (and the serie part of TheMovieDB: tsdb)
 - imdb  For the International Movie DataBase (ids starts with "tt...")
@@ -30,7 +30,9 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
-<TBODY> <TR> <TD> tvdb2     </TD> <TD> TVDB                </TD> <TD>Season            </TD> <TD>Multiple single season series (Sword Art online)</TD> </TR>
+<TBODY>
+        <TR> <TD> anib2     </TD> <TD> None                </TD> <TD>Absolute           </TD> <TD>Map to the tvdb at the right season and ep number to show 1 serie only</TD> </TR>
+        <TR> <TD> tvdb2     </TD> <TD> TVDB                </TD> <TD>Season            </TD> <TD>Multiple single season series (Sword Art online)</TD> </TR>
         <TR> <TD> tvdb3     </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan)</TD> </TR>
         <TR> <TD> tvdb4     </TD> <TD> Custom/Arc database </TD> <TD>Absolute          </TD> <TD>Long series with arc (one piece, dragon ball)</TD> </TR>
 </TBODY>
@@ -69,7 +71,7 @@ Advanced modes for when you have episodes of a series in SEPARATE parent folders
   - Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
 - **!!IMPORTANT NOTES FOR ADVANCED MODES!!**
   - When defining you modes on your folders:
-    - If you don't use the same mode or compatiable modes for all separate folders for a series, you will run into issues.
+    - If you don't use the same mode or compatible modes for all separate folders for a series, you will run into issues.
       - "anidb2", "tvdb", & "tvdb2" will work together
     - You might have to manually merge Plex series if "anidb2"/"tvdb2" or "tvdb"/"tvdb2" are both used.
     - "anidb2"/"tvdb" should automatically merge (but Plex is not perfect so you still might have to manually merge)
@@ -78,21 +80,17 @@ Advanced modes for when you have episodes of a series in SEPARATE parent folders
 
   Examples: <PRE><CODE>
 == Example 1 ==
-  "Bakuman [anidb2-7251]"
-  "Bakuman 2011 [anidb2-8150]"
-  "Bakuman 2012 [anidb2-8836]"
+Bakuman [anidb2-7251]       =  Bakuman [tvdb-193811-s1]      = Bakuman [tvdb-193811]
+Bakuman 2011 [anidb2-8150]  =  Bakuman 2011 [tvdb-193811-s2]
+Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
 == Example 2 ==
-  "Bakuman [tvdb-193811]"  (or "[tvdb-193811-s1]")
-  "Bakuman 2011 [tvdb-193811-s2]"
-  "Bakuman 2012 [tvdb-193811-s3]"
-== Example 3 ==
   "Sailor Moon Crystal [tvdb2-275039]"
   "Sailor Moon Crystal Season 3 [anidb2-11665]"  (or "[tvdb-275039-s3]" or "[tvdb2-275039-s3]")
-== Example 4 ==
+== Example 3 ==
   "Bleach [tvdb3-74796]"
   "Bleach movie 1 Memories in the Rain [tvdb3-74796-s0e3]"
   "Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
-== Example 5 ==
+== Example 4 ==
   https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml
     \<anime tvdbid="79604" name="Black Lagoon"\>
       01|001|012|The First Barrage
@@ -150,23 +148,13 @@ Into:
 
 Troubleshooting:
 ================
-If you have these or similar symptoms:
-- scanner not listed in scanner list
-- nothing is scanned
-- episodes are missing
-- Series are missing
-- library doesn't add new content (after scanner update) then most likelly the scanner is crashing and revert any changed to the library
 
-Include the following logs then:
-- [...]/Plex Media Server/Logs/Plex Media Scanner.log                       (scanner crash info)
-- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log          (episodes info)
-- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS) filelist.log (library file list)
+If the scanner not listed in scanner list:
+- Make sure you did not create a movie library, as it will mot show a SERIES scanner....
+- check size and open file to check for corruption
+- If you have HTML tags at the beginning you saved the scanner file wrong and should feel bad
 
-ANd post in:
-- Support thread for Scanner (you are unsure): https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
-- Github issue page (you have a bug):          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
-
-On windows, if you get in "Plex Media Scanner.log" the following error:
+On windows install https://www.microsoft.com/en-us/download/details.aspx?id=5555 if you experience this error:
 <PRE><CODE>
 Jul 23, 2016 12:55:54.558 [5288] ERROR - Error scanning directory .
 Jul 23, 2016 12:55:54.574 [5288] ERROR - No module in Absolute Series Scanner
@@ -177,12 +165,22 @@ from lxml import etree # fromstring
 ImportError: DLL load failed: The specified module could not be found.
 </CODE></PRE>
 
-Try to install the following, try again and report which solved the issue
-- https://www.microsoft.com/en-us/download/details.aspx?id=48145
-- https://www.microsoft.com/en-us/download/details.aspx?id=5555
-- https://www.microsoft.com/en-us/download/details.aspx?id=40784
-Source:
-- http://stackoverflow.com/questions/7228229/lxml-dll-load-failed-the-specified-module-could-not-be-found
+On linux, permissions issues could prevent the scanner execution. Check hama readme for commands and posts the ones not documented if any.
+
+If you have these or similar symptoms:
+- nothing is scanned
+- episodes are missing
+- Series are missing
+- library doesn't add new content (after scanner update) then most likelly the scanner is crashing and revert any changed to the library
+
+Include the following logs then:
+- [...]/Plex Media Server/Logs/Plex Media Scanner.log                       (scanner crash info)
+- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log          (episodes info)
+- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS) filelist.log (library file list)
+
+And post in:
+- Support thread for Scanner (you are unsure): https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
+- Github issue page (you have a bug):          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
 
 ###Local metadata
 It is supported but through "local media assets" agent, add it and and put it before HAMA in the priority order.<BR />
@@ -302,6 +300,7 @@ Movies are also in there own folder since anidb treats every movie as its own sh
 http://jmediamanager.org/jmm-desktop/utilities/file-renaming/
 
 Renaming Script:
+<code><pre>
 IF I(eng) DO ADD '%eng'
 IF I(ann);I(!eng) DO ADD '%ann'
 DO REPLACE '[' ''
@@ -323,7 +322,7 @@ DO REPLACE '?' ''
 DO REPLACE '*' '+'
 //DO REPLACE 'S0' '0'
 DO REPLACE '[%grp]' ''
-
+</pre></code>
 
 ###Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
