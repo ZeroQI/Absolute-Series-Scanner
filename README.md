@@ -1,7 +1,7 @@
 #Absolute Series Scanner
 
 The files choosen by the scanner will be showing in Plex, if not showing in Plex it is a scanner issue
-The Plex metadata agent will find metadata for files showing in Plex. Missing posters or metadata is an Agent issue
+The Plex metadata agent will find metadata (Serie Title, summary year, episode title, summary, posters, fanart, tags, ... ) for files showing in Plex. ANything missing there is an Agent issue, for which you should refer to the agent readme here: https://github.com/ZeroQI/Hama.bundle/blob/master/README.md
 
 A Plex series scanner choose the following from the folders and file names:
 - Serie name
