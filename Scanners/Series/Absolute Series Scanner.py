@@ -388,35 +388,28 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
     if offset_season != 0 or offset_episode != 0:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
 
-  mappingList, anidb2_match = {}, re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
+  anidb2_match, mappingList = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE), {}
   if anidb2_match:
-    anidb_id = anidb2_match.group('guid').lower()
-    tmp_file = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-    scudlee_filename, scudlee_file_new = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml'), False
+    anidb_id         = anidb2_match.group('guid').lower()
+    tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
+    scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
     try:
-      if not os.path.exists(scudlee_filename):
-        Log.info("Creating: "+ scudlee_filename)
-        scudlee_file = open(tmp_filename, mode='w'); scudlee_file.write( urlopen( ANIDB_TVDB_MAPPING ).read() ); scudlee_file.close()
+      if not os.path.exists(scudlee_filename) or int(time.time() - os.path.getmtime(scudlee_filename)) > 86400:
+        Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
+        with open(tmp_filename, 'w') as scudlee_file:  scudlee_file.write( urlopen( ANIDB_TVDB_MAPPING ).read() )
         os.rename(tmp_filename, scudlee_filename)
-      elif int(time.time() - os.path.getmtime(scudlee_filename)) > 86400:
-        Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING))
-        scudlee_file = open(tmp_filename, mode='w'); scudlee_file.write( urlopen( ANIDB_TVDB_MAPPING ).read() ); scudlee_file.close()
-        os.rename(tmp_filename, scudlee_filename)
-      else:
-        Log.info("Exists: " + scudlee_filename); del tmp_file
-    except Exception as e:
-      Log.error("Error downloading ScudLee's file from GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
+      else:  Log.info("Use existing: '%s'" % scudlee_filename); del tmp_file
+    except Exception as e:  Log.error("Error downloading ScudLee's file from GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e)) 
     else:
       try:
-        scudlee_file   = open(scudlee_filename, mode='r'); scudlee_mapping_content = etree.fromstring( scudlee_file.read() ); scudlee_file.close()
-      except Exception as e:
-        Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
+        with open(scudlee_filename, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
+      except Exception as e:  Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
       else:
         a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
-        offset_season  = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason.isdigit()         else 0
-        offset_episode = int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
-        folder_show    = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
-        Log.debug("mappingList: %s" % mappingList)
+        offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason.isdigit()         else 0
+        offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
+        folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
+        Log.debug("mappingList: %s" % mappingList)    
 
   ### File main loop ###
   files.sort(key=natural_sort_key)
