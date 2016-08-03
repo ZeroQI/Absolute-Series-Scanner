@@ -293,7 +293,7 @@ Implied is original language, folder named dubbed otherwise
 - TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniBD.net, but they do not carry porn series so no metadata for this type.
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
 
-###Japanese Media Manager###
+###Japanese Media Manager
 It uses anidb as source and uses hash info from file to determine what the show is (release included) and where it goes.
 So this means that shows like SOA/Fate stay night..etc are all in there own folder for each part of the series.
 Movies are also in there own folder since anidb treats every movie as its own show.
@@ -322,6 +322,52 @@ DO REPLACE '?' ''
 DO REPLACE '*' '+'
 //DO REPLACE 'S0' '0'
 DO REPLACE '[%grp]' ''
+</pre></code>
+
+###Batch file to create filelist.txt or re-create a library from the filelist with 0 size files
+<code><pre>
+@ECHO OFF
+REM 1 - if no filelist create filelist no folders
+REM 2 - if file there restore
+chcp 1252>nul
+
+IF EXIST filelist.txt goto RESTORE
+ECHO Press Enter to create listfile.txt containing all files relative path
+rundll32 user32.dll,MessageBeep -1
+PAUSE
+SETLOCAL DisableDelayedExpansion
+SET "r=%__CD__%"
+type nul > filelist.txt
+FOR /R . %%F IN (*) DO (
+  SET "p=%%F"
+  SETLOCAL EnableDelayedExpansion
+  ECHO(!p:%r%=!
+  ENDLOCAL
+) >> filelist.txt
+ECHO [filelist.txt] created list
+rundll32 user32.dll,MessageBeep -1
+GOTO EXIT
+
+:RESTORE
+ECHO Press enter to create all dummy files from filelist.txt
+rundll32 user32.dll,MessageBeep -1
+PAUSE
+rem for /f "tokens=2 delims=:." %%x in ('chcp') do set cp=%%x
+rem chcp 437>nul
+
+REM IMPORTANT LOOP DOING ALL THE WORK
+for /f "tokens=*" %%a in (filelist.txt) do (
+IF NOT EXIST "%%~pa" mkdir "%%~pa"
+IF NOT EXIST "%%a" TYPE nul > "%%a"
+)
+rem chcp %cp%>nul
+ECHO [filelist.txt] processed, blank files created
+rundll32 user32.dll,MessageBeep -1
+GOTO EXIT
+
+:EXIT
+ECHO Finished!
+PAUSE
 </pre></code>
 
 ###Task list
