@@ -1,13 +1,12 @@
 #Absolute Series Scanner
 
+The Plex Scanner will make the video files showing in Plex, if not showing in Plex, it is a scanner issue.
 A Plex series scanner choose the following from the folders and file names:
 - Serie name
 - Season number
 - Episode number
 - Episode title (not filled by plex default series scanner, until the metadata agent refreshes it)
 - Episode year
-
-The files chosen by the scanner will be showing in Plex, if not showing in Plex, it is a scanner issue.
 
 The Plex metadata agent will find metadata (Serie Title, summary year, episode title, summary, posters, fanart, tags, ... ) for files showing in Plex. Anything missing there while the file shows up in Plex is an Agent issue, refer to the Agent readme here: https://github.com/ZeroQI/Hama.bundle/blob/master/README.md
 
