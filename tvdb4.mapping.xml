@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <tvdb4entries>
   <anime tvdbid="[tvdbid]" name="[Series Name]" note="Example entry for complete series">
-    [Season Num]|[First Ep Num]|[Last Ep Num]|[Season Name]
-    [Season Num]|[First Ep Num]|[Last Ep Num]|[Season Name]
+    [    0Num]|[First Ep Num]|[Last Ep Num]|[    0Name]
+    [    0Num]|[First Ep Num]|[Last Ep Num]|[    0Name]
   </anime>
   <anime tvdbid="[tvdbid]" name="[Series Name]" note="Example entry for ongoing series">
-    [Season Num]|[First Ep Num]|[Last Ep Num]|[Season Name]
-    [Season Num]|[First Ep Num]|[First Ep Num]|[Season Name] (unknown length)
+    [    0Num]|[First Ep Num]|[Last Ep Num]|[    0Name]
+    [    0Num]|[First Ep Num]|[First Ep Num]|[    0Name] (unknown length)
   </anime>
   <anime tvdbid="79604" name="Black Lagoon">
     01|001|012|The First Barrage
@@ -24,6 +24,17 @@
     08|102|122|King Piccolo Saga
     09|123|153|Piccolo Jr. Saga
   </anime>
+  <anime tvdbid="81472" name="Dragon Ball Z">
+    01|001|039|Saiyan Saga
+    02|040|074|Namek And Captian Ginyu Sagas
+    03|075|107|Frieza Saga
+    04|108-139|Garlic Jr., Trunks and Androids Sagas
+    05|140|165|Imperfect Cell and Perfect Cell Sagas
+    06|166-194|Cell Games Saga
+    07|195|219|Great Saiyaman and World Tournament Sagas
+    08|220|253|Babidi and Majin Buu Sagas
+    09|254|291|Fusion and Kid Buu Sagas
+  </anime>
   <anime tvdbid="88031" name="Dragon Ball Kai">
     01|001|016|Saiyan Saga
     02|017|054|Frieza Saga
@@ -31,6 +42,19 @@
     04|068|098|Cell Saga
     05|099|133|Majin Buu Saga
     06|134|159|Evil Buu Saga
+  </anime>
+  <anime tvdbid="79275" name="Dragon Ball GT">
+    01|001|015|Black Star Dragon Ball Saga
+    02|016|040|Baby Saga
+    03|041|047|Super Android 17 Saga
+    04|048|064|Shadow Dragon Saga
+  </anime>
+  <anime tvdbid="295068" name="Dragon Ball Super">
+    01|001|014|Battle of Gods Arc
+    02|015|027|Resurrection 'F' Arc
+    03|028|041|Universe 6 Arc
+    04|042|046|Potaufeu Arc
+    05|047|047|Future Trunks Arc (Still airing)
   </anime>
   <anime tvdbid="133341" name="Durarara!!">
     01|001|024|Durarara!!
@@ -47,17 +71,79 @@
     06|093|136|Chimera Ant Arc
     07|137|148|13th Hunter Chairman Arc
   </anime>
+  <anime tvdbid="79824" name="Naruto">
+    01|001|035|1st Stage
+    02|036|083|2nd Stage
+    03|084|131|3rd Stage
+    04|132|185|4th Stage
+    05|186|186|5th Stage|Funeral Proxy Mission arc
+    06|187|191|Peddlers Escort Mission arc
+    07|192|192|Matchmaking Proxy Mission arc
+    08|193|193|The Dōjō Saga arc
+    09|194|194|Lady Daimyō Search Mission arc
+    10|195|196|The Third Great Beast arc
+    11|197|201|Konoha Plans Recapture Mission arc
+    12|202|202|The Top 5 Ninja Battles arc
+    13|203|207|Yakumo Kurama Rescue Mission arc
+    14|208|208|The Prized Artefact Escort Mission arc
+    15|209|212|Gantetsu Escort Mission arc Episodes
+    16|213|215|Menma Memory Search Mission arc
+    17|216|220|Sunagakure Support Mission arc
+  </anime>
+  <anime tvdbid="79824 " name="Naruto Shippuuden">
+    01|001|031|Kazekage Rescue
+    02|032|053|Long-Awaited Reunion
+    03|054|071|Twelve Guardian Ninja
+    04|072|088|Immortal Devastators — Hidan and Kakuzu-
+    05|089|112|The Three-Tailed Demon Turtle
+    06|113|143|Master's Prophecy and Vengeance
+    07|144|151|The Six-Tailed Demon Slug
+    08|152|175|Two Saviors
+    09|176|196|Past Arc: The Locus of Konoha
+    10|197|221|The Gathering of the Five Kage
+    11|222|242|Paradise on the Ship
+    12|243|275|Nine-tailed Fox Taming and Karmic Encounters
+    13|276|295|The Seven Shinobi Swordsmen
+    14|296|320|The Fourth Great Ninja War|Assailants From Afar
+    15|321|348|The Fourth Great Ninja War|Sasuke and Itachi
+    16|349|361|Kakashi: Shadow of the ANBU Black Op
+    17|362|372|The Fourth Great Ninja War|The Return of Squad Seven
+    18|373|393|The Fourth Great Ninja War|Obito Uchiha
+    19|394|413|Naruto's Back ~The Tracks of His Friends
+    20|414|414|Infinite Tsukuyomi: The Invocation (ongoing currently)
+  </anime>
+  <anime tvdbid="81797" name="One Piece">
+    01|001|061|East Blue
+    02|062|077|Entering into the Grand Line
+    03|078|092|Introducing Chopper at the Winter Island
+    04|093-130|Arrival and Fierce Fighting at Alabasta
+    05|131|143|TV Original
+    06|144-195|Sky Island Skypiea| / Golden Bell
+    07|196|228|Escape! The Naval Fortress & The Foxy Pirate Crew
+    08|229|263|Water Seven
+    09|264|335|Enies Lobby
+    10|337|381|Thriller Bark
+    11|382|405|Sabaody Archipelago
+    12|408|421|Island of Women
+    13|422|458|Impel Down
+    14|459|516|Marineford
+    15|517|573|Fishman Island
+    16|574|628|Punk Hazard
+    17|629|746|Dressrosa
+    18|747|750|Silver Mine Arc
+    19|751|751|Zou Arc (Currently Airing)
+  </anime>
   <anime tvdbid="289906" name="Seraph of the End">
     01|001|012|Vampire Reign
     02|013|024|Battle in Nagoya
   </anime>
   <anime tvdbid="272849" name="Space Dandy">
-    01|001|013|Space Dandy Season 01
-    02|014|026|Space Dandy Season 02
+    01|001|013|Space Dandy     001
+    02|014|026|Space Dandy     002
   </anime>
   <anime tvdbid="293996" name="The Asterisk War: The Academy City on the Water">
-    01|001|012|Asterisk War Season 01
-    02|013|024|Asterisk War Season 02
+    01|001|012|Asterisk War     001
+    02|013|024|Asterisk War     002
   </anime>
   <anime tvdbid="76014" name="Yakitate!! Japan">
     01|001|007|Pantasia Entrance Examination Arc
