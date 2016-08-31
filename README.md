@@ -215,7 +215,7 @@ If the scanner not listed in scanner list:
 - check size and open file to check for corruption
 - If you have HTML tags at the beginning you saved the scanner file wrong and should feel bad
 
-On windows install https://www.microsoft.com/en-us/download/details.aspx?id=5555 if you experience this error:
+On windows install https://www.microsoft.com/en-us/download/details.aspx?id=48145 if you experience this error:
 <PRE><CODE>
 Jul 23, 2016 12:55:54.558 [5288] ERROR - Error scanning directory .
 Jul 23, 2016 12:55:54.574 [5288] ERROR - No module in Absolute Series Scanner
