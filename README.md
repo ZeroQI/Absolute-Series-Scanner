@@ -20,13 +20,17 @@ This scanner supports absolute and season numbering, but here are two references
 - Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
 - Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
 
+Naming
+- Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
+
 Grouping folder
 - If you use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
   You can just add it as additionnal root folder in the library: "D:/Anime/Dragon Ball/" for "D:/Anime/Dragon Ball/[2] Dragon Ball Z" folder for example...
 
-Series
-- Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
-- Movie files in Series libraries accepted if they are in a folder with the same name (or 01|ep 01|s01e01, or " - Complete Movie" at the end)
+Movie files in Series libraries (since this is a Series Scanner) are supported if:
+-  Files are in a folder with the same name or with a single file inside it
+-  Files are numbered (01|ep 01|s01e01)
+-  Filename contain " - Complete Movie"
 
 Season folders
 - Seasons folders can have serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")
