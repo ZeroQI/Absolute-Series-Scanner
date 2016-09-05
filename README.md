@@ -199,6 +199,31 @@ Put latest scanner file from:
 Into:
 - [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
 
+One user had folders rights issues on Windows 2008 R2
+<code>2016-06-29 23:30:09,104 (30c) : CRITICAL (core:574) - Exception while loading code (most recent call last):
+File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Versions\2\Python\Framework\core.py", line 563, in load_code
+self.init_code = self.loader.load(self.init_path, elevated, use_xpython = Framework.constants.flags.use_xpython in self.sandbox.flags)
+File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Versions\2\Python\Framework\code\loader.py", line 47, in load
+code = self.compile(str(source), str(uni(filename)), elevated)
+File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Versions\2\Python\Framework\code\loader.py", line 52, in compile
+return RestrictedPython.compile_restricted(source, name, 'exec', elevated=elevated)
+File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Platforms\Shared\Libraries\RestrictedPython\RCompile.py", line 115, in compile_restricted
+gen.compile()
+File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Platforms\Shared\Libraries\RestrictedPython\RCompile.py", line 68, in compile
+tree = self._get_tree()
+File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Platforms\Shared\Libraries\RestrictedPython\RCompile.py", line 59, in _get_tree
+tree = self.parse()
+File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Platforms\Shared\Libraries\RestrictedPython\RCompile.py", line 56, in parse
+return niceParse(self.source, self.filename, self.mode)
+File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Platforms\Shared\Libraries\RestrictedPython\RCompile.py", line 38, in niceParse
+compile(source, filename, mode)
+TypeError: compile() expected string without null bytes
+</code>
+
+He solved it by changing rights for:
+- ...\Users\Administrator\AppData\Local\Plex Media Server\Plug-Ins
+- ...\Users\Administrator\AppData\Local\Plex Media Server\Scanners
+
 ###Logs
 Absolute series Scanner uses a pre-made list of folders to try to locate Plex Logs folder. 
 If custom logs are not present, then either you created a library using default Plex scanner and not my "Absolute Series Scanner" or you have an unknown Logs folder location and will need to forward me the path to add in the source code...
