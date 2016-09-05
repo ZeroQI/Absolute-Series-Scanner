@@ -200,7 +200,7 @@ Into:
 - [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
 
 One user had folders rights issues on Windows 2008 R2
-<code>
+<PRE><CODE>
 2016-06-29 23:30:09,104 (30c) : CRITICAL (core:574) - Exception while loading code (most recent call last):
 File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Versions\2\Python\Framework\core.py", line 563, in load_code
 self.init_code = self.loader.load(self.init_path, elevated, use_xpython = Framework.constants.flags.use_xpython in self.sandbox.flags)
@@ -219,7 +219,7 @@ return niceParse(self.source, self.filename, self.mode)
 File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Platforms\Shared\Libraries\RestrictedPython\RCompile.py", line 38, in niceParse
 compile(source, filename, mode)
 TypeError: compile() expected string without null bytes
-</code>
+</CODE></PRE>
 
 He solved it by changing rights for:
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Plug-Ins
