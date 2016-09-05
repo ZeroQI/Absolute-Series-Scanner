@@ -200,7 +200,8 @@ Into:
 - [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
 
 One user had folders rights issues on Windows 2008 R2
-<code>2016-06-29 23:30:09,104 (30c) : CRITICAL (core:574) - Exception while loading code (most recent call last):
+<code>
+2016-06-29 23:30:09,104 (30c) : CRITICAL (core:574) - Exception while loading code (most recent call last):
 File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Versions\2\Python\Framework\core.py", line 563, in load_code
 self.init_code = self.loader.load(self.init_path, elevated, use_xpython = Framework.constants.flags.use_xpython in self.sandbox.flags)
 File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Versions\2\Python\Framework\code\loader.py", line 47, in load
