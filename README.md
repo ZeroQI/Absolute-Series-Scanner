@@ -139,8 +139,8 @@ When you have all episodes of a series in a single parent folder:
 - " [tvdb4-xxxxx]" for absolute numbering episodes displayed using series arc as season for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end' numbered 1-24 splitted into 2 seasons).
   The arc definition to split into seasons the absolute numbering is done using the following order:
     - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
-    - in a local "tvdb.mapping" file inside serie folder
-      FORMAT: <CODE>\<season_num\>|\<starting_ep_num\>|\<ending_ep_num\>|\<freeform_text_naming_the_season\>(optional)</CODE>
+    - in a local "tvdb4.mapping" file inside serie folder with the following format lines, one per arc/season:
+      <CODE>\<season_num\>|\<starting_ep_num\>|\<ending_ep_num\>|\<freeform_text_naming_the_season\>(optional)</CODE>
     - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
       Format:<PRE><CODE>&lt;tvdb4entries&gt;
 &lt;anime tvdbid="289906" name="Seraph of the End"&gt;
