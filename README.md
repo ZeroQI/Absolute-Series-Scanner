@@ -209,7 +209,7 @@ List of logs files:
 - Plex Media Scanner (custom ASS) - Library_Name - filelist Root_Folder_name.log contain all files in the root folder, so i can re-create your library with zero size files. I use a batch file to recreate a user's library after converting to utf-8 with notepad
 - Plex Media Scanner.log - Standard Plex Scanner Log, contain crash error in case of a bug in the scanner code
 
-List of configuration files, to put in logs folder, can be found the (blank) config files in GitHub > ASS > releases > logs.7z
+List of configuration files:
 - "X-Plex-Token.id: Allow to get the library name to get a log per library (optional). Fill with plex token by following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token. **_Do not share that file when uploading the whole Logs folders_**
 
 Troubleshooting:
