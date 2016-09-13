@@ -199,6 +199,52 @@ Put latest scanner file from:
 Into:
 - [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
 
+###Logs
+Absolute series Scanner uses a pre-made list of folders to try to locate Plex Logs folder. 
+If custom logs are not present, then either you created a library using default Plex scanner and not my "Absolute Series Scanner" or you have an unknown Logs folder location and will need to forward me the path to add in the source code...
+If the scanner crash, you will get either no files (library creation) or no change (library already created) and will need to attach the Plex log "Plex Media Scanner.log"
+
+List of logs files:
+- Plex Media Scanner (custom ASS) - Library_Name.log contain all folders and files processed in a readable fashion, perfect for troubleshooting scanner issues.
+- Plex Media Scanner (custom ASS) - Library_Name - filelist Root_Folder_name.log contain all files in the root folder, so i can re-create your library with zero size files. I use a batch file to recreate a user's library after converting to utf-8 with notepad
+- Plex Media Scanner.log - Standard Plex Scanner Log, contain crash error in case of a bug in the scanner code
+
+List of configuration files, to put in logs folder, can be found the (blank) config files in GitHub > ASS > releases > logs.7z
+- "X-Plex-Token.id: Allow to get the library name to get a log per library (optional). Fill with plex token by following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token. **_Do not share that file when uploading the whole Logs folders_**
+
+Troubleshooting:
+================
+- Update the scanner to the latest
+- If the scanner not listed in scanner list
+  - Make sure you did create a "Series" library, as a "Movie" library will not show a "Series" scanner like ASS
+  - Check file size and open the scanner file to check for corruption and that it does have html/xml tags. If it does, it was saved incorrectly and you should feel bad.
+- Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
+- if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
+- If Episodes are missing, wrong seasons or episode numbers, or serie(s) missing, please include all "(custom ASS)" logs
+- If library doesn't add new content then most likelly the scanner is crashing (after scanner update) and will revert any changes to the library so nothing changes...
+
+Include the following logs (in any case, specify if file not present):
+- [...]/Plex Media Server/Logs/Plex Media Scanner.log                       (scanner crash info)
+- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log          (episodes info)
+- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS) filelist.log (library file list)
+
+And post in:
+- Support thread for Scanner (you are unsure): https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
+- Github issue page (you have a bug):          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
+
+Known issues:
+
+On windows install https://www.microsoft.com/en-us/download/details.aspx?id=48145 if you experience this error:
+<PRE><CODE>
+Jul 23, 2016 12:55:54.558 [5288] ERROR - Error scanning directory .
+Jul 23, 2016 12:55:54.574 [5288] ERROR - No module in Absolute Series Scanner
+Jul 23, 2016 12:55:54.574 [5288] ERROR - Error in Python: Looking up module:
+Traceback (most recent call last):
+File "C:\Users\Administrator\AppData\Local\Plex Media Server\Scanners\Series\Absolute Series Scanner.py", line 8, in 
+from lxml import etree # fromstring
+ImportError: DLL load failed: The specified module could not be found.
+</CODE></PRE>
+
 One user had folders rights issues on Windows 2008 R2
 <PRE><CODE>
 2016-06-29 23:30:09,104 (30c) : CRITICAL (core:574) - Exception while loading code (most recent call last):
@@ -225,53 +271,7 @@ He solved it by changing rights for:
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Plug-Ins
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Scanners
 
-###Logs
-Absolute series Scanner uses a pre-made list of folders to try to locate Plex Logs folder. 
-If custom logs are not present, then either you created a library using default Plex scanner and not my "Absolute Series Scanner" or you have an unknown Logs folder location and will need to forward me the path to add in the source code...
-If the scanner crash, you will get either no files (library creation) or no change (library already created) and will need to attach the Plex log "Plex Media Scanner.log"
-
-List of logs files:
-- Plex Media Scanner (custom ASS) - Library_Name.log contain all folders and files processed in a readable fashion, perfect for troubleshooting scanner issues.
-- Plex Media Scanner (custom ASS) - Library_Name - filelist Root_Folder_name.log contain all files in the root folder, so i can re-create your library with zero size files. I use a batch file to recreate a user's library after converting to utf-8 with notepad
-- Plex Media Scanner.log - Standard Plex Scanner Log, contain crash error in case of a bug in the scanner code
-
-List of configuration files, to put in logs folder, can be found the (blank) config files in GitHub > ASS > releases > logs.7z
-- "X-Plex-Token.id: Allow to get the library name to get a log per library (optional). Fill with plex token by following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token. **_Do not share that file when uploading the whole Logs folders_**
-
-Troubleshooting:
-================
-If the scanner not listed in scanner list:
-- Make sure you did not create a movie library, as it will mot show a SERIES scanner....
-- check size and open file to check for corruption
-- If you have HTML tags at the beginning you saved the scanner file wrong and should feel bad
-
-On windows install https://www.microsoft.com/en-us/download/details.aspx?id=48145 if you experience this error:
-<PRE><CODE>
-Jul 23, 2016 12:55:54.558 [5288] ERROR - Error scanning directory .
-Jul 23, 2016 12:55:54.574 [5288] ERROR - No module in Absolute Series Scanner
-Jul 23, 2016 12:55:54.574 [5288] ERROR - Error in Python: Looking up module:
-Traceback (most recent call last):
-File "C:\Users\Administrator\AppData\Local\Plex Media Server\Scanners\Series\Absolute Series Scanner.py", line 8, in 
-from lxml import etree # fromstring
-ImportError: DLL load failed: The specified module could not be found.
-</CODE></PRE>
-
 On linux, permissions issues could prevent the scanner execution. Check hama readme for commands and posts the ones not documented if any.
-
-If you have these or similar symptoms (or others):
-- nothing is scanned
-- episodes are missing
-- Series are missing
-- library doesn't add new content (after scanner update) then most likelly the scanner is crashing and revert any changed to the library
-
-Include the following logs (in any case, specify if file not present):
-- [...]/Plex Media Server/Logs/Plex Media Scanner.log                       (scanner crash info)
-- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log          (episodes info)
-- [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS) filelist.log (library file list)
-
-And post in:
-- Support thread for Scanner (you are unsure): https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
-- Github issue page (you have a bug):          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
 
 ###Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
