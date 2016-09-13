@@ -339,37 +339,6 @@ Implied is original language, folder named dubbed otherwise
     - Multi-Systems (Mame, Mess)
     - Phone
 
-###Japanese Media Manager
-It uses anidb as source and uses hash info from file to determine what the show is (release included) and where it goes.
-So this means that shows like SOA/Fate stay night..etc are all in there own folder for each part of the series.
-Movies are also in there own folder since anidb treats every movie as its own show.
-http://jmediamanager.org/jmm-desktop/utilities/file-renaming/
-
-Renaming Script:
-<code><pre>
-IF I(eng) DO ADD '%eng'
-IF I(ann);I(!eng) DO ADD '%ann'
-DO REPLACE '[' ''
-DO REPLACE ']' ''
-IF T(!Movie);H(!S);T(!OVA) DO ADD ' - %enr - '
-IF H(S),T(OVA),T(Movie) DO ADD ' - %enr - '
-DO ADD '%epr '
-DO ADD '[%grp]'
-
-// Replace all illegal file name characters
-DO REPLACE '<' '('
-DO REPLACE '>' ')'
-DO REPLACE ':' ' -'
-DO REPLACE '"' '`'
-DO REPLACE '/' '-'
-DO REPLACE '\' '_'
-DO REPLACE '|' '_'
-DO REPLACE '?' ''
-DO REPLACE '*' '+'
-//DO REPLACE 'S0' '0'
-DO REPLACE '[%grp]' ''
-</pre></code>
-
 ###Batch file to create filelist.txt or re-create a library from the filelist with 0 size files
 <code><pre>
 @ECHO OFF
