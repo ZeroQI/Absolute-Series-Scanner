@@ -3,6 +3,10 @@
   <posters tvdbid="[tvdbid]" name="[Series Name]" note="Example Entry">
     [Season Num]|[URL]
   </posters>
+   <posters tvdbid="303730" name="Active Raid">
+    01|http://thetvdb.com/banners/seasons/303730-1.jpg
+    02|http://thetvdb.com/banners/seasons/303730-1-2.jpg
+  </posters>
   <posters tvdbid="79604" name="Black Lagoon">
     01|http://img7.anidb.net/pics/anime/131090.jpg
     02|http://img7.anidb.net/pics/anime/131092.jpg
