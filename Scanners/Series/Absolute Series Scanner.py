@@ -414,7 +414,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
 
   ### File main loop ###
   files.sort(key=natural_sort_key)
-  movie_list, AniDB_op, counter, misc = {}, {}, 500, filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())              # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+  movie_list, AniDB_op, counter, misc = {}, {}, 500, [] #, filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())              # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+  array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
+  for file in files:
+    for prefix in array:         # remove cleansed folder name from cleansed filename and remove potential space
+      if file.lower().startswith(prefix.lower()):  misc.append( file[len(prefix):].lstrip('- ') ); break
+    else:  misc.append( clean_string(os.path.basename(file), True))
+  
   for file in files:
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
@@ -429,9 +435,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       elif "-m" in clean_string(folder_show).split():                                                          ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '-m' in the folder name denoting a movie folder
       elif not re.search("\d+(\.\d+)?", clean_string(filename, True)):                                         ep, title,      = "01", folder_show                  ### Movies/Single Ep Shows ### If only one file in the folder & it has no numbers in it (as would otherwise force it to a 500+ special)
     elif folder_show:                                                                                                                                               # if not at root and containing folder exist and has name different from "_" (scrubed to "")
-      ### To fix below:["To Heart 2 (2007) [anidb-4806]" s2007e001 "To Heart 2 (2007) - 2 [Avalon&AQS].avi" "4" ") - 2"]
-      for prefix in (folder_show, clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True)):         # remove cleansed folder name from cleansed filename and remove potential space
-        if ep.lower().startswith(prefix.lower()):                                                              ep, folder_use = ep[len(prefix):].lstrip('- '), True; break
+      for prefix in array:         # remove cleansed folder name from cleansed filename and remove potential space
+        if ep.lower().startswith(prefix.lower()):
+          ep, folder_use = ep[len(prefix):].lstrip('- '), True; break
       if folder_season > 1:                                                                                                                                         # 
         for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                         #"%s %d " % (folder_show, folder_season), 
           if ep.lower().startswith(prefix.lower()):                                                            ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
