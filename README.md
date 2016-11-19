@@ -226,7 +226,7 @@ Troubleshooting:
 - Update the scanner to the latest
 - If the scanner not listed in scanner list
   - Make sure you did create a "Series" library, as a "Movie" library will not show a "Series" scanner like ASS
-  - Check file size and open the scanner file to check for corruption and that it does have html/xml tags. If it does, it was saved incorrectly and you should feel bad.
+  - Check scanner file size and open the scanner file to check if it does have html/xml tags. If it does, it was saved incorrectly and you should feel bad.
 - Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
 - if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
 - If Episodes are missing, wrong seasons or episode numbers, or serie(s) missing, please include all "(custom ASS)" logs
