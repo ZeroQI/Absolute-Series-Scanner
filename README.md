@@ -200,6 +200,14 @@ Put latest scanner file from:
 Into:
 - [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
 
+Linux install script example
+<PRE><CODE>
+mkdir -p '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners/Series'
+wget -O '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py' https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/Scanners/Series/Absolute%20Series%20Scanner.py
+chown -R plex:plex '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners'
+chmod 775 -R '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners'
+</CODE></PRE>
+
 ###Logs
 Absolute series Scanner uses a pre-made list of folders to try to locate Plex Logs folder. 
 If custom logs are not present, then either you created a library using default Plex scanner and not my "Absolute Series Scanner" or you have an unknown Logs folder location and will need to forward me the path to add in the source code...
@@ -235,7 +243,15 @@ And post in:
 
 Known issues:
 
-On windows install https://www.microsoft.com/en-us/download/details.aspx?id=48145 if you experience this error:
+<PRE><CODE>
+Nov 16, 2016 18:48:53.594 [0x7f48c2324800] DEBUG - Adding subdirectory for scanner: /home/plex/things/anime/Ah! My Goddess 2
+Nov 16, 2016 18:48:53.597 [0x7f48c2324800] ERROR - No module in VideoFiles
+Nov 16, 2016 18:48:53.597 [0x7f48c2324800] ERROR - Error scanning directory .
+Nov 16, 2016 18:48:53.597 [0x7f48c2324800] ERROR - No module in Absolute Series Scanner
+Nov 16, 2016 18:48:53.598 [0x7f48c2324800] ERROR - We got an error scanning in /home/plex/things/anime
+</CODE></PRE>
+You bloody downloaded the web page and not the actual py file:
+
 <PRE><CODE>
 Jul 23, 2016 12:55:54.558 [5288] ERROR - Error scanning directory .
 Jul 23, 2016 12:55:54.574 [5288] ERROR - No module in Absolute Series Scanner
@@ -245,8 +261,8 @@ File "C:\Users\Administrator\AppData\Local\Plex Media Server\Scanners\Series\Abs
 from lxml import etree # fromstring
 ImportError: DLL load failed: The specified module could not be found.
 </CODE></PRE>
+On windows install https://www.microsoft.com/en-us/download/details.aspx?id=48145
 
-One user had folders rights issues on Windows 2008 R2
 <PRE><CODE>
 2016-06-29 23:30:09,104 (30c) : CRITICAL (core:574) - Exception while loading code (most recent call last):
 File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Versions\2\Python\Framework\core.py", line 563, in load_code
@@ -267,12 +283,11 @@ File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\F
 compile(source, filename, mode)
 TypeError: compile() expected string without null bytes
 </CODE></PRE>
-
-He solved it by changing rights for:
+Rights issues on Windows 2008 R2, solved by changing rights for:
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Plug-Ins
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Scanners
 
-On linux, permissions issues could prevent the scanner execution. Check hama readme for commands and posts the ones not documented if any.
+On linux, permissions issues could prevent the scanner execution.
 
 ###Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
