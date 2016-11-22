@@ -260,7 +260,7 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidb_id):
       if tvdbid.isdigit():
         try: ### mapping list ###
           for season in anime.iter('mapping') if anime else []:
-            if anime.get("offset"):  mappingList[ 's'+season.get("tvdbseason")] = [anime.get("start"), anime.get("end"), anime.get("offset")]
+            if season.get("offset"):  mappingList[ 's'+season.get("tvdbseason")] = [season.get("start"), season.get("end"), season.get("offset")]
             for string2 in filter(None, season.text.split(';')):  mappingList [ 's' + season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1]
         except: Log.error("anidbTvdbMapping() - mappingList creation exception")
       elif tvdbid in ("", "unknown"):  Log.error("anidbid: %s | Title: '%s' | Has no matching tvdbid ('%s') in mapping file | " % (anidb_id, name, tvdbid))
