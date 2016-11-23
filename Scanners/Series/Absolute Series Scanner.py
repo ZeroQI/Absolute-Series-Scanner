@@ -260,8 +260,8 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
         if tvdbid.isdigit():
           try:
             for season in anime.iter('mapping'):
-              if season.get("offset"):                mappingList[ 's'+season.get("tvdbseason")                                ] = [season.get("start"), season.get("end"), season.get("offset")]
-              for string2 in season.text.split(';'):  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1]
+              if season.get("offset"):     mappingList[ 's'+season.get("tvdbseason")                                ] = [season.get("start"), season.get("end"), season.get("offset")]
+              if hasattr(season, 'test'):  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] for string2 in season.text.split(';')
           except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s', season: '%s'" % (str(mappingList), str(season) if 'season' in locals() else ""))
         elif tvdbid in ("", "unknown"):  Log.error("anidbid: %s | Title: '%s' | Has no matching tvdbid ('%s') in mapping file | " % (anidbid, name, tvdbid))
         Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s'" % (anidbid, tvdbid, defaulttvdbseason, name) )
