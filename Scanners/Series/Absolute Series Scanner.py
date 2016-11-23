@@ -251,26 +251,25 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
   Log.info("\"%s\" s%04de%03d%s%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, " (Orig: %s)" % ep_orig if ep_orig!=ep_final else "", os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))
 
 ### Get the tvdbId from the AnimeId #######################################################################################################################
-def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidb_id):
-  poster_id_array, mappingList = {}, {}
-  for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree else []:
-    anidbid, tvdbid, tmdbid, imdbid, defaulttvdbseason, mappingList['episodeoffset'] = anime.get("anidbid"), anime.get('tvdbid'), anime.get('tmdbid'), anime.get('imdbid'), anime.get('defaulttvdbseason'), anime.get('episodeoffset')
-    if tvdbid.isdigit():  poster_id_array [tvdbid] = poster_id_array [tvdbid] + 1 if tvdbid in poster_id_array else 0  # Count posters to have a unique poster per anidbid
-    if anidbid == anidb_id: #manage all formats latter
-      name = anime.xpath("name")[0].text 
-      if tvdbid.isdigit():
-        try: ### mapping list ###
-          for season in anime.iter('mapping') if anime else []:
-            if season.get("offset"):  mappingList[ 's'+season.get("tvdbseason")] = [season.get("start"), season.get("end"), season.get("offset")]
-            for string2 in filter(None, season.text.split(';')):  mappingList [ 's' + season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1]
-        except: Log.error("anidbTvdbMapping() - mappingList creation exception")
-      elif tvdbid in ("", "unknown"):  Log.error("anidbid: %s | Title: '%s' | Has no matching tvdbid ('%s') in mapping file | " % (anidb_id, name, tvdbid))
-      Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s'" % (anidbid, tvdbid, defaulttvdbseason, name) )
-      return tvdbid, defaulttvdbseason, mappingList
+def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
+  if AniDB_TVDB_mapping_tree:
+    mappingList = {} 
+    for anime in AniDB_TVDB_mapping_tree.iter('anime'):
+      if anime.get("anidbid") == anidbid:
+        tvdbid, defaulttvdbseason, mappingList['episodeoffset'], name = anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.get('episodeoffset'), anime.xpath("name")[0].text 
+        if tvdbid.isdigit():
+          try:
+            for season in anime.iter('mapping'):
+              if season.get("offset"):                mappingList[ 's'+season.get("tvdbseason")                                ] = [season.get("start"), season.get("end"), season.get("offset")]
+              for string2 in season.text.split(';'):  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1]
+          except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s', season: '%s'" % (str(mappingList), str(season) if 'season' in locals() else ""))
+        elif tvdbid in ("", "unknown"):  Log.error("anidbid: %s | Title: '%s' | Has no matching tvdbid ('%s') in mapping file | " % (anidbid, name, tvdbid))
+        Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s'" % (anidbid, tvdbid, defaulttvdbseason, name) )
+        return tvdbid, defaulttvdbseason, mappingList
   else:
-    Log.error("anidbTvdbMapping() - anidbid '%s' not found in file" % anidb_id)
+    Log.error("anidbTvdbMapping() - anidbid '%s' not found in file" % anidbid)
     return "", "", []
-
+   
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
   global LOG_FILE_LIBRARY;
