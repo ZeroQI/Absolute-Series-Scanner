@@ -223,7 +223,6 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
   ep_orig = "s%se%s" % (season, ep)
   if 's%se%s' % (season, int(ep)) in mappingList: season, ep, ep2 = mappingList['s%se%s' % (season, ep)][1:].split("e") + [None]; season, ep = int(season), int(ep)
   elif season > 0:                                season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
-  if 's%d' % season in mappingList and mappingList['s%d' % season][2].isdigit():  ep = ep + int (mappingList['s%s' % season][2])
   #Log.debug("Initial2: file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
   file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
   #if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):                  file = os.path.join(LOG_PATH,"dummy.mp4")   # with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
@@ -252,26 +251,19 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
 
 ### Get the tvdbId from the AnimeId #######################################################################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
-  if AniDB_TVDB_mapping_tree:
-    mappingList = {}
-    for anime in AniDB_TVDB_mapping_tree.iter('anime'):
-      if anidbid == anime.get("anidbid"):
-        tvdbid, defaulttvdbseason, mappingList['episodeoffset'], name =  anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.get('episodeoffset'), anime.xpath("name")[0].text
-        if tvdbid.isdigit():
-          try:
-            for season in anime.iter('mapping'):
-              if season.get("offset"):     mappingList[ 's'+season.get("tvdbseason")] = [season.get("start"), season.get("end"), season.get("offset")]
-              if hasattr(season, 'text'):  
-                for string2 in season.text.split(';'):
-                  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1]
-          except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s', season: '%s'" % (str(mappingList), str(season) if 'season' in locals() else ""))
-        elif tvdbid in ("", "unknown"):  Log.error("anidbid: %s | Title: '%s' | Has no matching tvdbid ('%s') in mapping file | " % (anidbid, name, tvdbid))
-        Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s'" % (anidbid, tvdbid, defaulttvdbseason, name) )
-        return tvdbid, defaulttvdbseason, mappingList
-    else:
-      Log.error("anidbTvdbMapping() - anidbid '%s' not found in file" % anidbid)
-      return "", "", []
-   
+  for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree else []:
+    if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
+      mappingList  = {}; mappingList['episodeoffset'] = anime.get('episodeoffset')
+      try:
+        for season in anime.iter('mapping'):
+          if season.get("offset"):  mappingList[ 's'+season.get("tvdbseason")] = [season.get("start"), season.get("end"), season.get("offset")]
+          for string2 in filter(None, season.text.split(';')) if season.text else []:  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] 
+      except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
+      else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.xpath("name")[0].text, str(mappingList)) )
+      return anime.get('tvdbid'), anime.get('defaulttvdbseason'), mappingList
+  Log.error("anidbTvdbMapping() - No valid tvbdbid: '%s' found for anidbid '%s'" % (anime.get('tvdbid'), anidbid))
+  return "", "", {}
+
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
   global LOG_FILE_LIBRARY;
@@ -412,7 +404,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason.isdigit()         else 0
         offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
         folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
-        Log.debug("mappingList: %s" % mappingList)    
 
   ### File main loop ###
   files.sort(key=natural_sort_key)
@@ -504,4 +495,5 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     counter = counter+1                                          #                    #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
   Log.info("".ljust(157, '-'))
+  Log.info("")
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
