@@ -253,22 +253,24 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
 ### Get the tvdbId from the AnimeId #######################################################################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   if AniDB_TVDB_mapping_tree:
-    mappingList = {} 
+    mappingList = {}
     for anime in AniDB_TVDB_mapping_tree.iter('anime'):
-      if anime.get("anidbid") == anidbid:
-        tvdbid, defaulttvdbseason, mappingList['episodeoffset'], name = anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.get('episodeoffset'), anime.xpath("name")[0].text 
+      if anidbid == anime.get("anidbid"):
+        tvdbid, defaulttvdbseason, mappingList['episodeoffset'], name =  anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.get('episodeoffset'), anime.xpath("name")[0].text
         if tvdbid.isdigit():
           try:
             for season in anime.iter('mapping'):
-              if season.get("offset"):     mappingList[ 's'+season.get("tvdbseason")                                ] = [season.get("start"), season.get("end"), season.get("offset")]
-              if hasattr(season, 'test'):  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] for string2 in season.text.split(';')
+              if season.get("offset"):     mappingList[ 's'+season.get("tvdbseason")] = [season.get("start"), season.get("end"), season.get("offset")]
+              if hasattr(season, 'text'):  
+                for string2 in season.text.split(';'):
+                  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1]
           except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s', season: '%s'" % (str(mappingList), str(season) if 'season' in locals() else ""))
         elif tvdbid in ("", "unknown"):  Log.error("anidbid: %s | Title: '%s' | Has no matching tvdbid ('%s') in mapping file | " % (anidbid, name, tvdbid))
         Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s'" % (anidbid, tvdbid, defaulttvdbseason, name) )
         return tvdbid, defaulttvdbseason, mappingList
-  else:
-    Log.error("anidbTvdbMapping() - anidbid '%s' not found in file" % anidbid)
-    return "", "", []
+    else:
+      Log.error("anidbTvdbMapping() - anidbid '%s' not found in file" % anidbid)
+      return "", "", []
    
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
