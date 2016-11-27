@@ -223,6 +223,7 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
   ep_orig = "s%se%s" % (season, ep)
   if 's%se%s' % (season, int(ep)) in mappingList: season, ep, ep2 = mappingList['s%se%s' % (season, ep)][1:].split("e") + [None]; season, ep = int(season), int(ep)
   elif season > 0:                                season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
+  if 's%d' % season in mappingList and mappingList['s%d' % season][2].isdigit():  ep = ep + int (mappingList['s%s' % season][2])
   #Log.debug("Initial2: file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
   file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
   #if os.path.isfile(os.path.join(LOG_PATH,"dummy.mp4")):                  file = os.path.join(LOG_PATH,"dummy.mp4")   # with dummy.mp4(not empy file) in Logs folder to get rid of Plex Media Scanner.log exceptions, it will remove most eps with size 0 which oculd remove series
@@ -404,7 +405,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason.isdigit()         else 0
         offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
         folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
-
   ### File main loop ###
   files.sort(key=natural_sort_key)
   movie_list, AniDB_op, counter, misc = {}, {}, 500, [] #, filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())              # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
@@ -494,6 +494,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]))  #for word in ep.split(" "): # if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
     counter = counter+1                                          #                    #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
-  Log.info("".ljust(157, '-'))
+  #Log.info("".ljust(157, '-'))
   Log.info("")
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
