@@ -195,10 +195,14 @@ Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
 
 Install
 =======
-Put latest scanner file from:
 - https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/Scanners/Series/Absolute%20Series%20Scanner.py
 Into:
 - [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
+Note:
+- "Scanners" and "Series" folder are not created by default and will need creating.
+- "Scanners" folder will be besides "Plug-in Support" folder in the same parent directory.
+
+Put latest scanner file from:
 
 Linux install script example
 <PRE><CODE>
