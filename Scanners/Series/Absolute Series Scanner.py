@@ -219,15 +219,15 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
-  #Log.debug("Initial: file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
+  #Log.debug("Initial: file='%s', root='%s', path='%s', show='%s', season='%d', ep='%d', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
   ep_orig = "s%de%d" % (season, ep)
   if ep_orig in mappingList:                                                      season, ep, ep2 = mappingList[ep_orig][1:].split("e") + [None]; season, ep = int(season), int(ep)
   elif season > 0:                                                                season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   if 's%d' % season in mappingList and mappingList['s%d' % season][2].isdigit():  ep = ep + int (mappingList['s%d' % season][2])
   file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
-  if title==title.lower() or title==title.upper() and title.count(" ")>0:  title                 = title.title()       # capitalise if all caps or all lowercase and one space at least
-  if ep==0:                                                                season, ep, ep2       = 0, 1, 1             # s01e00 and S00e00 => s00e01
-  if not ep2 or ep > ep2:                                                  ep2                   = ep                  #  make ep2 same as ep for loop and tests
+  if title==title.lower() or title==title.upper() and title.count(" ")>0:         title           = title.title()       # capitalise if all caps or all lowercase and one space at least
+  if ep==0:                                                                       season, ep, ep2 = 0, 1, 1             # s01e00 and S00e00 => s00e01
+  if not ep2 or ep > ep2:                                                         ep2             = ep                  #  make ep2 same as ep for loop and tests
   if tvdb_mapping and season > 0 :
     max_ep_num, season_buffer = max(tvdb_mapping.keys()), 0 if unknown_series_length else 1
     if   ep  in tvdb_mapping:               season, ep  = tvdb_mapping[ep ]
@@ -235,7 +235,7 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
     if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
     elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
   #Log.debug("Initial3: file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
-  ep_final = "s%se%s" % (season, ep)
+  ep_final = "s%de%d" % (season, ep)
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
@@ -405,12 +405,12 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
   ### File main loop ###
   files.sort(key=natural_sort_key)
-  movie_list, AniDB_op, counter, misc = {}, {}, 500, [] #, filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())              # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+  movie_list, AniDB_op, counter, misc = {}, {}, 500, "" #, filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())              # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
   array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
   for file in files:
     for prefix in array:         # remove cleansed folder name from cleansed filename and remove potential space
-      if file.lower().startswith(prefix.lower()):  misc.append( file[len(prefix):].lstrip('- ') ); break
-    else:  misc.append( clean_string(os.path.basename(file), True))
+      if file.lower().startswith(prefix.lower()):  misc+=file[len(prefix):].lstrip('- '); break
+    else:   misc+= clean_string(os.path.basename(file), True)+" "
   
   for file in files:
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
@@ -448,6 +448,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       if ep in ("", "-"):                                                                                      continue                                             #
       if ''.join(letter for letter in ep if letter.isdigit())=="":                                             continue                                             # Continue if there are no numbers in the string
       if path and misc.count(ep)>=2:                                                                           continue                                             # Continue if not root folder and string found in in any other filename
+      Log.debug("ep: "+ep +" misc.count(ep): "+str(misc.count(ep))+" misc: "+str(misc))
       if ep in clean_string(folder_show, True).split() and clean_string(filename, True).split().count(ep)!=2:  continue                                             # Continue if string is in the folder name & string is not in the filename only twice
       if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:2])==folder_season):   season, ep = int(ep[0:2]), ep[2:4]                   # 1206 could be season 12 episode 06  #Get assigned from left ot right
       elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));   continue                                             # take everything after supposed episode number
