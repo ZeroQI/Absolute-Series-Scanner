@@ -403,13 +403,14 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason.isdigit()         else 0
         offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
         folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
+
   ### File main loop ###
   files.sort(key=natural_sort_key)
-  movie_list, AniDB_op, counter, misc = {}, {}, 500, "" #, filter(None, " ".join( [clean_string(os.path.basename(x), True) for x in files]).lower().split())              # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+  movie_list, AniDB_op, counter, misc = {}, {}, 500, "" # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
   array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
   for file in files:
     for prefix in array:         # remove cleansed folder name from cleansed filename and remove potential space
-      if ep.lower().startswith(prefix.lower()):  ep, folder_use = ep[len(prefix):].lstrip('- '), True; break #if file.lower().startswith(prefix.lower()):  misc+=file[len(prefix):].lstrip('- '); break
+      if prefix.lower() in file.lower():  misc+= file.lower().replace(prefix.lower(), " ").lstrip('- ')+" "; break
     else:   misc+= clean_string(os.path.basename(file), True)+" "
   
   for file in files:
@@ -427,7 +428,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       elif not re.search("\d+(\.\d+)?", clean_string(filename, True)):                                         ep, title,      = "01", folder_show                  ### Movies/Single Ep Shows ### If only one file in the folder & it has no numbers in it (as would otherwise force it to a 500+ special)
     elif folder_show:                                                                                                                                               # if not at root and containing folder exist and has name different from "_" (scrubed to "")
       for prefix in array:         # remove cleansed folder name from cleansed filename and remove potential space
-        if prefix.lower() in file.lower():  ep, folder_use = ep.lower().replace(prefix.lower()).lstrip('- '), True; break #if ep.lower().startswith(prefix.lower()):  ep, folder_use = ep[len(prefix):].lstrip('- '), True; break
+        if prefix.lower() in file.lower():  ep, folder_use = ep.lower().replace(prefix.lower(), " ").lstrip('- '), True; break #if ep.lower().startswith(prefix.lower()):  ep, folder_use = ep[len(prefix):].lstrip('- '), True; break
       if folder_season > 1:                                                                                                                                         # 
         for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                         #"%s %d " % (folder_show, folder_season), 
           if ep.lower().startswith(prefix.lower()):                                                            ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
