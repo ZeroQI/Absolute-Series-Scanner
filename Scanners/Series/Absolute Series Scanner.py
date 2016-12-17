@@ -15,14 +15,15 @@ try:                 from urllib.request import urlopen # urlopen Python 3.0 and
 except ImportError:  from urllib2        import urlopen # urlopen Python 2.x #import urllib2 # urlopen
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
-TVDB_HTTP_API_URL   = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
-ASS_MAPPING_URL     = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
-ANIDB_TVDB_MAPPING  = 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
-SOURCE_IDS          = ".*? ?\[(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
-SOURCE_ID_FILES     = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tmdb.id", "tsdb.id", "imdb.id"]
-TVDB_MODE_IDS       = ".*? ?\[tvdb(?P<mode>(2|3|4))-(tt)?(?P<guid>[0-9]{1,7})-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
-TVDB_MODE_ID_OFFSET = ".*? ?\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"
-ANIDB2_MODE         = ".*? ?\[anidb2-(?P<guid>[0-9]{1,7})\]"
+TVDB_HTTP_API_URL         = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
+ASS_MAPPING_URL           = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
+ANIDB_TVDB_MAPPING        = 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
+ANIDB_TVDB_MAPPING_CUSTOM = 'anime-list-custom.xml'                                                                            # custom local correction for ScudLee mapping file url
+SOURCE_IDS                = ".*? ?\[(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
+SOURCE_ID_FILES           = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tmdb.id", "tsdb.id", "imdb.id"]
+TVDB_MODE_IDS             = ".*? ?\[tvdb(?P<mode>(2|3|4))-(tt)?(?P<guid>[0-9]{1,7})-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
+TVDB_MODE_ID_OFFSET       = ".*? ?\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"
+ANIDB2_MODE               = ".*? ?\[anidb2-(?P<guid>[0-9]{1,7})\]"
 SEASON_RX = [                                                                                                                                                           ### Seasons Folders 
  'Specials',                                                                                                                                                            # Specials (season 0)
  '(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                  # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
@@ -268,7 +269,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   global LOG_FILE_LIBRARY;
   LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  ### Rename log file with library name if XML file can be accessed or token file present in log folder. LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
   if LOG_FILE_LIBRARY != LOG_FILE:  set_logging("Root", LOG_FILE_LIBRARY)
-  FILELIST         = LOG_FILE_LIBRARY[:-4] + " - filelist " + os.path.basename(root) + LOG_FILE_LIBRARY[-4:]           # custom log file per library root folder
+  FILELIST = LOG_FILE_LIBRARY[:-4] + " - filelist " + LOG_FILE_LIBRARY[-4:]           # custom log file per library root folder
   if not path:
     set_logging("FileList", FILELIST); LogFileList("".ljust(157, '=')); LogFileList("==== Starting File Scan (root:%s) ====" % root); LogFileList("".ljust(157, '='))
     Log.info(("=== Library \"%s\", Root: \"%s\",  Launched: '%s'" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "X-Plex-Token.id missing", root, time.strftime("%Y-%m-%d %H:%M:%S"))).ljust(157, '='))
@@ -396,7 +397,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     except Exception as e:  Log.error("Error downloading ScudLee's file from GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e)) 
     else:
       try:
-        with open(scudlee_filename, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
+        if os.path.exists( scudlee_filename ):
+          with open(scudlee_filename,        'r') as scudlee_file:  scudlee_mapping_content        = etree.fromstring( scudlee_file.read() )
+        scudlee_filename_custom = os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM)
+        if os.path.exists( scudlee_filename_custom ):
+          with open(scudlee_filename_custom, 'r') as scudlee_file:  scudlee_mapping_content_custom = etree.fromstring( scudlee_file.read() )
+          scudlee_mapping_content = scudlee_mapping_content_custom[:scudlee_mapping_content_custom.rfind("</anime-list>")-1] + scudlee_mapping_content[scudlee_mapping_content.find("<anime-list>")+len("<anime-list>")+1:] #cut both fiels together removing ending and starting tags to do so
+          Log.Info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
       except Exception as e:  Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
       else:
         a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
@@ -458,9 +465,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)    # root folder and 
       title = clean_string( " ".join(words[words.index(word):])[" ".join(words[words.index(word):]).lower().index(ep)+len(ep):] )                                   # take everything after supposed episode number
       break
-    else: 
-      loop_completed = True
-    #Log.debug("Words: " + str(words) + " : Loop broken on: '%s'" % ep)
+    else:  loop_completed = True
     if not loop_completed and ep.isdigit():  
       add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  continue
 
@@ -477,22 +482,22 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         if match.groupdict().has_key('ep'    ) and match.group('ep'    ):               ep     = match.group('ep')
         elif rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                 ep     = "01"
         else:                                                                                                                         #No ep number, anidb usefull ?????
-          movie_list[season] = movie_list[season]+1 if season in movie_list else 1                                                    # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
+          movie_list[season] = movie_list[season]+1 if season in movie_list else 1                         # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
           ep                 = str(movie_list[season])
-        if rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                                                                 ### AniDB Specials ################################################################
-          offset, season = ANIDB_OFFSET [ ANIDB_RX.index(rx) ], 0                                                                      # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
-          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                    ### OP/ED with letter version Example: op2a
-            AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                    # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
-            ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
-          ep = str( offset + int(ep))                                                                                                 # Add episode number to the offset, 01 by default from the match group above
+        if rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                                      ### AniDB Specials ################################################################
+          offset, season = ANIDB_OFFSET [ ANIDB_RX.index(rx) ], 0                                          # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
+          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                         ### OP/ED with letter version Example: op2a
+            AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                         # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+            ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )  # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+          ep = str( offset + int(ep))                                                                      # Add episode number to the offset, 01 by default from the match group above
         add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
         break
     if match: continue  # next file iteration
     
     ### Ep not found, adding as season 0 episode 501+ ###
-    if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]))  #for word in ep.split(" "): # if word in folder_show:  ep = replace_insensitive (ep, word, sep=" ")         # title.replace(word, "", 1)
+    if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]))
     counter = counter+1                                          #                    #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
-  #Log.info("".ljust(157, '-'))
+
   Log.info("")
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
