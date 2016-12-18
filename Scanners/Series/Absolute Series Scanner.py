@@ -235,7 +235,6 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
     elif ep  > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
     if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
     elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
-  #Log.debug("Initial3: file='%s', root='%s', path='%s', show='%s', season='%s', ep='%s', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
   ep_final = "s%de%d" % (season, ep)
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
@@ -302,11 +301,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   for last_folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
     for rx in SEASON_RX :                               # in anime, more specials folders than season folders, so doing it first
       match = re.match(rx, last_folder, re.IGNORECASE)  #
-      if match:
-        if rx!=SEASON_RX[-1]:  folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #get season number but Skip last entry in seasons (skipped folders)
+      if match:                                         # get season number but Skip last entry in seasons (skipped folders)
+        if rx!=SEASON_RX[-1]:  folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 
         reverse_path.remove(last_folder);  break        # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
     if match and rx!=SEASON_RX[-1]:  break              # cascade break if not skipped folder since season number found
-    Log.info("len rev path: '%s', path count /: '%s'" % (len(reverse_path), path.count("/")))
     if len(reverse_path)>1 and path.count("/"):         #if grouping folders, skip and add them as additionnal folders
       Log.warning("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path)
       Log.info("".ljust(157, '-'))
@@ -317,116 +315,111 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   guid = ""
   if not re.search(SOURCE_IDS, folder_show, re.IGNORECASE):
     for file in SOURCE_ID_FILES:
-      if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), file)):
-        with open(os.path.join(root, "/".join(reversed(reverse_path)), file), 'r') as guid_file:
+      if os.path.isfile(os.path.join(root, path, file)):
+        with open(os.path.join(root, path, file), 'r') as guid_file:
           guid         = guid_file.read().strip()
           folder_show  = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file))[0], guid)
         break
     else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
   
-  ### Capture if absolute numbering should be applied for all episode numbers  ###
+  ### Forced id mode - Capture if absolute numbering should be applied for all episode numbers  ###
   tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
+  mappingList, offset_season, offset_episode, offset_match = {}, 0, 0, re.search(TVDB_MODE_ID_OFFSET, folder_show, re.IGNORECASE)
   if tvdb_mode_search:
     tvdb_mode, tvdb_guid = tvdb_mode_search.group('mode').lower(), tvdb_mode_search.group('guid').lower();
     Log.info("folder_show: '%s', folder_season: '%s', tvdb mode: '%s', tvdb id: '%s'" % (folder_show, folder_season, tvdb_mode, tvdb_guid)) # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
-  if tvdb_mode in ["2", "3"]: 
-    try:
+    if tvdb_mode in ["2", "3"]: 
       tvdb_guid_url, ep_count, abs_manual_placement_info, number_set = TVDB_HTTP_API_URL % tvdb_guid, 0, [], False
       Log.info("TVDB season mode (%s) enabled, serie url: '%s'" % (tvdb_mode, tvdb_guid_url))
-      tvdbanime = etree.fromstring( urlopen(tvdb_guid_url).read() )
-      for episode in tvdbanime.xpath('Episode'):
-        if episode.xpath('SeasonNumber')[0].text != '0':
-          ep_count = ep_count + 1
-          if not episode.xpath('absolute_number')[0].text:
-            episode.xpath('absolute_number')[0].text, number_set = str(ep_count), True
-            abs_manual_placement_info.append("s%se%s = abs %s" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text, episode.xpath('absolute_number')[0].text))
-          elif not number_set:  ep_count = int(episode.xpath('absolute_number')[0].text)
-          else:  Log.error("abs number found on ep (s%se%s) after starting to manually place our own abs numbers. all episodes will be added as season 1." % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text) );  break
-      else:
-        Log.debug("abs_manual_placement_worked, abs_manual_placement_info: '%s'" % (str(abs_manual_placement_info)))
+      try:
+        tvdbanime = etree.fromstring( urlopen(tvdb_guid_url).read() )
         for episode in tvdbanime.xpath('Episode'):
-          SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
-          EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
-          absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
-          if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
-    except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
-  elif tvdb_mode=="4" and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
-    file_array, tvdb4_mapping_content = [], ""
-    for mapping_file in ["tvdb4.mapping"]: ###local tvdb4.mapping file loading###
-      if os.path.isfile(os.path.join(root, "/".join(reversed(reverse_path)), mapping_file)):  tvdb4_mapping_content = open(os.path.join(root, "/".join(reversed(reverse_path)), mapping_file)).read().strip()
-    if not tvdb4_mapping_content: ###load remote tvdb4 mapping file since no season folders, no local files###
-      try:
-        Log.info("TVDB season mode (%s) enabled, serie url: '%s'" % (tvdb_mode, ASS_MAPPING_URL))
-        tvdb4_anime           = etree.fromstring( urlopen(ASS_MAPPING_URL).read() )
-        tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % tvdb_guid)[0].text.strip()
-      except Exception as e:
-        if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
-        else:                                    Log.error("Error opening remote tvdb4.mapping, Exception: '%s''" % e)
-    if tvdb4_mapping_content:
-      for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):  file_array.append(line.strip().split("|"))
-    if file_array:
-      try:
-        for season in file_array:
-          for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
-        if "(unknown length)" in season[3].lower(): unknown_series_length = True
-      except Exception as e: tvdb_mapping = {}; Log.error("mapping parsing issue, Exception: '%s''" % e)
-  if tvdb_mapping: Log.info("unknown_series_length: %s, tvdb_mapping: %s" % (unknown_series_length, str(tvdb_mapping)))
+          if episode.xpath('SeasonNumber')[0].text != '0':
+            ep_count = ep_count + 1
+            if not episode.xpath('absolute_number')[0].text:
+              episode.xpath('absolute_number')[0].text, number_set = str(ep_count), True
+              abs_manual_placement_info.append("s%se%s = abs %s" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text, episode.xpath('absolute_number')[0].text))
+            elif not number_set:  ep_count = int(episode.xpath('absolute_number')[0].text)
+            else:  Log.error("abs number found on ep (s%se%s) after starting to manually place our own abs numbers. all episodes will be added as season 1." % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text) );  break
+        else:
+          Log.debug("abs_manual_placement_worked, abs_manual_placement_info: '%s'" % (str(abs_manual_placement_info)))
+          for episode in tvdbanime.xpath('Episode'):
+            SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
+            EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
+            absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
+            if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
+      except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
+    elif tvdb_mode=="4" and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
+      if os.path.isfile(os.path.join(root, path, "tvdb4.mapping")):  tvdb4_mapping_content = open(os.path.join(root, path, "tvdb4.mapping")).read().strip()
+      else: ###load remote tvdb4 mapping file since no season folders, no local files###
+        Log.info("TVDB season mode (%s) enabled, tvdb4 mapping url: '%s'" % (tvdb_mode, ASS_MAPPING_URL))
+        try:
+          tvdb4_anime           = etree.fromstring( urlopen(ASS_MAPPING_URL).read() )
+          tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % tvdb_guid)[0].text.strip()
+          for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
+            season = line.strip().split("|")
+            for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
+            if "(unknown length)" in season[3].lower(): unknown_series_length = True
+        except Exception as e:
+          tvdb_mapping, tvdb4_mapping_content = {}, "" 
+          if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
+          else:                                    Log.error("Error opening remote tvdb4.mapping, Exception: '%s'" % e)
+    if tvdb_mapping: Log.info("unknown_series_length: %s, tvdb_mapping: %s" % (unknown_series_length, str(tvdb_mapping)))
 
-  offset_season, offset_episode, offset_match = 0, 0, re.search(TVDB_MODE_ID_OFFSET, folder_show, re.IGNORECASE)
-  if offset_match:
-    match_source, match_season, match_episode = offset_match.group('source'), "", ""
-    if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
-    if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-1
-    if tvdb_mapping and match_season!='s0': 
-      season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if match_source in ['tvdb3','tvdb4'] else 1
-      offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
-    folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
-    if offset_season != 0 or offset_episode != 0:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
+    ### Calculate offset for season or episode ###
+    if offset_match:
+      match_source, match_season, match_episode = offset_match.group('source'), "", ""
+      if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
+      if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-1
+      if tvdb_mapping and match_season!='s0': 
+        season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if match_source in ['tvdb3','tvdb4'] else 1
+        offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
+      folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
+      if offset_season+offset_episode:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
 
-  anidb2_match, mappingList = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE), {}
-  if anidb2_match:
-    anidb_id         = anidb2_match.group('guid').lower()
-    tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-    scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
-    try:
-      if not os.path.exists(scudlee_filename) or int(time.time() - os.path.getmtime(scudlee_filename)) > 86400:
-        Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
-        with open(tmp_filename, 'w') as scudlee_file:  scudlee_file.write( urlopen( ANIDB_TVDB_MAPPING ).read() )
-        os.rename(tmp_filename, scudlee_filename)
-      else:  Log.info("Use existing: '%s'" % scudlee_filename); del tmp_file
-    except Exception as e:  Log.error("Error downloading ScudLee's file from GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e)) 
-    else:
+    ### anidb2 mode (requires ScudLee's mapping xml file) ###
+    anidb2_match = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
+    if anidb2_match:
+      anidb_id         = anidb2_match.group('guid').lower()
+      tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
+      scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
       try:
-        if os.path.exists( scudlee_filename ):
-          with open(scudlee_filename,        'r') as scudlee_file:  scudlee_mapping_content        = etree.fromstring( scudlee_file.read() )
-        scudlee_filename_custom = os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM)
-        if os.path.exists( scudlee_filename_custom ):
-          with open(scudlee_filename_custom, 'r') as scudlee_file:  scudlee_mapping_content_custom = etree.fromstring( scudlee_file.read() )
-          scudlee_mapping_content = scudlee_mapping_content_custom[:scudlee_mapping_content_custom.rfind("</anime-list>")-1] + scudlee_mapping_content[scudlee_mapping_content.find("<anime-list>")+len("<anime-list>")+1:] #cut both fiels together removing ending and starting tags to do so
-          Log.Info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
-      except Exception as e:  Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
+        if not os.path.exists(scudlee_filename) or int(time.time() - os.path.getmtime(scudlee_filename)) > 86400:
+          Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
+          with open(tmp_filename, 'w') as scudlee_file:  scudlee_file.write( urlopen( ANIDB_TVDB_MAPPING ).read() )
+          os.rename(tmp_filename, scudlee_filename)
+        else:  Log.info("Use existing: '%s'" % scudlee_filename); del tmp_file
+      except Exception as e:  Log.error("Error downloading ScudLee's file from GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e)) 
       else:
-        a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
-        offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason.isdigit()         else 0
-        offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
-        folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
+        try:
+          if os.path.exists( scudlee_filename ):
+            with open(scudlee_filename, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
+          scudlee_filename_custom = os.path.join(root, path, ANIDB_TVDB_MAPPING_CUSTOM)
+          if os.path.exists( scudlee_filename_custom ):
+            with open(scudlee_filename_custom, 'r') as scudlee_file:  scudlee_mapping_content_custom = etree.fromstring( scudlee_file.read() )
+            scudlee_mapping_content = scudlee_mapping_content_custom[:scudlee_mapping_content_custom.rfind("</anime-list>")-1] + scudlee_mapping_content[scudlee_mapping_content.find("<anime-list>")+len("<anime-list>")+1:] #cut both fiels together removing ending and starting tags to do so
+            Log.Info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
+        except Exception as e:  Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
+        else:
+          a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
+          offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason.isdigit()         else 0
+          offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
+          folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
 
   ### File main loop ###
   files.sort(key=natural_sort_key)
   movie_list, AniDB_op, counter, misc = {}, {}, 500, "" # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
   array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
-  for file in files:
-    for prefix in array:         # remove cleansed folder name from cleansed filename and remove potential space
+  for file in files:     # build misc variable, to avoid numbers in titles if present in multiple filenames
+    for prefix in array: # remove cleansed folder name from cleansed filename and remove potential space
       if prefix.lower() in file.lower():  misc+= file.lower().replace(prefix.lower(), " ").lstrip('- ')+" "; break
     else:   misc+= clean_string(os.path.basename(file), True)+" "
-  
+    
   for file in files:
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
-    
     filename                                       = os.path.splitext(os.path.basename(file))[0] if not disc else ep
     show, season, ep, ep2, title, folder_use, year = folder_show, folder_season if folder_season else 1, clean_string(filename, False), None, "", False, ""
-    #Log.debug("Initial: show '%s', season '%s', ep '%s', filename '%s'" % (show, season, ep, filename))
     if not path and " - Complete Movie" in ep:                                                                 ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
     elif clean_string(filename, True, no_dash=True)==clean_string(folder_show, True, no_dash=True):            ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
     elif len(files)==1:
@@ -435,12 +428,12 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       elif not re.search("\d+(\.\d+)?", clean_string(filename, True)):                                         ep, title,      = "01", folder_show                  ### Movies/Single Ep Shows ### If only one file in the folder & it has no numbers in it (as would otherwise force it to a 500+ special)
     elif folder_show:                                                                                                                                               # if not at root and containing folder exist and has name different from "_" (scrubed to "")
       for prefix in array:         # remove cleansed folder name from cleansed filename and remove potential space
-        if prefix.lower() in file.lower():  ep, folder_use = ep.lower().replace(prefix.lower(), " ").lstrip('- '), True; break #if ep.lower().startswith(prefix.lower()):  ep, folder_use = ep[len(prefix):].lstrip('- '), True; break
+        if prefix.lower() in file.lower():  ep, folder_use = ep.lower().replace(prefix.lower(), " ").lstrip('- '), True; break
       if folder_season > 1:                                                                                                                                         # 
         for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                         #"%s %d " % (folder_show, folder_season), 
           if ep.lower().startswith(prefix.lower()):                                                            ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
       if ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():           season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
-    #Log.debug("Second Initial: show '%s', season '%s', ep '%s'" % (show, season, ep))
+
     words, loop_completed = filter(None, ep.split()), False                                                                                                         #
     for word in words:                                                                                                                                              #
       ep=word.lower().strip()                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
@@ -455,7 +448,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       if ep in ("", "-"):                                                                                      continue                                             #
       if ''.join(letter for letter in ep if letter.isdigit())=="":                                             continue                                             # Continue if there are no numbers in the string
       if path and misc.count(ep)>=2:                                                                           continue                                             # Continue if not root folder and string found in in any other filename
-      Log.debug("ep: "+ep +" misc.count(ep): "+str(misc.count(ep))+" misc: "+str(misc))
+      #Log.debug("ep: "+ep +" misc.count(ep): "+str(misc.count(ep))+" misc: "+str(misc))
       if ep in clean_string(folder_show, True).split() and clean_string(filename, True).split().count(ep)!=2:  continue                                             # Continue if string is in the folder name & string is not in the filename only twice
       if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:2])==folder_season):   season, ep = int(ep[0:2]), ep[2:4]                   # 1206 could be season 12 episode 06  #Get assigned from left ot right
       elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));   continue                                             # take everything after supposed episode number
@@ -474,22 +467,22 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     for rx in SERIES_RX + ANIDB_RX:
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
-        #Log.debug("rx match = %s" % match.groupdict())
         if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show' ))  # Mainly if file at root or _ folder
         if match.groupdict().has_key('title' ) and match.group('title' ):               title  = clean_string( match.group('title'))
         if match.groupdict().has_key('season') and match.group('season'):               season = int(match.group('season'))
         if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):               ep2    = match.group('ep2') 
         if match.groupdict().has_key('ep'    ) and match.group('ep'    ):               ep     = match.group('ep')
         elif rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                 ep     = "01"
-        else:                                                                                                                         #No ep number, anidb usefull ?????
-          movie_list[season] = movie_list[season]+1 if season in movie_list else 1                         # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
+        else:                                                                                                                                                   #No ep number, anidb usefull ?????
+          movie_list[season] = movie_list[season]+1 if season in movie_list else 1                                                                              # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
           ep                 = str(movie_list[season])
-        if rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                                      ### AniDB Specials ################################################################
-          offset, season = ANIDB_OFFSET [ ANIDB_RX.index(rx) ], 0                                          # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
-          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                         ### OP/ED with letter version Example: op2a
-            AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                         # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
-            ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )  # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
-          ep = str( offset + int(ep))                                                                      # Add episode number to the offset, 01 by default from the match group above
+        if rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                                                                                           ### AniDB Specials ################################################################
+          offset, season = ANIDB_OFFSET [ ANIDB_RX.index(rx) ], 0                                                                                               # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
+          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                                              ### OP/ED with letter version Example: op2a
+            AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                                              # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+            ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                                                       # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+          if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
+          if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
         add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
         break
     if match: continue  # next file iteration
