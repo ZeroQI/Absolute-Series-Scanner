@@ -33,10 +33,11 @@ SERIES_RX = [                                                                   
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})((|[_\-][0-9]{1,2})[Xx](?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                       #  0 # 1x01
   '(^|(?P<show>.*?)[ _\.\-]+)s(?P<season>[0-9]{1,2})(e| e|ep| ep|-)(?P<ep>[0-9]{1,3})(([ _\.\-]|(e|ep)|[ _\.\-](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*?)$)',#  1 # s01e01-02 | ep01-ep02 | e01-02
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
-  '^(?P<show>.*?) - (?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?( - )?(?P<title>.*)$',                                                                                                            #  3 # Serie - xx - title.ext
-  '^(?P<show>.*?) \[(?P<season>[0-9]{1,2})\] \[(?P<ep>[0-9]{1,3})\] (?P<title>.*)$',                                                                                    #  4 # Serie [Sxx] [Exxx] title.ext                     
-  '\(?(?P<season>(19|20)[0-9]{2})[)]?[ _\.\-]+(?P<title>.*?)$',                                                                                                         #  5 # (1932) title.ext
-  '(?P<title>.*?) [(]?(?P<season>(19|20)[0-9]{2})[)]$']                                                                                                                 #  6 # title (1932).ext
+  '^(?P<show>.*?) - (?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?( - )?(?P<title>.*)$',                                                                                     #  3 # Serie - xx - title.ext
+  '^(?P<show>.*?) -? ?(e|e |ep|ep )?(?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?( - )?(?P<title>.*)$',                                                                     #  4 # Serie ep xx - title.ext
+  '^(?P<show>.*?) \[(?P<season>[0-9]{1,2})\] \[(?P<ep>[0-9]{1,3})\] (?P<title>.*)$',                                                                                    #  5 # Serie [Sxx] [Exxx] title.ext                     
+  '\(?(?P<season>(19|20)[0-9]{2})[)]?[ _\.\-]+(?P<title>.*?)$',                                                                                                         #  6 # (1932) title.ext
+  '(?P<title>.*?) [(]?(?P<season>(19|20)[0-9]{2})[)]$']                                                                                                                 #  7 # title (1932).ext
 ANIDB_OFFSET = [0, 100, 150, 200, 400, 0, 0]; ANIDB_RX  = [                                                                                                             ######### AniDB Specials regex ### 
   '(^|(?P<show>.*?)[ _\.\-]+)(SP|SPECIAL|OAV) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                        #  7 # 001-099 Specials
   '(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                      #  8 # 100-149 Openings
@@ -222,8 +223,8 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   #Log.debug("Initial: file='%s', root='%s', path='%s', show='%s', season='%d', ep='%d', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
   ep_orig = "s%de%d" % (season, ep)
-  if season > 0:                                                                  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   if "s%de%d" % (season, ep) in mappingList:                                      season, ep, ep2 = mappingList[ep_orig][1:].split("e") + [None]; season, ep = int(season), int(ep)
+  elif season > 0:                                                                season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   if 's%d' % season in mappingList and mappingList['s%d' % season][2].isdigit():  ep = ep + int (mappingList['s%d' % season][2])
   file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
   if title==title.lower() or title==title.upper() and title.count(" ")>0:         title           = title.title()       # capitalise if all caps or all lowercase and one space at least
@@ -278,7 +279,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log.info("\"%s\" match IGNORE_DIRS_RX: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
   reverse_path, files_to_remove = list(reversed(Utils.SplitPath(path))), []
   for file in files:
-    LogFileList(file)  #add to filelist
+    LogFileList(file.replace(root, "")[1:])  #add to filelist
     ext = os.path.splitext(file)[1].lstrip('.').lower()
     if ext in VIDEO_EXTS:
       for rx in IGNORE_FILES_RX:                                                                                        # Filter trailers and sample files
@@ -379,33 +380,33 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
 
   ### anidb2 mode (requires ScudLee's mapping xml file) ###
   anidb2_match = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
+  scudlee_mapping_content=None
   if anidb2_match:
-    anidb_id         = anidb2_match.group('guid').lower()
-    tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-    scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
-    try:
-      if not os.path.exists(scudlee_filename) or int(time.time() - os.path.getmtime(scudlee_filename)) > 86400:
-        Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
-        with open(tmp_filename, 'w') as scudlee_file:  scudlee_file.write( urlopen( ANIDB_TVDB_MAPPING ).read() )
-        os.rename(tmp_filename, scudlee_filename)
-      else:  Log.info("Use existing: '%s'" % scudlee_filename); del tmp_file
-    except Exception as e:  Log.error("Error downloading ScudLee's file from GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e)) 
-    else:
+    anidb_id = anidb2_match.group('guid').lower()
+    scudlee_filename_custom = os.path.join(root, path, ANIDB_TVDB_MAPPING_CUSTOM)
+    if os.path.exists( scudlee_filename_custom ):
+      with open(scudlee_filename_custom, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
+      Log.info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
+    if not scudlee_mapping_content:
+      tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
+      scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
       try:
-        if os.path.exists( scudlee_filename ):
-          with open(scudlee_filename, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
-        scudlee_filename_custom = os.path.join(root, path, ANIDB_TVDB_MAPPING_CUSTOM)
-        if os.path.exists( scudlee_filename_custom ):
-          with open(scudlee_filename_custom, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
-          #scudlee_mapping_content = scudlee_mapping_content_custom[:scudlee_mapping_content_custom.find("</anime-list>")-1] + scudlee_mapping_content[scudlee_mapping_content.find("<anime-list>")+len("<anime-list>")+1:] #cut both fiels together removing ending and starting tags to do so
-          Log.info("Loading local custom mapping - url: '%s'" % os.path.join(root, path, ANIDB_TVDB_MAPPING_CUSTOM))
-        else: Log.info(scudlee_filename_custom)
-      except Exception as e:  Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
+        if not os.path.exists(scudlee_filename) or int(time.time() - os.path.getmtime(scudlee_filename)) > 86400:
+          #Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
+          with open(tmp_filename, 'w') as scudlee_file:  scudlee_file.write( urlopen( ANIDB_TVDB_MAPPING ).read() )
+          os.rename(tmp_filename, scudlee_filename)
+        else:  Log.info("Use existing: '%s'" % scudlee_filename); del tmp_file
+      except Exception as e:  Log.error("Error downloading ScudLee's file from GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e)) 
       else:
-        a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
-        offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
-        offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
-        folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
+        try:
+          if os.path.exists( scudlee_filename ):
+            with open(scudlee_filename, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
+        except Exception as e:  Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
+    if scudlee_mapping_content:
+      a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
+      offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
+      offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
+      folder_show                                  = folder_show.replace("[anidb2-%s]" % anidb_id, "[tvdb-%s]" % a2_tvdbid)
 
   ### File main loop ###
   files.sort(key=natural_sort_key)
@@ -413,9 +414,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
   for file in files:     # build misc variable, to avoid numbers in titles if present in multiple filenames
     for prefix in array: # remove cleansed folder name from cleansed filename and remove potential space
-      if prefix.lower() in file.lower():  misc+= file.lower().replace(prefix.lower(), " ").lstrip('- ')+" "; break
+      if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+" "; break
     else:   misc+= clean_string(os.path.basename(file), True)+" "
-    
+  
   for file in files:
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
