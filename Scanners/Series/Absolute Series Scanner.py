@@ -18,6 +18,7 @@ except ImportError:  from urllib2        import urlopen # urlopen Python 2.x #im
 TVDB_HTTP_API_URL         = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
 ASS_MAPPING_URL           = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
 ANIDB_TVDB_MAPPING        = 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
+ANIDB_TVDB_MAPPING_MOD    = 'http://rawgit.com/Dingmatt/AMSA/master/Plug-in%20Support/Data/com.plexapp.agents.amsa/DataItems/anime-list-corrections.xml'
 ANIDB_TVDB_MAPPING_CUSTOM = 'anime-list-custom.xml'                                                                            # custom local correction for ScudLee mapping file url
 SOURCE_IDS                = ".*? ?\[(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
 SOURCE_ID_FILES           = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tmdb.id", "tsdb.id", "imdb.id"]
@@ -392,6 +393,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if os.path.exists( scudlee_filename_custom ):
       with open(scudlee_filename_custom, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
       Log.info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
+    #ANIDB_TVDB_MAPPING_MOD loading to add
     if not scudlee_mapping_content:
       tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
       scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
@@ -411,7 +413,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
       offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
       offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
-      folder_show                                  = clean_string(folder_show)+" [anidb2-%s]" % anidb_id
+      folder_show                                  = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
 
   if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
   
