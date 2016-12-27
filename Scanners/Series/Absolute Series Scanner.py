@@ -280,7 +280,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     Log.info("".ljust(157, '='))
     Log.info("");    
   Log.info("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log.info("".ljust(157, '-'))  # Exit every other iteration than the root scan
-  if path=="A Certain Magical Index - The Miracle of Endymion [anidb2-8694]/specials": Log.info("file: '%s'" % str(files))
   for subdir in subdirs:                                                    #
     for rx in IGNORE_DIRS_RX:                                               # if initial scan and root folder
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log.info("\"%s\" match IGNORE_DIRS_RX: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
