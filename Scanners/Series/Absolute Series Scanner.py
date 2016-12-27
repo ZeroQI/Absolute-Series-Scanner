@@ -280,6 +280,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     Log.info("".ljust(157, '='))
     Log.info("");    
   Log.info("Scanner call - root: '%s', path: '%s', dirs: '%d', files: '%d'" % (root, path, len(subdirs), len(files)));  Log.info("".ljust(157, '-'))  # Exit every other iteration than the root scan
+  if path=="A Certain Magical Index - The Miracle of Endymion [anidb2-8694]/specials": Log.info("file: '%s'" % str(files))
   for subdir in subdirs:                                                    #
     for rx in IGNORE_DIRS_RX:                                               # if initial scan and root folder
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log.info("\"%s\" match IGNORE_DIRS_RX: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
@@ -372,7 +373,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
           else:                                    Log.error("Error opening remote tvdb4.mapping, Exception: '%s'" % e)
     if tvdb_mapping: Log.info("unknown_series_length: %s, tvdb_mapping: %s" % (unknown_series_length, str(tvdb_mapping)))
-
+  
   ### Calculate offset for season or episode ###
   if offset_match:
     match_source, match_season, match_episode = offset_match.group('source'), "", ""
@@ -383,7 +384,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
     folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
     if offset_season+offset_episode:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
-
+  
   ### anidb2 mode (requires ScudLee's mapping xml file) ###
   anidb2_match = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
   scudlee_mapping_content=None
@@ -393,9 +394,15 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     while dir and dir is not "/":
       scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_CUSTOM)
       if os.path.exists( scudlee_filename_custom ):
-        with open(scudlee_filename_custom, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
-        Log.info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
+        with open(scudlee_filename_custom, 'r') as scudlee_file:
+          temp= scudlee_file.read()
+          if temp:
+            try:     scudlee_mapping_content = etree.fromstring( temp )
+            except:  Log.info("Invalid custom mapping file content")
+            else:    Log.info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
+          else:      Log.info("Custom mapping file present but empty")
       dir = os.path.dirname(dir)
+    
     #ANIDB_TVDB_MAPPING_MOD loading to add
     if not scudlee_mapping_content:
       tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
@@ -447,7 +454,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                         #"%s %d " % (folder_show, folder_season), 
           if ep.lower().startswith(prefix.lower()):                                                            ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
       if ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():           season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
-
+    
     words, loop_completed = filter(None, ep.split()), False                                                                                                         #
     for word in words:                                                                                                                                              #
       ep=word.lower().strip()                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
