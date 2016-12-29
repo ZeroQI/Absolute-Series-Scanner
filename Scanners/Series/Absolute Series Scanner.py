@@ -260,9 +260,9 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
           for string2 in filter(None, season.text.split(';')) if season.text else []:  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] 
       except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
       else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.xpath("name")[0].text, str(mappingList)) )
-      return anime.get('tvdbid'), anime.get('defaulttvdbseason'), mappingList, ""
+      return anime.get('tvdbid'), anime.get('defaulttvdbseason'), mappingList
   Log.error("anidbTvdbMapping() - No valid tvbdbid: '%s' found for anidbid '%s'" % (anime.get('tvdbid'), anidbid))
-  return "", "", {}, ""
+  return "", "", {}
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
@@ -419,10 +419,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
             with open(scudlee_filename, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
         except Exception as e:  Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
     if scudlee_mapping_content:
-      a2_tvdbid, a2_defaulttvdbseason, mappingList, title = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
-      offset_season                                       = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
-      offset_episode                                      = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
-      folder_show                                         = title + " [tvdb-%s]" % a2_tvdbid
+      a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
+      offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
+      offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
+      folder_show                                  = " [tvdb-%s]" % a2_tvdbid
 
   if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
   
