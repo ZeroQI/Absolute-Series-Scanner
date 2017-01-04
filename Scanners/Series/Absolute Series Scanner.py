@@ -39,7 +39,7 @@ SERIES_RX = [                                                                   
   '\(?(?P<season>(19|20)[0-9]{2})[)]?[ _\.\-]+(?P<title>.*?)$',                                                                                                         #  5 # (1932) title.ext
   '(?P<title>.*?) [(]?(?P<season>(19|20)[0-9]{2})[)]$']                                                                                                                 #  6 # title (1932).ext
 ANIDB_OFFSET = [0, 100, 150, 200, 400, 0, 0]; ANIDB_RX  = [                                                                                                             ######### AniDB Specials regex ### 
-  '(^|(?P<show>.*?)[ _\.\-]+)(SP|SPECIAL|OAV|OAD) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                    #  7 # 001-099 Specials
+  '(^|(?P<show>.*?)[ _\.\-]+)(SP|SPECIAL|OAV) ?(?P<ep>\d{1,2}) ?(?P<title>.*)$',                                                                                        #  7 # 001-099 Specials
   '(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                      #  8 # 100-149 Openings
   '(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                       #  9 # 150-199 Endings
   '(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                          # 10 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
@@ -221,11 +221,10 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
-  #Log.debug("Initial: file='%s', root='%s', path='%s', show='%s', season='%d', ep='%d', title='%s', year='%s', ep2='%s', unknown_series_length='%s', offset_season='%s', offset_episode='%s', mappingList='%s'" % (file, root, path, show, season, ep, title, year, ep2, unknown_series_length, offset_season, offset_episode, mappingList) )
   ep_orig, ep_orig_padded = "s%de%d" % (season, ep), "s%02de%02d" % (season, ep)
-  if "s%de%d" % (season, ep) in mappingList:                                      season, ep, ep2 = mappingList[ep_orig][1:].split("e") + [None]; season, ep = int(season), int(ep)
-  elif season > 0:                                                                season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
-  if 's%d' % season in mappingList and mappingList['s%d' % season][2].isdigit():  ep = ep + int (mappingList['s%d' % season][2])
+  if "s%de%d" % (season, ep) in mappingList:                                        season, ep, ep2 = mappingList[ep_orig][1:].split("e") + [None]; season, ep = int(season), int(ep)
+  elif 's%d' % season in mappingList and mappingList['s%d' % season][2].isdigit():  ep = ep + int (mappingList['s%d' % season][2])
+  elif season > 0:                                                                  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
   if title==title.lower() or title==title.upper() and title.count(" ")>0:         title           = title.title()       # capitalise if all caps or all lowercase and one space at least
   if ep==0:                                                                       season, ep, ep2 = 0, 1, 1             # s01e00 and S00e00 => s00e01
@@ -422,7 +421,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
       offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
       offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
-      folder_show                                  = " [tvdb-%s]" % a2_tvdbid
+      folder_show                                  = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
 
   if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
   
@@ -516,4 +515,3 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
 
   Log.info("")
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
-  
