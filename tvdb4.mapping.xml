@@ -35,6 +35,12 @@
     15|317|342|Gotei 13 Invading Army Arc
     16|343|366|Lost Agent Arc
   </anime>
+  <anime tvdbid="78960" name="Blood+">
+    01|001|013|Blood+ 1
+    02|014|025|Blood+ 2
+    03|026|038|Blood+ 3
+    04|039|050|Blood+ 4
+  </anime>
   <anime tvdbid="305075" name="Bungo Stray Dogs">
     01|001|012|Bungo Stray Dogs 1st Cour
     02|013|024|Bungo Stray Dogs 2nd Cour (Still Airing)
@@ -188,11 +194,5 @@
     02|008|029|Pantasia Newcomers Battle Arc
     03|030|053|Monaco Cup Arc
     04|054|069|Yakitate!! 9 Arc
-  </anime>
-  <anime tvdbid="78960" name="Blood+">
-    01|001|013|Blood+ 1
-    02|014|025|Blood+ 2
-    03|026|038|Blood+ 3
-    04|039|050|Blood+ 4
   </anime>
 </tvdb4entries>
