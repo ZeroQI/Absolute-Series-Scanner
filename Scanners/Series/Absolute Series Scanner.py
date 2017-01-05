@@ -222,17 +222,18 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
+  # Mapping List 
   ep_orig, ep_orig_padded = "s%de%d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%s" % ep2), "s%02de%02d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%02d" % ep2)
   if "s%de%d" % (season, ep) in mappingList:
     season, ep = mappingList[ep_orig][1:].split("e")
     if '+' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None  #ex anidbid 680
     season, ep = int(season), int(ep)
-  elif 's%d' % season in mappingList and mappingList['s%d' % season][2].isdigit():  ep = ep + int (mappingList['s%d' % season][2])
-  elif season > 0:                                                                  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
-  file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
-  if title==title.lower() or title==title.upper() and title.count(" ")>0:         title           = title.title()       # capitalise if all caps or all lowercase and one space at least
-  if ep==0:                                                                       season, ep, ep2 = 0, 1, 1             # s01e00 and S00e00 => s00e01
-  if not ep2 or ep > ep2:                                                         ep2             = ep                  #  make ep2 same as ep for loop and tests
+  elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep,ep2 = ep + int (mappingList['s%d' % season][2]), ""
+  elif season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
+  
+  if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()       # capitalise if all caps or all lowercase and one space at least
+  if ep==0:                                                               season, ep, ep2 = 0, 1, 1             # s01e00 and S00e00 => s00e01
+  if not ep2 or ep > ep2:                                                 ep2             = ep                  #  make ep2 same as ep for loop and tests
   if tvdb_mapping and season > 0 :
     max_ep_num, season_buffer = max(tvdb_mapping.keys()), 0 if unknown_series_length else 1
     if   ep  in tvdb_mapping:               season, ep  = tvdb_mapping[ep ]
@@ -240,6 +241,7 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
     if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
     elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
   ep_final = "s%de%d" % (season, ep)
+  file=os.path.join(root,path,file)
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
