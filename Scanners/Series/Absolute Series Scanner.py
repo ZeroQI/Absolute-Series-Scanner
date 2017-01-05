@@ -221,8 +221,12 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
+  Log.info("season: '%s', ep: '%s', ep2: '%s', tvdb_mapping: '%s', offset_season: '%s', offset_episode: '%s', mappingList: '%s'" %(str(season),str(ep),str(ep2),str(tvdb_mapping),str(offset_season),str(offset_episode),str(mappingList)))
   ep_orig, ep_orig_padded = "s%de%d" % (season, ep), "s%02de%02d" % (season, ep)
-  if "s%de%d" % (season, ep) in mappingList:                                        season, ep, ep2 = mappingList[ep_orig][1:].split("e") + [None]; season, ep = int(season), int(ep)
+  if "s%de%d" % (season, ep) in mappingList:
+    season, ep = mappingList[ep_orig][1:].split("e")
+    if '+' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None  #ex anidbid 680
+    season, ep = int(season), int(ep)
   elif 's%d' % season in mappingList and mappingList['s%d' % season][2].isdigit():  ep = ep + int (mappingList['s%d' % season][2])
   elif season > 0:                                                                  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   file=os.path.join(root,path,file);                                                                                   #if not keep_zero_size_files and str(os.path.getsize(file))=="0":         return                                      # do not keep dummy files by default unless this file present in Logs folder
@@ -246,7 +250,7 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
       else:  tv_show.parts.append(file)
       mediaList.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = str(SERIES_RX.index(rx)) if rx in SERIES_RX else str(ANIDB_RX.index(rx)+len(SERIES_RX)) if rx in ANIDB_RX else ""  # rank of the regex used from 0
-  Log.info("\"%s\" s%04de%03d%s%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 else "-%03d" % ep2, " (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "", os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))
+  Log.info("\"%s\" s%04de%03d%s%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 or not ep2 else "-%03d" % ep2, " (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "", os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))
 
 ### Get the tvdbId from the AnimeId #######################################################################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -500,11 +504,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           offset, season = ANIDB_OFFSET [ ANIDB_RX.index(rx) ], 0                                                                                               # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
           if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                                              ### OP/ED with letter version Example: op2a
             AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                                              # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
-            ep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                                                       # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+            ep, offset                         = int( ep[:-1] ), offset + sum( AniDB_op.values() )                                                       # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
           if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
           if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
-          ep = str( offset + int(ep)) 
-        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
+          ep = offset + int(ep) 
+        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else int(ep), rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
         break
     if match: continue  # next file iteration
     
