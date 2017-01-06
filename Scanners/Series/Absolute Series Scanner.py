@@ -389,50 +389,68 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   
   ### anidb2 mode (requires ScudLee's mapping xml file) ###
   anidb2_match = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
-  scudlee_mapping_content=None
+  a2_tvdbid, a2_defaulttvdbseason, mappingList, scudlee_mapping_content = "", "", {}, None
   if anidb2_match:
-    anidb_id = anidb2_match.group('guid').lower()
-    dir = os.path.join(root, path)
+    
+    # Local custom mapping file
+    anidb_id, dir = anidb2_match.group('guid').lower(), os.path.join(root, path)
     while dir and dir is not "/":
       scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_CUSTOM)
       if os.path.exists( scudlee_filename_custom ):
         with open(scudlee_filename_custom, 'r') as scudlee_file:
-          temp= scudlee_file.read()
-          if temp:
-            try:     scudlee_mapping_content = etree.fromstring( temp )
-            except:  Log.info("Invalid custom mapping file content")
-            else:    Log.info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
-          else:      Log.info("Custom mapping file present but empty")
+          try:     scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
+          except:  Log.info("Invalid local custom mapping file content")
+          else:
+            Log.info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
+            a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
+            break
       dir = os.path.dirname(dir)
-    
-    #ANIDB_TVDB_MAPPING_MOD loading to add
-    if not scudlee_mapping_content:
-      tmp_file          = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-      scudlee_filename  = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
-      #tmp_file          = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-      #scudlee_filename2 = tmp_filename.replace(os.path.basename(tmp_filename), 'anime-list-corrections.xml')
-      #AniDB_TVDB_mapping_tree = HamaCommonAgent().xmlElementFromFile(ANIDB_TVDB_MAPPING,  os.path.basename(ANIDB_TVDB_MAPPING), False, CACHE_1HOUR * 24 * 2)
-      #scudlee_2               = etree.tostring( AniDB_TVDB_mapping_tree, encoding="UTF-8", method="xml")
-      #AniDB_TVDB_mapping_tree = HamaCommonAgent().xmlElementFromFile(ANIDB_TVDB_MAPPING2, os.path.basename(ANIDB_TVDB_MAPPING2), False, CACHE_1HOUR * 24 * 2)
-      #scudlee_1               = etree.tostring( AniDB_TVDB_mapping_tree, encoding="UTF-8", method="xml")
-      #AniDB_TVDB_mapping_tree = etree.fromstring( scudlee_1[:scudlee_1.rfind("</anime-list>")-1] + scudlee_2[scudlee_2.find("<anime-list>")+len("<anime-list>")+1:] )  #cut both fiels together removing ending and starting tags to do so  
+      
+    # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD 
+    if not a2_tvdbid:
+      tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
+      scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'anime-list-corrections.xml')
       try:
-        if not os.path.exists(scudlee_filename) or int(time.time() - os.path.getmtime(scudlee_filename)) > 86400:
-          Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
-          with open(tmp_filename, 'w') as scudlee_file:  scudlee_file.write( urlopen( ANIDB_TVDB_MAPPING ).read() )
+        if os.path.exists(scudlee_filename) and int(time.time() - os.path.getmtime(scudlee_filename)) <= 86400:
+          Log.info("Use existing: '%s'" % scudlee_filename)
+          del tmp_file
+          with open(scudlee_filename, 'r') as scudlee_file:  scudlee_file_content = scudlee_file.read()
+        else:
+          Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING_MOD) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
+          with open(tmp_filename, 'w') as scudlee_file:
+            scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING_MOD).read()
+            scudlee_file.write( scudlee_file_content )
           os.rename(tmp_filename, scudlee_filename)
-        else:  Log.info("Use existing: '%s'" % scudlee_filename); del tmp_file
-      except Exception as e:  Log.error("Error downloading ScudLee's file from GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e)) 
+      except Exception as e:  Log.error("Error downloading ScudLee's file mod from local/GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING_MOD, e)) 
       else:
-        try:
-          if os.path.exists( scudlee_filename ):
-            with open(scudlee_filename, 'r') as scudlee_file:  scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
-        except Exception as e:  Log.error("Error parsing ScudLee's file from local '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
-    if scudlee_mapping_content:
-      a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
-      offset_season                                = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
-      offset_episode                               = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
-      folder_show                                  = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
+        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring( scudlee_file_content ), anidb_id)
+        except Exception as e:  Log.error("Error parsing ScudLee's file mod content, Exception: '%s'" % e)
+    
+    #ANIDB_TVDB_MAPPING
+    if not a2_tvdbid:
+      tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
+      scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
+      try:
+        if os.path.exists(scudlee_filename) and int(time.time() - os.path.getmtime(scudlee_filename)) <= 86400:
+          Log.info("Use existing: '%s'" % scudlee_filename)
+          del tmp_file
+          with open(scudlee_filename, 'r') as scudlee_file:  scudlee_file_content = scudlee_file.read()
+        else:
+          Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
+          with open(tmp_filename, 'w') as scudlee_file:
+            scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING).read()
+            scudlee_file.write( scudlee_file_content )
+          os.rename(tmp_filename, scudlee_filename)
+      except Exception as e:  Log.error("Error parsing ScudLee's file mod content, Exception: '%s'" % e)
+      else:
+        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(scudlee_file_content), anidb_id)
+        except Exception as e:  Log.error("Error parsing ScudLee's file from local/url '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
+    
+    #Build AniDB2 Offsets
+    if a2_tvdbid:
+      offset_season  = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
+      offset_episode = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
+      folder_show    = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
 
   if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
   
