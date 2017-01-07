@@ -454,55 +454,60 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
 
   if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
   
-  ### File main loop ###
-  files.sort(key=natural_sort_key)
-  movie_list, AniDB_op, counter, misc = {}, {}, 500, "" # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+  # Build misc variable to check numbers in titles
+  misc  = "" # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
   array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
+  files.sort(key=natural_sort_key)
   for file in files:     # build misc variable, to avoid numbers in titles if present in multiple filenames
     for prefix in array: # remove cleansed folder name from cleansed filename and remove potential space
       if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+" "; break
     else:   misc+= clean_string(os.path.basename(file), True)+" "
   
+  ### File main loop ###
   for file in files:
+    show, season, ep2, title, year = folder_show, folder_season if folder_season else 1, None, "", ""
+    
+    #DVD/BluRay folders
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
-    filename                                       = os.path.splitext(os.path.basename(file))[0] if not disc else ep
-    show, season, ep, ep2, title, folder_use, year = folder_show, folder_season if folder_season else 1, clean_string(filename, False), None, "", False, ""
-    if not path and " - Complete Movie" in ep:                                                                 ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
-    elif clean_string(filename, True, no_dash=True)==clean_string(folder_show, True, no_dash=True):            ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
-    elif len(files)==1:
-      if   ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()):                 ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
-      elif "-m" in clean_string(folder_show).split():                                                          ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '-m' in the folder name denoting a movie folder
-      elif not re.search("\d+(\.\d+)?", clean_string(filename, True)):                                         ep, title,      = "01", folder_show                  ### Movies/Single Ep Shows ### If only one file in the folder & it has no numbers in it (as would otherwise force it to a 500+ special)
-    elif folder_show:                                                                                                                                               # if not at root and containing folder exist and has name different from "_" (scrubed to "")
-      for prefix in array:         # remove cleansed folder name from cleansed filename and remove potential space
-        if prefix.lower() in filename.lower():  ep, folder_use = clean_string(filename.lower().replace(prefix.lower(), " "), True), True; break
-      else:   ep = clean_string(os.path.basename(file), True)
-      if folder_season > 1:                                                                                                                                         # 
-        for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                         #"%s %d " % (folder_show, folder_season), 
-          if ep.lower().startswith(prefix.lower()):                                                            ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
-      if ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():           season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
+    filename = ep if disc else os.path.splitext(os.path.basename(file))[0]
     
+    #remove cleansed folder name from cleansed filename and remove potential space
+    if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):              ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
+    else:
+      for prefix in array:
+        if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
+      else:                                     filename = clean_string(filename, True)
+      ep = filename
+    
+    if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
+    elif len(files)==1 and not folder_season:
+      if   ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
+    if folder_show and folder_season > 1:                                                                                                                                         # 
+      for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                         #"%s %d " % (folder_show, folder_season), 
+        if ep.lower().startswith(prefix.lower()):  ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
+    if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
+    
+    # Word search for ep number in scrubbed title
     words, loop_completed = filter(None, ep.split()), False                                                                                                         #
     for word in words:                                                                                                                                              #
       ep=word.lower().strip()                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
-      if "(" in ep and len(ep)==6 and ep[0]=='(' and ep[5]==')' and ep[1:5].isdigit():                         ep = ep [1:5]                                        # remove parenthesis from year in parenthesis
+      for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
+        if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):      ep, season = ep[len(prefix):], 0 if prefix=="s" else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
+      if ep.endswith(("v1", "v2", "v3", "v4", "v5")):                                                          ep=ep[:-2].rstrip('-')                               #
+      
       if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                                       # If separator in string
-        if re.match("^(?P<ep>[0-9]{1,3})-(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):                             ep, ep2 = ep.split('-'); break
+        if re.match("^(?P<ep>[0-9]{1,3})-(?P<ep2>[0-9]{1,3})$", ep, re.IGNORECASE):                            ep, ep2 = ep.split('-'); break
         if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):       ep="Skip"; break                                     # if multi ep: make it non digit and exit so regex takes care of it
         elif path and ( (misc.count(ep)==1 and len(files)>=2) or ep not in clean_string(folder_show, True).lower().split() ):
           ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1];                                  # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
         else:                                                                                                  continue
-      if ep.endswith(("v1", "v2", "v3", "v4")):                                                                ep=ep[:-2].rstrip('-')                               #
       if re.match("((t|o)[0-9]{1,3}$|(sp|special|oav|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)($|[0-9]{1,3}$))", ep):  break                         # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
-      if ep in ("", "-"):                                                                                      continue                                             #
       if ''.join(letter for letter in ep if letter.isdigit())=="":                                             continue                                             # Continue if there are no numbers in the string
       if path and misc.count(ep)>=3:                                                                           continue                                             # Continue if not root folder and string found in in any other filename
       if ep in clean_string(folder_show, True).split() and clean_string(filename, True).split().count(ep)!=2:  continue                                             # Continue if string is in the folder name & string is not in the filename only twice
       if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:2])==folder_season):   season, ep = int(ep[0:2]), ep[2:4]                   # 1206 could be season 12 episode 06  #Get assigned from left ot right
       elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));   continue                                             # take everything after supposed episode number
-      for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
-        if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):      ep, season = ep[len(prefix):], 0 if prefix=="s" else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
       if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                           season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break # ep 12.5 = "12" title "Special 12.5"
       if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)    # root folder and 
       title = clean_string( " ".join(words[words.index(word):])[" ".join(words[words.index(word):]).lower().index(ep)+len(ep):] )                                   # take everything after supposed episode number
@@ -512,7 +517,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  continue
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
-    ep = clean_string(filename, False)  # restart matching from filename
+    movie_list, AniDB_op, counter, ep = {}, {}, 500, filename
     for rx in SERIES_RX + ANIDB_RX:
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
@@ -533,7 +538,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
           if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
           ep = offset + int(ep) 
-        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else int(ep), rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
+        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
         break
     if match: continue  # next file iteration
     
