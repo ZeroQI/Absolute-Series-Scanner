@@ -221,8 +221,9 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   # Mapping List 
   ep_orig, ep_orig_padded = "s%de%d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%s" % ep2), "s%02de%02d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%02d" % ep2)
-  if "s%de%d" % (season, ep) in mappingList:
+  if ep_orig in mappingList:
     season, ep = mappingList[ep_orig][1:].split("e")
+    if '-' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None 
     if '+' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None  #ex anidbid 680
     season, ep = int(season), int(ep)
   elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep,ep2 = ep + int (mappingList['s%d' % season][2]), ""
