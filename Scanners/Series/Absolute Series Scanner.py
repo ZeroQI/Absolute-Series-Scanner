@@ -20,10 +20,10 @@ ASS_MAPPING_URL           = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/ma
 ANIDB_TVDB_MAPPING        = 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
 ANIDB_TVDB_MAPPING_MOD    = 'http://rawgit.com/Dingmatt/AMSA/master/Plug-in%20Support/Data/com.plexapp.agents.amsa/DataItems/anime-list-corrections.xml'
 ANIDB_TVDB_MAPPING_CUSTOM = 'anime-list-custom.xml'                                                                            # custom local correction for ScudLee mapping file url
-SOURCE_IDS                = ".*? ?\[(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
-SOURCE_ID_FILES           = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tmdb.id", "tsdb.id", "imdb.id"]
-TVDB_MODE_IDS             = ".*? ?\[tvdb(?P<mode>(2|3|4))-(tt)?(?P<guid>[0-9]{1,7})-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
-TVDB_MODE_ID_OFFSET       = ".*? ?\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"
+SOURCE_IDS                = ".*? ?\[(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
+SOURCE_ID_FILES           = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id"]
+TVDB_MODE_IDS             = ".*?\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"
+TVDB_MODE_ID_OFFSET       = ".*? ?\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"
 ANIDB2_MODE               = ".*? ?\[anidb2-(?P<guid>[0-9]{1,7})\]"
 SEASON_RX = [                                                                                                                                                           ### Seasons Folders 
  'Specials',                                                                                                                                                            # Specials (season 0)
@@ -338,6 +338,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   ### Forced id mode - Capture if absolute numbering should be applied for all episode numbers  ###
   tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
   mappingList, offset_season, offset_episode, offset_match = {}, 0, 0, re.search(TVDB_MODE_ID_OFFSET, folder_show, re.IGNORECASE)
+  #Log.info("tvdb_mode_search: '%s'" % tvdb_mode_search)
   if tvdb_mode_search:
     tvdb_mode, tvdb_guid = tvdb_mode_search.group('mode').lower(), tvdb_mode_search.group('guid').lower();
     Log.info("folder_show: '%s', folder_season: '%s', tvdb mode: '%s', tvdb id: '%s'" % (folder_show, folder_season, tvdb_mode, tvdb_guid)) # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
@@ -377,6 +378,16 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           tvdb_mapping, tvdb4_mapping_content = {}, "" 
           if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
           else:                                    Log.error("Error opening remote tvdb4.mapping, Exception: '%s'" % e)
+    elif tvdb_mode=="5": ##Star wars: Clone attack chronological order#
+      Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (tvdb_mode, TVDB_HTTP_API_URL % tvdb_guid))
+      tvdb_guid_url= TVDB_HTTP_API_URL % tvdb_guid
+      try:
+        tvdbanime = etree.fromstring( urlopen(tvdb_guid_url).read() )
+        for episode in tvdbanime.xpath('Episode'):
+          if episode.xpath('SeasonNumber')[0].text != '0' and episode.xpath('absolute_number')[0].text:
+            mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
+        Log.info("mappingList: '%s'" % str(mappingList))
+      except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
     if tvdb_mapping: Log.info("unknown_series_length: %s, tvdb_mapping: %s" % (unknown_series_length, str(tvdb_mapping)))
   
   ### Calculate offset for season or episode ###
@@ -392,7 +403,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   
   ### anidb2 mode (requires ScudLee's mapping xml file) ###
   anidb2_match = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
-  a2_tvdbid, a2_defaulttvdbseason, mappingList, scudlee_mapping_content = "", "", {}, None
+  a2_tvdbid, a2_defaulttvdbseason, scudlee_mapping_content = "", "", None
   if anidb2_match:
     
     # Local custom mapping file
@@ -469,11 +480,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   misc_count={}
   for item in misc.split('|'): 
     if item in misc_count:  misc_count[item] +=1
-    else:                   misc_count[item] = 0
-  maxi = max(misc_count.values())
+    else:                   misc_count[item] = 1
   misc_words = []
   for item in misc_count:
-    if misc_count[item] == maxi and item:
+    if item and (misc_count[item] >= len(files) or misc_count[item]== max(misc_count.values()) ):
       misc_words.append(item)
       misc = misc.replace(item, '|')
   Log.info("misc: '%s'" % misc)
