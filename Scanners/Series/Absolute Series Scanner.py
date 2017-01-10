@@ -223,11 +223,13 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   # Mapping List 
   ep_orig, ep_orig_padded = "s%de%d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%s" % ep2), "s%02de%02d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%02d" % ep2)
-  if ep_orig in mappingList:
-    season, ep = mappingList[ep_orig][1:].split("e")
-    if '-' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None 
-    if '+' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None  #ex anidbid 680
-    season, ep = int(season), int(ep)
+  ep_orig_single          = "s%de%d"   % (season, ep)
+  if ep_orig_single in mappingList:
+    multi_ep   = 0 if ep_orig == ep_orig_single else ep2-ep
+    season, ep = mappingList[ep_orig_single][1:].split("e")
+    if '-' in ep or  '+' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None
+    season, ep, ep2 = int(season), int(ep), int(ep)+multi_ep if multi_ep else ep2
+    
   elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep,ep2 = ep + int (mappingList['s%d' % season][2]), ""
   elif season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   
@@ -483,7 +485,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     else:                   misc_count[item] = 1
   misc_words = []
   for item in misc_count:
-    if item and (misc_count[item] >= len(files) or misc_count[item]== max(misc_count.values()) ):
+    if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) ):
       misc_words.append(item)
       misc = misc.replace(item, '|')
   Log.info("misc: '%s'" % misc)
