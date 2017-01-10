@@ -93,7 +93,8 @@ CHARACTERS_MAP = {
 ### Log + LOG_PATH calculated once for all calls ###
 LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows Vista/7/8
                           '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ],    # Windows XP, 2003, Home Server
-              'darwin': [ '$HOME/Library/Application Support/Plex Media Server/Logs' ],                    # LINE_FEED = "\r"
+              'darwin': [ '$HOME/Library/Application Support/Plex Media Server/Logs',                      # Darwin (MacOS) 
+                           '$HOME/Library/Logs/Plex Media Server'],                                        # Darwin (MacOS) LINE_FEED = "\r"
               'linux':  [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 # Linux
                           '$PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR/Plex Media Server/Logs',             # Slack, Ubuntu/Fedora, Synology
                           '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # Ubuntu/Fedora/QNAP
@@ -456,13 +457,27 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
   
   # Build misc variable to check numbers in titles
-  misc  = "" # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+  misc  = "|" # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
   array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
   files.sort(key=natural_sort_key)
   for file in files:     # build misc variable, to avoid numbers in titles if present in multiple filenames
     for prefix in array: # remove cleansed folder name from cleansed filename and remove potential space
-      if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+" "; break
-    else:   misc+= clean_string(os.path.basename(file), True)+" "
+      if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+"|"; break
+    else:   misc+= clean_string(os.path.basename(file), True)+"|"
+  for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|')
+  misc_count={}
+  for item in misc.split('|'): 
+    if item in misc_count:  misc_count[item] +=1
+    else:                   misc_count[item] = 0
+  maxi = max(misc_count.values())
+  misc_words = []
+  for item in misc_count:
+    if misc_count[item] == maxi and item:
+      misc_words.append(item)
+      misc = misc.replace(item, '|')
+  Log.info("misc: '%s'" % misc)
+  Log.info("misc_count: '%s'" % str(misc_count))
+  Log.info("misc_words: '%s'" % str(misc_words))
   
   ### File main loop ###
   for file in files:
@@ -479,6 +494,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       for prefix in array:
         if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
       else:                                     filename = clean_string(filename, True)
+      for item in misc_words:  filename = filename.lower().replace(item, ' ')
       ep = filename
     
     if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
