@@ -108,7 +108,8 @@ LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',            
                           '/share/CACHEDEV1_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',    # QNAP
                           '/raid0/data/module/Plex/sys/Plex Media Server/Logs',                            # Thecus
                           '/raid0/data/PLEX_CONFIG/Plex Media Server/Logs',                                # Thecus Plex community version
-                          '/config/Library/Application Support/Plex Media Server/Logs'] }                  # Docker linuxserver/plex
+                          '/config/Library/Application Support/Plex Media Server/Logs'],                   # Docker linuxserver/plex
+              'freebsd9':['/usr/local/plexdata/Plex Media Server/Logs' ] }                  
 
 RootLogger,     RootHandler,     RootFormatting     = logging.getLogger('main'),           None, logging.Formatter('%(message)s') #%(asctime)-15s %(levelname)s - 
 FileListLogger, FileListHandler, FileListFormatting = logging.getLogger('FileListLogger'), None, logging.Formatter('%(message)s')
