@@ -120,12 +120,13 @@ Hama supports the following guid_type:
 You can have **absolutely numbered series** (i.e. without season number apart from Specials/season 0) being **displayed in Plex with seasons** without the need to rename the files with season numbering or creating season folders and moving absolutely numbered episodes inside by using the following custom modes, and episodes will be displayed as:
 
 <TABLE>
-<THEAD> <TR> <TH> guid_type </TH> <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
+<THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
 <TBODY>
-        <TR> <TD> anib2     </TD> <TD> None                </TD> <TD>Absolute           </TD> <TD>Map to the tvdb at the right season and ep number to show 1 serie only</TD> </TR>
-        <TR> <TD> tvdb2     </TD> <TD> TVDB                </TD> <TD>Season            </TD> <TD>Multiple single season series (Sword Art online)</TD> </TR>
-        <TR> <TD> tvdb3     </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan)</TD> </TR>
-        <TR> <TD> tvdb4     </TD> <TD> Custom/Arc database </TD> <TD>Absolute          </TD> <TD>Long series with arc (one piece, dragon ball)</TD> </TR>
+        <TR> <TD> anib2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Map to the tvdb at the right season and ep number to show 1 serie only</TD> </TR>
+        <TR> <TD> tvdb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Season            </TD> <TD>Multiple single season series (Sword Art online)</TD> </TR>
+        <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan)</TD> </TR>
+        <TR> <TD> tvdb4     </TD> <TD> Absolute, random season </TD> <TD> Custom/Arc database </TD> <TD>Absolute          </TD> <TD>Long series with arc (one piece, dragon ball)</TD> </TR>
+        <TR> <TD> tvdb5     </TD> <TD> TVDB season + ep        </TD> <TD>Absolute          </TD> <TD>Chronological order (Star Wars: The Clone Wars)</TD> </TR>
 </TBODY>
 </TABLE>
 
