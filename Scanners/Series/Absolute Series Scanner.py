@@ -402,7 +402,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
     folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
     if offset_season+offset_episode:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
-  
+    
   ### anidb2 mode (requires ScudLee's mapping xml file) ###
   anidb2_match = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
   a2_tvdbid, a2_defaulttvdbseason, scudlee_mapping_content = "", "", None
@@ -465,9 +465,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     #Build AniDB2 Offsets
     if a2_tvdbid:
       offset_season  = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
-      offset_episode = int(mappingList['episodeoffset']) if mappingList['episodeoffset'] and mappingList['episodeoffset'].isdigit() else 0
+      offset_episode = 0-int(mappingList['episodeoffset'][1:]) if mappingList['episodeoffset'].startswith('-') else int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
       folder_show    = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
-
+      
   if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
   
   # Build misc variable to check numbers in titles
