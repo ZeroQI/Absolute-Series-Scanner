@@ -96,7 +96,8 @@ Anidb (single) season
 Anidb type special numbering is detailed below:
 <TABLE> 
 <THEAD> <TR> <TH> Type     </TH> <TH> Internal letter </TH> <TH>  Episode number   </TH> </TR> </THEAD>
-<TBODY> <TR> <TD> OPs      </TD> <TD> C               </TD> <TD>  Episodes 101-150 </TD> </TR>
+<TBODY> <TR> <TD> Specials </TD> <TD> S               </TD> <TD>  Episodes 001-100 </TD> </TR>
+        <TR> <TD> OPs      </TD> <TD> C               </TD> <TD>  Episodes 101-150 </TD> </TR>
         <TR> <TD> EDs      </TD> <TD> C               </TD> <TD>  Episodes 151-200 </TD> </TR>
         <TR> <TD> Trailers </TD> <TD> T               </TD> <TD>  Episodes 201-300 </TD> </TR>
         <TR> <TD> OPs/EDs  </TD> <TD> P               </TD> <TD>  Episodes 301-400 </TD> </TR>
@@ -194,10 +195,22 @@ Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
 
 Install
 =======
-Put latest scanner file from:
 - https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/Scanners/Series/Absolute%20Series%20Scanner.py
 Into:
 - [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
+Note:
+- "Scanners" and "Series" folder are not created by default and will need creating.
+- "Scanners" folder will be besides "Plug-in Support" folder in the same parent directory.
+
+Put latest scanner file from:
+
+Linux install script example
+<PRE><CODE>
+mkdir -p '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners/Series'
+wget -O '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py' https://raw.githubusercontent.com/ZeroQI/Absolute-Series-Scanner/master/Scanners/Series/Absolute%20Series%20Scanner.py
+chown -R plex:plex '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners'
+chmod 775 -R '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners'
+</CODE></PRE>
 
 ###Logs
 Absolute series Scanner uses a pre-made list of folders to try to locate Plex Logs folder. 
@@ -217,7 +230,7 @@ Troubleshooting:
 - Update the scanner to the latest
 - If the scanner not listed in scanner list
   - Make sure you did create a "Series" library, as a "Movie" library will not show a "Series" scanner like ASS
-  - Check file size and open the scanner file to check for corruption and that it does have html/xml tags. If it does, it was saved incorrectly and you should feel bad.
+  - Check scanner file size and open the scanner file to check if it does have html/xml tags. If it does, it was saved incorrectly and you should feel bad.
 - Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
 - if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
 - If Episodes are missing, wrong seasons or episode numbers, or serie(s) missing, please include all "(custom ASS)" logs
@@ -234,7 +247,15 @@ And post in:
 
 Known issues:
 
-On windows install https://www.microsoft.com/en-us/download/details.aspx?id=48145 if you experience this error:
+<PRE><CODE>
+Nov 16, 2016 18:48:53.594 [0x7f48c2324800] DEBUG - Adding subdirectory for scanner: /home/plex/things/anime/Ah! My Goddess 2
+Nov 16, 2016 18:48:53.597 [0x7f48c2324800] ERROR - No module in VideoFiles
+Nov 16, 2016 18:48:53.597 [0x7f48c2324800] ERROR - Error scanning directory .
+Nov 16, 2016 18:48:53.597 [0x7f48c2324800] ERROR - No module in Absolute Series Scanner
+Nov 16, 2016 18:48:53.598 [0x7f48c2324800] ERROR - We got an error scanning in /home/plex/things/anime
+</CODE></PRE>
+You bloody downloaded the web page and not the actual py file:
+
 <PRE><CODE>
 Jul 23, 2016 12:55:54.558 [5288] ERROR - Error scanning directory .
 Jul 23, 2016 12:55:54.574 [5288] ERROR - No module in Absolute Series Scanner
@@ -244,8 +265,8 @@ File "C:\Users\Administrator\AppData\Local\Plex Media Server\Scanners\Series\Abs
 from lxml import etree # fromstring
 ImportError: DLL load failed: The specified module could not be found.
 </CODE></PRE>
+On windows install https://www.microsoft.com/en-us/download/details.aspx?id=48145
 
-One user had folders rights issues on Windows 2008 R2
 <PRE><CODE>
 2016-06-29 23:30:09,104 (30c) : CRITICAL (core:574) - Exception while loading code (most recent call last):
 File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\Framework.bundle\Contents\Resources\Versions\2\Python\Framework\core.py", line 563, in load_code
@@ -266,12 +287,11 @@ File "C:\Program Files (x86)\Plex\Plex Media Server\Resources\Plug-ins-a17e99e\F
 compile(source, filename, mode)
 TypeError: compile() expected string without null bytes
 </CODE></PRE>
-
-He solved it by changing rights for:
+Rights issues on Windows 2008 R2, solved by changing rights for:
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Plug-Ins
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Scanners
 
-On linux, permissions issues could prevent the scanner execution. Check hama readme for commands and posts the ones not documented if any.
+On linux, permissions issues could prevent the scanner execution.
 
 ###Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs

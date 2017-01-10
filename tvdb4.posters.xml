@@ -3,10 +3,18 @@
   <posters tvdbid="[tvdbid]" name="[Series Name]" note="Example Entry">
     [Season Num]|[URL]
   </posters>
+   <posters tvdbid="303730" name="Active Raid">
+    01|http://thetvdb.com/banners/seasons/303730-1.jpg
+    02|http://thetvdb.com/banners/seasons/303730-1-2.jpg
+  </posters>
   <posters tvdbid="79604" name="Black Lagoon">
     01|http://img7.anidb.net/pics/anime/131090.jpg
     02|http://img7.anidb.net/pics/anime/131092.jpg
     03|http://img7.anidb.net/pics/anime/48203.jpg
+  </posters>
+  <posters tvdbid="305075" name="Bungo Stray Dogs">
+    01|http://thetvdb.com/banners/seasons/305075-1-3.jpg
+    02|http://thetvdb.com/banners/seasons/305075-1-4.jpg
   </posters>
   <posters tvdbid="88031" name="Dragon Ball Kai">
     01|https://image.tmdb.org/t/p/original/6WtCy228qbkpW5Eo71akpI8XJKi.jpg
@@ -27,6 +35,14 @@
     05|https://walter.trakt.us/images/seasons/000/024/502/posters/original/a28d0ef148.jpg
     06|https://walter.trakt.us/images/seasons/000/024/503/posters/original/a11d4d9c36.jpg
   </posters>
+  <posters tvdbid="295222" name="GATE">
+    01|http://thetvdb.com/banners/seasons/295222-1-5.jpg
+    02|http://thetvdb.com/banners/seasons/295222-1-7.jpg
+    01|http://thetvdb.com/banners/seasons/295222-1-2.jpg
+    02|http://thetvdb.com/banners/seasons/295222-1-3.jpg
+    01|http://thetvdb.com/banners/seasons/295222-1.jpg
+    02|http://img1.ak.crunchyroll.com/i/spire1/1110c6b0cb40567e2f4a184d73e04f0b1447819164_full.jpg
+  </posters>
   <posters tvdbid="252322" name="Hunter x Hunter (2011)">
     01|http://vignette4.wikia.nocookie.net/hunterxhunter/images/8/89/Hunter_Exam_Arc.jpg
     02|http://vignette3.wikia.nocookie.net/hunterxhunter/images/2/26/Zoldyck_Family_members.png
@@ -39,6 +55,15 @@
   <posters tvdbid="289906" name="Seraph of the End">
     01|http://thetvdb.com/banners/seasons/289906-1-3.jpg
     02|http://thetvdb.com/banners/seasons/289906-1-4.jpg
+  </posters>
+  <posters tvdbid="295205" name="Snow White with the Red Hair">
+    01|http://thetvdb.com/banners/seasons/295205-1-2.jpg
+    02|http://thetvdb.com/banners/seasons/295205-1-3.jpg
+  </posters>
+  <posters tvdbid="294001" name="Ushio and Tora (2015)">
+    01|http://thetvdb.com/banners/seasons/294001-1-5.jpg
+    02|http://thetvdb.com/banners/seasons/294001-1.jpg
+    01|http://thetvdb.com/banners/seasons/294001-1-2.jpg
   </posters>
   <posters tvdbid="76014" name="Yakitate!! Japan">
     01|https://images-na.ssl-images-amazon.com/images/I/51J150FC71L.jpg
