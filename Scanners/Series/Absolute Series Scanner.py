@@ -464,9 +464,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     
     #Build AniDB2 Offsets
     if a2_tvdbid:
-      offset_season  = int(a2_defaulttvdbseason)-1       if a2_defaulttvdbseason         and a2_defaulttvdbseason.isdigit()         else 0
-      offset_episode = 0-int(mappingList['episodeoffset'][1:]) if mappingList['episodeoffset'].startswith('-') else int(mappingList['episodeoffset']) if mappingList['episodeoffset'].isdigit() else 0
       folder_show    = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
+      offset_season  = int(a2_defaulttvdbseason)-1 if a2_defaulttvdbseason and a2_defaulttvdbseason.isdigit() else 0
+      if 'episodeoffset' in mappingList and mappingList['episodeoffset']:  offset_episode = 0-int(mappingList['episodeoffset'][1:]) if mappingList['episodeoffset'].startswith('-') else int(mappingList['episodeoffset'])
+      else:                                                                offset_episode = 0
       
   if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
   
