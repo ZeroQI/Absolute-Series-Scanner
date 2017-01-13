@@ -94,7 +94,7 @@ CHARACTERS_MAP = {
 LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows Vista/7/8
                           '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ],    # Windows XP, 2003, Home Server
               'darwin': [ '$HOME/Library/Application Support/Plex Media Server/Logs',                      # Darwin (MacOS) 
-                           '$HOME/Library/Logs/Plex Media Server'],                                        # Darwin (MacOS) LINE_FEED = "\r"
+                          '$HOME/Library/Logs/Plex Media Server'],                                         # Darwin (MacOS) LINE_FEED = "\r"
               'linux':  [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 # Linux
                           '$PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR/Plex Media Server/Logs',             # Slack, Ubuntu/Fedora, Synology
                           '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # Ubuntu/Fedora/QNAP
@@ -258,9 +258,9 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
 
 ### Get the tvdbId from the AnimeId #######################################################################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
+  mappingList                  = {}
   for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree else []:
     if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
-      mappingList                  = {}
       mappingList['episodeoffset'] = anime.get('episodeoffset')
       try:
         for season in anime.iter('mapping'):
@@ -269,7 +269,7 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
       except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
       else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.xpath("name")[0].text, str(mappingList)) )
       return anime.get('tvdbid'), anime.get('defaulttvdbseason'), mappingList
-  Log.error("anidbTvdbMapping() - No valid tvbdbid: '%s' found for anidbid '%s'" % (anime.get('tvdbid'), anidbid))
+  Log.error("anidbTvdbMapping() - No valid tvbdbid: found for anidbid '%s'" % (anidbid))
   return "", "", {}
 
 ### Look for episodes ###################################################################################
@@ -317,8 +317,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     for rx in SEASON_RX :                               # in anime, more specials folders than season folders, so doing it first
       match = re.match(rx, last_folder, re.IGNORECASE)  #
       if match:                                         # get season number but Skip last entry in seasons (skipped folders)
-        if rx!=SEASON_RX[-1]:  folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 
-        reverse_path.remove(last_folder);  break        # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
+        if rx!=SEASON_RX[-1]:
+          folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 
+          reverse_path.remove(last_folder);  break        # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
     if match and rx!=SEASON_RX[-1]:  break              # cascade break if not skipped folder since season number found
     if len(reverse_path)>1 and path.count("/"):         #if grouping folders, skip and add them as additionnal folders
       Log.warning("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path)
@@ -495,7 +496,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   
   ### File main loop ###
   for file in files:
-    show, season, ep2, title, year = folder_show, folder_season if folder_season else 1, None, "", ""
+    show, season, ep2, title, year = folder_show, folder_season if folder_season is not None else 1, None, "", ""
     
     #DVD/BluRay folders
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
