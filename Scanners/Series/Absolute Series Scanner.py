@@ -230,7 +230,7 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
     if '-' in ep or  '+' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None
     season, ep, ep2 = int(season), int(ep), int(ep)+multi_ep if multi_ep else ep2
     
-  elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep,ep2 = ep + int (mappingList['s%d' % season][2]), ""
+  elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep, season = ep + int (mappingList['s%d' % season][2]), int(mappingList['s%d' % season][3])
   elif season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()       # capitalise if all caps or all lowercase and one space at least
@@ -264,7 +264,7 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
       mappingList['episodeoffset'] = anime.get('episodeoffset')
       try:
         for season in anime.iter('mapping'):
-          if season.get("offset"):  mappingList[ 's'+season.get("tvdbseason")] = [season.get("start"), season.get("end"), season.get("offset")]
+          if season.get("offset"):  mappingList[ 's'+season.get("anidbseason")] = [season.get("start"), season.get("end"), season.get("offset"), season.get("tvdbseason")]
           for string2 in filter(None, season.text.split(';')) if season.text else []:  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] 
       except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
       else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.xpath("name")[0].text, str(mappingList)) )
