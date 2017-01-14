@@ -480,7 +480,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     for prefix in array: # remove cleansed folder name from cleansed filename and remove potential space
       if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+"|"; break
     else:   misc+= clean_string(os.path.basename(file), True)+"|"
-  for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|')
+  for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|') 
   misc_count={}
   for item in misc.split('|'): 
     if item in misc_count:  misc_count[item] +=1
@@ -489,9 +489,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   for item in misc_count:
     if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) ):
       misc_words.append(item)
-      misc = misc.replace(item, '|')
+      misc = misc.replace("|%s|" % item, '|')
+  misc = "|".join([s for s in misc.split('|') if s])
   Log.info("misc: '%s'" % misc)
-  Log.info("misc_count: '%s'" % str(misc_count))
+  #Log.info("misc_count: '%s'" % str(misc_count))
   Log.info("misc_words: '%s'" % str(misc_words))
   
   ### File main loop ###
@@ -503,13 +504,14 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
     filename = ep if disc else os.path.splitext(os.path.basename(file))[0]
     
-    #remove cleansed folder name from cleansed filename and remove potential space
+    #remove cleansed folder name from cleansed filename or keywords otherwise
     if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):              ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
     else:
       for prefix in array:
         if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
-      else:                                     filename = clean_string(filename, True)
-      for item in misc_words:  filename = filename.lower().replace(item, ' ')
+      else:
+        filename = clean_string(filename, True)
+        for item in misc_words:  filename = filename.lower().replace(item, ' ')
       ep = filename
     
     if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
