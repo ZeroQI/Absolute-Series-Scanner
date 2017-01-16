@@ -45,7 +45,7 @@ ANIDB_OFFSET = [0, 100, 150, 200, 400, 0, 0]; ANIDB_RX  = [                     
   '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                  # 10 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
   '(^|(?P<show>.*?)[ _\.\-]+)S ?(?P<ep>\d{1,2}) ?(?P<title>.*)$']                                                                                                       # 11 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
 IGNORE_DIRS_RX  = [ '@Recycle', '.@__thumb', 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
-IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '.plexignore', '\.xml$']                                                       # Skipped files (samples, trailers)                                                          
+IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '.plexignore', '\.xml$', '\.smi$']                                                       # Skipped files (samples, trailers)                                                          
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',    #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', #
                     'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']                                                                 # DVD: 'ifo', 'bup', 'vob'
@@ -157,13 +157,24 @@ def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):  return [int(text) if tex
 def unicodeLen (char):                                           # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
   for x in range(1,6):                                           # start at 1, 6 times 
     if ord(char) < 256-pow(2, 7-x)+(2 if x==6 else 0): return x  # 256-2pow(x) with x(7->0) = 128 192 224 240 248 252 254 255 = 1 to 8 bits at 1 from the left, 256-2pow(7-x) starts form left
+  #og.info("ord(char): '%d'" % ord(char))
 
 ### Decode string back to Unicode ###   #Unicodize in utils?? #fixEncoding in unicodehelper
 def encodeASCII(string, language=None): #from Unicodize and plex scanner and other sources
   if string=="": return ""
-  ranges = [ {"from": ord(u"\u3300"), "to": ord(u"\u33ff")}, {"from": ord(u"\ufe30"), "to": ord(u"\ufe4f")}, {"from": ord(u"\uf900"), "to": ord(u"\ufaff")},  # compatibility ideographs
-             {"from": ord(u"\u30a0"), "to": ord(u"\u30ff")}, {"from": ord(u"\u2e80"), "to": ord(u"\u2eff")},                                                  # Japanese Kana    # cjk radicals supplement
-             {"from": ord(u"\u4e00"), "to": ord(u"\u9fff")}, {"from": ord(u"\u3400"), "to": ord(u"\u4dbf")}]                                                  # windows: TypeError: ord() expected a character, but string of length 2 found #{"from": ord(u"\U00020000"), "to": ord(u"\U0002a6df")}, #{"from": ord(u"\U0002a700"), "to": ord(u"\U0002b73f")}, #{"from": ord(u"\U0002b740"), "to": ord(u"\U0002b81f")}, #{"from": ord(u"\U0002b820"), "to": ord(u"\U0002ceaf")}, # included as of Unicode 8.0                             #{"from": ord(u"\U0002F800"), "to": ord(u"\U0002fa1f")}  # compatibility ideographs
+  ranges = [ {"from": u"\u3300" , "to": u"\u33ff" },
+             {"from": u"\ufe30" , "to": u"\ufe4f" },
+             {"from": u"\uf900" , "to": u"\ufaff" }, # compatibility ideographs
+             {"from": u"\u30a0" , "to": u"\u30ff" }, #cjk radicals supplement                 - Japanese Kana    
+             {"from": u"\u2e80" , "to": u"\u2eff" }, #cjk radicals supplement                 - Japanese Kana    
+             {"from": u"\u4e00" , "to": u"\u9fff" }, #CJK Unified Ideographs                  - Chinese Han Ideographs, Common
+             {"from": u"\uF900" , "to": u"\uFAFF" }, #CJK Compatibility Ideographs            - Chinese Han Ideographs, Rare, historic
+             {"from": u"\u3400" , "to": u"\u4DBF" }, #CJK Unified Ideographs Extension A      - Chinese Han Ideographs, Rare
+             {"from": u"\u20000", "to": u"\u2A6DF"}, #CJK Unified Ideographs Extension B      - Chinese Han Ideographs, Rare, historic
+             {"from": u"\u2A700", "to": u"\u2B73F"}, #CJK Unified Ideographs Extension C      - Chinese Han Ideographs, Rare, historic
+             {"from": u"\u2B740", "to": u"\u2B81F"}, #CJK Unified Ideographs Extension D      - Chinese Han Ideographs, Uncommon, some in current use
+             {"from": u"\u2B820", "to": u"\u2CEAF"}, #CJK Unified Ideographs Extension E      - Chinese Han Ideographs, Rare, historic
+             {"from": u"\u2F800", "to": u"\u2FA1F"}] #CJK Compatibility Ideographs Supplement - Chinese Han Ideographs, Duplicates, unifiable variants, corporate characters
   encodings, encoding = ['iso8859-1', 'utf-16', 'utf-16be', 'utf-8'], ord(string[0])                                                                          #
   if 0 <= encoding < len(encodings):  string = string[1:].decode('cp949') if encoding == 0 and language == 'ko' else string[1:].decode(encodings[encoding])   # If we're dealing with a particular language, we might want to try another code page.
   if sys.getdefaultencoding() not in encodings:
@@ -183,14 +194,16 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
   while i < len(string):                                       ### loop through unicode and replace special chars with spaces then map if found ###
     if ord(string[i])<128:  i = i+1
     else: #non ascii char
-      char, char2, char3, char_len = 0, "", [], unicodeLen(string[i])
+      char, char2, char_list, char_len = 0, "", [], unicodeLen(string[i])
       for x in range(0, char_len):
-        char = 256*char + ord(string[i+x]); char2 += string[i+x]; char3.append(string[i+x])
-        if not x==0: string[i] += string[i+x]; string[i+x]=''
-      try:    asian_language = any([mapping["from"] <= ord("".join(char3).decode('utf8')) <= mapping["to"] for mapping in ranges])
+        char = 256*char + ord(string[i+x]); char2 += string[i+x]; char_list.append(string[i+x])
+        if x:   string[i] += string[i+x]; string[i+x]=''
+      try:
+        asian_language = any([mapping["from"] <= x <= mapping["to"] for mapping in ranges for x in char_list])
+        Log.info("str: '%s'" % str([mapping["from"] <= x <= mapping["to"] for mapping in ranges for x in char_list]))
       except: asian_language = False
       if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
-      elif not asian_language:    Log.warning("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char3, original_string))
+      elif not asian_language:    Log.warning("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char_list, original_string))
       i += char_len
   return ''.join(string)
 
@@ -200,7 +213,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
   if no_parenthesis:                                                                                                                                          # delete parts between parenthesis if needed
     while re.match(".*\([^\(\)]*?\).*", string):                 string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                               #   support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
   if re.search("(\[|\]|\{|\})", string):                         string = re.sub("(\[|\]|\{|\})", "", re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string))  # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
-  string = encodeASCII(string)                                                                                                                                # Translate them
+  #string = encodeASCII(string)                                  #now ran once on string since multiple clean_string calls are made per string                                                                                            # Translate them
   if not no_whack:
     for word in WHACK_PRE_CLEAN:                                 string = replace_insensitive(string, word) if word.lower() in string.lower() else string     # Remove words present in pre-clean list
   string = re.sub(r'(?P<a>[^0-9Ssv])(?P<b>[0-9]{1,3})\.(?P<c>[0-9]{1,2})(?P<d>[^0-9])', '\g<a>\g<b>DoNoTfIlTeR\g<c>\g<d>', string)                            # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
@@ -310,6 +323,22 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if len(reverse_path)>1:  reverse_path.pop(0)
     Log.info("BluRay/DVD folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
   else: disc = False
+  
+  #if ext == 'zip':
+  #  zzz = zipfile.ZipFile(f) # We should actually check inside the zip itself.
+  #  for z in zzz.namelist():
+  #    zname, zext = os.path.splitext(z)
+  #    zext = zext[1:]
+  #    platform_id = platform_id + [k for k, v in game_exts_x.iteritems() if zext in v]
+  #    if len(zzz.namelist()) == 1 and zzz.namelist()[0][-3:] in ['rom','bin','cas']:
+  #      filecontents = zzz.read(zzz.namelist()[0])
+  #      for pf, sigdict in file_sigs.iteritems():
+  #        for sig, addr in sigdict.iteritems(): # logging.debug(" Platform is: " + pf + " sig is: " + sig)
+  #          if '0x' + filecontents[addr:(addr + ((len(sig) - 2)/2))].encode('hex') == sig:
+  #            platform_id[0] = pf
+  #            break
+  #          else:  continue
+  #        break
   
   ### Extract season folder to reduce complexity and use folder as serie name ###
   folder_season =  None
@@ -502,7 +531,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     #DVD/BluRay folders
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
-    filename = ep if disc else os.path.splitext(os.path.basename(file))[0]
+    filename = ep if disc else encodeASCII(os.path.splitext(os.path.basename(file))[0])
     
     #remove cleansed folder name from cleansed filename or keywords otherwise
     if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):              ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
