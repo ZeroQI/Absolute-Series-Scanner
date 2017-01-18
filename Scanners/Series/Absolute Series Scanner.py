@@ -191,6 +191,7 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
   try:       string = string.encode('ascii', 'replace')        # Encode into Ascii
   except:    pass
   original_string, string, i = string, list(string), 0
+  asian_language = False
   while i < len(string):                                       ### loop through unicode and replace special chars with spaces then map if found ###
     if ord(string[i])<128:  i = i+1
     else: #non ascii char
@@ -205,7 +206,7 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
       if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
       elif not asian_language:    Log.warning("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char_list, original_string))
       i += char_len
-  return ''.join(string)
+  return original_string if asian_language else ''.join(string)
 
 ### Allow to display ints even if equal to None at times ################################################
 def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
@@ -213,7 +214,6 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
   if no_parenthesis:                                                                                                                                          # delete parts between parenthesis if needed
     while re.match(".*\([^\(\)]*?\).*", string):                 string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                               #   support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
   if re.search("(\[|\]|\{|\})", string):                         string = re.sub("(\[|\]|\{|\})", "", re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string))  # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
-  #string = encodeASCII(string)                                  #now ran once on string since multiple clean_string calls are made per string                                                                                            # Translate them
   if not no_whack:
     for word in WHACK_PRE_CLEAN:                                 string = replace_insensitive(string, word) if word.lower() in string.lower() else string     # Remove words present in pre-clean list
   string = re.sub(r'(?P<a>[^0-9Ssv])(?P<b>[0-9]{1,3})\.(?P<c>[0-9]{1,2})(?P<d>[^0-9])', '\g<a>\g<b>DoNoTfIlTeR\g<c>\g<d>', string)                            # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
@@ -315,20 +315,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   for file in files_to_remove:  files.remove(file)
   if len(files)==0:  Log.info(""); return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
-  ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
-  if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
-    for temp in ['stream', 'bdmv', 'video_ts']:
-      if reverse_path[0].lower() == temp:  reverse_path.pop(0)
-    ep, disc = clean_string(reverse_path[0], True), True
-    if len(reverse_path)>1:  reverse_path.pop(0)
-    Log.info("BluRay/DVD folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
-  else: disc = False
-  
   #if ext == 'zip':
   #  zzz = zipfile.ZipFile(f) # We should actually check inside the zip itself.
   #  for z in zzz.namelist():
-  #    zname, zext = os.path.splitext(z)
-  #    zext = zext[1:]
+  #    zname, zext = os.path.splitext(z); zext = zext[1:]
   #    platform_id = platform_id + [k for k, v in game_exts_x.iteritems() if zext in v]
   #    if len(zzz.namelist()) == 1 and zzz.namelist()[0][-3:] in ['rom','bin','cas']:
   #      filecontents = zzz.read(zzz.namelist()[0])
@@ -339,6 +329,15 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   #            break
   #          else:  continue
   #        break
+  
+  ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
+  if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
+    for temp in ['stream', 'bdmv', 'video_ts']:
+      if reverse_path[0].lower() == temp:  reverse_path.pop(0)
+    ep, disc = clean_string(reverse_path[0], True), True
+    if len(reverse_path)>1:  reverse_path.pop(0)
+    Log.info("BluRay/DVD folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
+  else: disc = False
   
   ### Extract season folder to reduce complexity and use folder as serie name ###
   folder_season =  None
@@ -510,19 +509,20 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+"|"; break
     else:   misc+= clean_string(os.path.basename(file), True)+"|"
   for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|') 
+  misc = "|".join([s for s in misc.split('|') if s])
+  Log.info("misc: '%s'" % misc)
   misc_count={}
   for item in misc.split('|'): 
     if item in misc_count:  misc_count[item] +=1
     else:                   misc_count[item] = 1
-  misc_words = []
+  misc_words = ()
   for item in misc_count:
     if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) ):
-      misc_words.append(item)
-      misc = misc.replace("|%s|" % item, '|')
-  misc = "|".join([s for s in misc.split('|') if s])
-  Log.info("misc: '%s'" % misc)
+      misc_words = misc_words + (item,)
+    misc = misc.replace("|%s|" % item, '|')
   #Log.info("misc_count: '%s'" % str(misc_count))
-  Log.info("misc_words: '%s'" % str(misc_words))
+  #Log.info("misc_words: '%s'" % str(misc_words))
+  #Log.info("misc_words1: '%s'" % misc_words[0])
   
   ### File main loop ###
   for file in files:
@@ -531,7 +531,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     #DVD/BluRay folders
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
-    filename = ep if disc else encodeASCII(os.path.splitext(os.path.basename(file))[0])
+    if disc:  filename = ep
+    else:
+      filename = os.path.splitext(os.path.basename(file))[0]
+      encodeASCII(filename)
     
     #remove cleansed folder name from cleansed filename or keywords otherwise
     if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):              ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
