@@ -12,7 +12,7 @@ The Plex metadata agent will find metadata (Serie Title, summary year, episode t
 
 ###Which Metadata/Title source to select?
 - Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" serie). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
-- TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniBD.net, but they do not carry porn series so no metadata for this type. TheTVDB uses seasons which can be practical for long anime.
+- TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniDB.net, but they do not carry porn series so no metadata for this type. TheTVDB uses seasons which can be practical for long anime.
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
 
 ###File Naming Conventions
@@ -112,7 +112,7 @@ You can specify the guid to use the following way:
 - In guid_type.id inside serie folder with the id in it (ex: tvdb.id file with tvdbid "114801" without double quotes in it)
 
 Hama supports the following guid_type:
-- anidb for AniDB.net (and and the behaviour changing mode anibd2)
+- anidb for AniDB.net (and and the behaviour changing mode anidb2)
 - tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
 - tmdb  For TheMovieDB.net (and the serie part of TheMovieDB: tsdb)
 - imdb  For the International Movie DataBase (ids starts with "tt...")
@@ -122,7 +122,7 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering     </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
 <TBODY>
-        <TR> <TD> anib2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Map to the tvdb at the right season and ep number to show 1 serie only</TD> </TR>
+        <TR> <TD> anidb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Map to the tvdb at the right season and ep number to show 1 serie only</TD> </TR>
         <TR> <TD> tvdb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Multiple single season series (Sword Art online)</TD> </TR>
         <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan)</TD> </TR>
         <TR> <TD> tvdb4     </TD> <TD> Absolute, random season </TD> <TD> Abs/Custom/Arc db   </TD> <TD>Absolute          </TD> <TD>Long series with arc (one piece, dragon ball)</TD> </TR>
