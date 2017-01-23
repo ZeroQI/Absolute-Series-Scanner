@@ -154,11 +154,17 @@ def replace_insensitive (ep, word, sep=" "):
 def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):  return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
 
 ### Return number of bytes of Unicode characters ########################################################
-def unicodeLen (char):                                           # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
+def unicodeCharLen (char):                                           # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
   for x in range(1,6):                                           # start at 1, 6 times 
     if ord(char) < 256-pow(2, 7-x)+(2 if x==6 else 0): return x  # 256-2pow(x) with x(7->0) = 128 192 224 240 248 252 254 255 = 1 to 8 bits at 1 from the left, 256-2pow(7-x) starts form left
   #og.info("ord(char): '%d'" % ord(char))
 
+def unicodeLen (string):                                           # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
+  length=0
+  for char in string:
+    length += unicodeCharLen(char)
+  return length
+  
 ### Decode string back to Unicode ###   #Unicodize in utils?? #fixEncoding in unicodehelper
 def encodeASCII(string, language=None): #from Unicodize and plex scanner and other sources
   if string=="": return ""
@@ -195,7 +201,7 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
   while i < len(string):                                       ### loop through unicode and replace special chars with spaces then map if found ###
     if ord(string[i])<128:  i = i+1
     else: #non ascii char
-      char, char2, char_list, char_len = 0, "", [], unicodeLen(string[i])
+      char, char2, char_list, char_len = 0, "", [], unicodeCharLen(string[i])
       for x in range(0, char_len):
         char = 256*char + ord(string[i+x]); char2 += string[i+x]; char_list.append(string[i+x])
         if x:   string[i] += string[i+x]; string[i+x]=''
@@ -233,7 +239,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
   return string
 
 ### Add files into Plex database ########################################################################
-def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
+def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", length=0, tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   # Mapping List 
   ep_orig, ep_orig_padded = "s%de%d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%s" % ep2), "s%02de%02d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%02d" % ep2)
   ep_orig_single          = "s%de%d"   % (season, ep)
@@ -268,7 +274,8 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
       mediaList.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = str(SERIES_RX.index(rx)) if rx in SERIES_RX else str(ANIDB_RX.index(rx)+len(SERIES_RX)) if rx in ANIDB_RX else ""  # rank of the regex used from 0
   Log.info("\"%s\" s%04de%03d%s%s \"%s\"%s%s" % (show, season, ep, "" if ep==ep2 or not ep2 else "-%03d" % ep2, " (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "", os.path.basename(file), " \"%s\"" % index if index else "", " \"%s\" " % title if title else ""))
-
+  #Log.info('{show} s{season}e{episode}{multi}{original} "{file:<{length}}" {title}{regex}'.format(show=show, file=os.path.basename(file), length=length, season=season, episode=ep, multi="" if ep==ep2 or not ep2 else "-%03d" % ep2, original=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "", title=" \"%s\"" % index if index else "", regex=" \"%s\" " % title if title else ""))
+  
 ### Get the tvdbId from the AnimeId #######################################################################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   mappingList                  = {}
@@ -504,7 +511,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   misc  = "|" # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
   array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
   files.sort(key=natural_sort_key)
+  length=0
   for file in files:     # build misc variable, to avoid numbers in titles if present in multiple filenames
+    length2=len(os.path.basename(file))
+    #http://stackoverflow.com/questions/29776299/aligning-japanese-characters-in-python
+    if length<length2: length = length2 #max len longest - dirname(file)
     for prefix in array: # remove cleansed folder name from cleansed filename and remove potential space
       if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+"|"; break
     else:   misc+= clean_string(os.path.basename(file), True)+"|"
@@ -517,12 +528,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     else:                   misc_count[item] = 1
   misc_words = ()
   for item in misc_count:
-    if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) ):
+    if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) and max(misc_count.values())>3 ):
       misc_words = misc_words + (item,)
     misc = misc.replace("|%s|" % item, '|')
-  #Log.info("misc_count: '%s'" % str(misc_count))
-  #Log.info("misc_words: '%s'" % str(misc_words))
-  #Log.info("misc_words1: '%s'" % misc_words[0])
+  Log.info("misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
   
   ### File main loop ###
   for file in files:
@@ -537,13 +546,16 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       encodeASCII(filename)
     
     #remove cleansed folder name from cleansed filename or keywords otherwise
+    #Log.info("filename1: '%s'" % filename)
     if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):              ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
     else:
       for prefix in array:
         if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
       else:
         filename = clean_string(filename, True)
-        for item in misc_words:  filename = filename.lower().replace(item, ' ', 1)
+        #Log.info("else filename '%s'" % filename)
+        for item in misc_words:  filename = filename.lower().replace(item, ' ', 1); Log.info("item: '%s'" % item)
+      #Log.info("filename2: '%s'" % filename)
       ep = filename
     
     if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
@@ -555,8 +567,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
     
     # Word search for ep number in scrubbed title
+    #Log.info("ep: '%s'" % ep)
     words, loop_completed = filter(None, ep.split()), False                                                                                                         #
+    #Log.info("words: '%s'" % str(words))
     for word in words:                                                                                                                                              #
+      #Log.info("word: '%s'" % word)
       ep=word.lower().strip()                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
       for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
         if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):      ep, season = ep[len(prefix):], 0 if prefix=="s" else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
@@ -570,6 +585,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         else:                                                                                                  continue
       if re.match("((t|o)[0-9]{1,3}$|(sp|special|oav|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)($|[0-9]{1,3}$))", ep):  break                         # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
       if ''.join(letter for letter in ep if letter.isdigit())=="":                                             continue                                             # Continue if there are no numbers in the string
+      #Log.info("misc.count(ep): '%s'" % misc.count(ep))
       if path and misc.count(ep)>=3:                                                                           continue                                             # Continue if not root folder and string found in in any other filename
       if ep in clean_string(folder_show, True).split() and clean_string(filename, True).split().count(ep)!=2:  continue                                             # Continue if string is in the folder name & string is not in the filename only twice
       if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:2])==folder_season):   season, ep = int(ep[0:2]), ep[2:4]                   # 1206 could be season 12 episode 06  #Get assigned from left ot right
@@ -580,7 +596,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       break
     else:  loop_completed = True
     if not loop_completed and ep.isdigit():  
-      add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  continue
+      add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  continue
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
     movie_list, AniDB_op, counter, ep = {}, {}, 500, filename
@@ -604,14 +620,14 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
           if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
           ep = offset + int(ep) 
-        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
+        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
         break
     if match: continue  # next file iteration
     
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]))
     counter = counter+1                                          #                    #
-    add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "")
+    add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "", length)
 
   Log.info("")
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
