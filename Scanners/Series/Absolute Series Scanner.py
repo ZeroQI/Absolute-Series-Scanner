@@ -388,11 +388,11 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         for episode in tvdbanime.xpath('Episode'):
           if episode.xpath('SeasonNumber')[0].text != '0':
             ep_count = ep_count + 1
-            if not episode.xpath('absolute_number')[0].text:
+            if not episode.xpath('absolute_number')[0].text or episode.xpath('absolute_number')[0].text==str(ep_count):
               episode.xpath('absolute_number')[0].text, number_set = str(ep_count), True
               abs_manual_placement_info.append("s%se%s = abs %s" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text, episode.xpath('absolute_number')[0].text))
             elif not number_set:  ep_count = int(episode.xpath('absolute_number')[0].text)
-            else:  Log.error("abs number found on ep (s%se%s) after starting to manually place our own abs numbers. all episodes will be added as season 1." % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text) );  break
+            else:  Log.error("different abs number found on ep (s%se%s) after starting to manually place our own abs numbers. all episodes will be added as season 1." % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text) );  break
         else:
           Log.debug("abs_manual_placement_worked, abs_manual_placement_info: '%s'" % (str(abs_manual_placement_info)))
           for episode in tvdbanime.xpath('Episode'):
