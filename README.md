@@ -24,7 +24,7 @@ Naming
 - Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
 
 Grouping folder
-- If you use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
+- If you used to use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
   You can just add it as additionnal root folder in the library: "D:/Anime/Dragon Ball/" for "D:/Anime/Dragon Ball/[2] Dragon Ball Z" folder for example...
 
 Movie files in Series libraries (since this is a Series Scanner) are supported if:
