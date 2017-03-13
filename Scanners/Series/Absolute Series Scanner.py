@@ -5,12 +5,8 @@ import os                                               # path, listdir
 import tempfile                                         # NamedTemporaryFile
 import time                                             # strftime
 import re                                               # match, compile, sub
-import unicodedata                                      # normalize
 from lxml import etree                                  # fromstring
 import Utils                                            # SplitPath
-import Media                                            # Episode
-import Stack                                            # Scan
-import logging, logging.handlers                        #
 try:                 from urllib.request import urlopen # urlopen Python 3.0 and later
 except ImportError:  from urllib2        import urlopen # urlopen Python 2.x #import urllib2 # urlopen
 
@@ -91,30 +87,19 @@ CHARACTERS_MAP = {
   49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½', 52352:'', 52353:''}                                                    #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #  ['\xcc', '\x81'] 
 
 ### Log + LOG_PATH calculated once for all calls ###
-LOG_PATHS = { 'win32':  [ '%LOCALAPPDATA%\\Plex Media Server\\Logs',                                       # Windows Vista/7/8
-                          '%USERPROFILE%\\Local Settings\\Application Data\\Plex Media Server\\Logs' ],    # Windows XP, 2003, Home Server
-              'darwin': [ '$HOME/Library/Application Support/Plex Media Server/Logs',                      # Darwin (MacOS) 
-                          '$HOME/Library/Logs/Plex Media Server'],                                         # Darwin (MacOS) LINE_FEED = "\r"
-              'linux':  [ '$PLEX_HOME/Library/Application Support/Plex Media Server/Logs',                 # Linux
-                          '$PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR/Plex Media Server/Logs',             # Slack, Ubuntu/Fedora, Synology
-                          '/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',          # Ubuntu/Fedora/QNAP
-                          '/volume1/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, Asustor
-                          '/volume2/Plex/Library/Application Support/Plex Media Server/Logs',              # Synology, if migrated a second raid volume as unique volume in new box         
-                          '/c/.plex/Library/Application Support/Plex Media Server/Logs',                   # ReadyNAS
-                          '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Logs',   # Debian, Fedora, CentOS, Ubuntu
-                          '/usr/local/plexdata/Plex Media Server/Logs',                                    # FreeBSD
-                          '/usr/pbi/plexmediaserver-amd64/plexdata/Plex Media Server/Logs',                # FreeNAS
-                          '${JAIL_ROOT}/var/db/plexdata/Plex Media Server/Logs/',                          # FreeNAS
-                          '/share/CACHEDEV1_DATA/.qpkg/PlexMediaServer/Library/Plex Media Server/Logs',    # QNAP
-                          '/raid0/data/module/Plex/sys/Plex Media Server/Logs',                            # Thecus
-                          '/raid0/data/PLEX_CONFIG/Plex Media Server/Logs',                                # Thecus Plex community version
-                          '/config/Library/Application Support/Plex Media Server/Logs'],                   # Docker linuxserver/plex
-              'freebsd9':['/usr/local/plexdata/Plex Media Server/Logs' ] }                  
+import logging, logging.handlers                        #
+RootLogger     = logging.getLogger('main')
+RootHandler    = None
+RootFormatting = logging.Formatter('%(message)s') #%(asctime)-15s %(levelname)s - 
+RootLogger.setLevel(logging.DEBUG);
+Log = RootLogger
 
-RootLogger,     RootHandler,     RootFormatting     = logging.getLogger('main'),           None, logging.Formatter('%(message)s') #%(asctime)-15s %(levelname)s - 
-FileListLogger, FileListHandler, FileListFormatting = logging.getLogger('FileListLogger'), None, logging.Formatter('%(message)s')
-RootLogger.setLevel(logging.DEBUG); FileListLogger.setLevel(logging.DEBUG)
-Log, LogFileList = RootLogger, FileListLogger.info
+FileListLogger     = logging.getLogger('FileListLogger')
+FileListHandler    = None
+FileListFormatting = logging.Formatter('%(message)s')
+FileListLogger.setLevel(logging.DEBUG)
+LogFileList = FileListLogger.info
+
 def set_logging(instance, filename):
   global RootLogger, RootHandler, RootFormatting, FileListLogger, FileListHandler, FileListFormatting
   logger, handler, formatting, backup_count = [RootLogger, RootHandler, RootFormatting, 9] if instance=="Root" else [FileListLogger, FileListHandler, FileListFormatting, 1]
@@ -127,11 +112,8 @@ def set_logging(instance, filename):
   else:                 FileListHandler = handler
 
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
-platform = sys.platform.lower() if "platform" in dir(sys) and not sys.platform.lower().startswith("linux") else "linux" if "platform" in dir(sys) else Platform.OS.lower()
-for LOG_PATH in LOG_PATHS[platform] if platform in LOG_PATHS else [ os.path.join(os.getcwd(),"Logs"), '$HOME']:
-  if '%' in LOG_PATH or '$' in LOG_PATH:  LOG_PATH = os.path.expandvars(LOG_PATH)  # % on win only, $ on linux
-  if os.path.isdir(LOG_PATH):             break                                    # os.path.exists(LOG_PATH)
-else: LOG_PATH = os.path.expanduser('~')                                           # logging.basicConfig(), logging.basicConfig(filename=os.path.join(absolute_path, 'Plex Media Scanner (custom ASS).log'), level=logging.INFO) #logging.error('Failed on {}'.format(filename))
+import inspect
+LOG_PATH         = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", "..", "Logs"))
 LOG_FILE_LIBRARY = LOG_FILE = 'Plex Media Scanner (custom ASS).log'                # Log filename library will include the library name, LOG_FILE not and serve as reference
 set_logging("Root", LOG_FILE_LIBRARY)
 PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
@@ -167,6 +149,7 @@ def unicodeLen (string):                                           # count conse
   
 ### Decode string back to Unicode ###   #Unicodize in utils?? #fixEncoding in unicodehelper
 def encodeASCII(string, language=None): #from Unicodize and plex scanner and other sources
+  import unicodedata                                      # normalize
   if string=="": return ""
   ranges = [ {"from": u"\u3300" , "to": u"\u33ff" },
              {"from": u"\ufe30" , "to": u"\ufe4f" },
@@ -240,6 +223,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", length=0, tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
+  import Media                                            # Episode
   # Mapping List 
   ep_orig, ep_orig_padded = "s%de%d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%s" % ep2), "s%02de%02d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%02d" % ep2)
   ep_orig_single          = "s%de%d"   % (season, ep)
@@ -356,7 +340,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 
           reverse_path.remove(last_folder);  break        # All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
     if match and rx!=SEASON_RX[-1]:  break              # cascade break if not skipped folder since season number found
-    if len(reverse_path)>1 and path.count("/"):         #if grouping folders, skip and add them as additionnal folders
+    if len(reverse_path)>1 and path.count(os.sep):         #if grouping folders, skip and add them as additionnal folders
       Log.warning("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path)
       Log.info("".ljust(157, '-'))
       return
@@ -446,7 +430,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     
     # Local custom mapping file
     anidb_id, dir = anidb2_match.group('guid').lower(), os.path.join(root, path)
-    while dir and dir is not "/":
+    while dir and dir is not os.sep:
       scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_CUSTOM)
       if os.path.exists( scudlee_filename_custom ):
         with open(scudlee_filename_custom, 'r') as scudlee_file:
@@ -630,4 +614,5 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "", length)
 
   Log.info("")
+  import Stack                                            # Scan
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
