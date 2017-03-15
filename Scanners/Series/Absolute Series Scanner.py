@@ -430,7 +430,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     
     # Local custom mapping file
     anidb_id, dir = anidb2_match.group('guid').lower(), os.path.join(root, path)
-    while dir and dir is not os.sep:
+    while dir and os.path.splitdrive(dir)[1] != os.sep:
       scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_CUSTOM)
       if os.path.exists( scudlee_filename_custom ):
         with open(scudlee_filename_custom, 'r') as scudlee_file:
