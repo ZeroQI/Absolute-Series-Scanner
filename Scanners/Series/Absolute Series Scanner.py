@@ -456,6 +456,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           with open(tmp_filename, 'w') as scudlee_file:
             scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING_MOD).read()
             scudlee_file.write( scudlee_file_content )
+          if os.path.exists(scudlee_filename): os.remove(scudlee_filename)
           os.rename(tmp_filename, scudlee_filename)
       except Exception as e:  Log.error("Error downloading ScudLee's file mod from local/GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING_MOD, e)) 
       else:
@@ -476,6 +477,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           with open(tmp_filename, 'w') as scudlee_file:
             scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING).read()
             scudlee_file.write( scudlee_file_content )
+          if os.path.exists(scudlee_filename): os.remove(scudlee_filename)
           os.rename(tmp_filename, scudlee_filename)
       except Exception as e:  Log.error("Error parsing ScudLee's file mod content, Exception: '%s'" % e)
       else:
