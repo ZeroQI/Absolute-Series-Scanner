@@ -372,7 +372,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         for episode in tvdbanime.xpath('Episode'):
           if episode.xpath('SeasonNumber')[0].text != '0':
             ep_count = ep_count + 1
-            if not episode.xpath('absolute_number')[0].text or episode.xpath('absolute_number')[0].text==str(ep_count):
+            if not episode.xpath('absolute_number')[0].text:
               episode.xpath('absolute_number')[0].text, number_set = str(ep_count), True
               abs_manual_placement_info.append("s%se%s = abs %s" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text, episode.xpath('absolute_number')[0].text))
             elif not number_set:  ep_count = int(episode.xpath('absolute_number')[0].text)
