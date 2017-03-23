@@ -495,7 +495,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   
   # Build misc variable to check numbers in titles
   misc  = "|" # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
-  array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
+  array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True)) if folder_show else ()
   files.sort(key=natural_sort_key)
   length=0
   for file in files:     # build misc variable, to avoid numbers in titles if present in multiple filenames
