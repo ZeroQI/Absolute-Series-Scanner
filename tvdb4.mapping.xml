@@ -43,7 +43,7 @@
   </anime>
   <anime tvdbid="305075" name="Bungo Stray Dogs">
     01|001|012|Bungo Stray Dogs 1st Cour
-    02|013|024|Bungo Stray Dogs 2nd Cour (Still Airing)
+    02|013|024|Bungo Stray Dogs 2nd Cour
   </anime>
   <anime tvdbid="70668" name="Cardcaptor Sakura">
     01|001|035|Cardcaptor Sakura 1
@@ -91,7 +91,8 @@
     02|015|027|Resurrection 'F' Arc
     03|028|041|Universe 6 Arc
     04|042|046|Potaufeu Arc
-    05|047|047|Future Trunks Arc (Still airing)
+    05|047|076|Future Trunks Arc
+    06|077|077|Universe Survival Arc
   </anime>
   <anime tvdbid="133341" name="Durarara!!">
     01|001|024|Durarara!!
@@ -151,28 +152,29 @@
     17|362|372|The Fourth Great Ninja War|The Return of Squad Seven
     18|373|393|The Fourth Great Ninja War|Obito Uchiha
     19|394|413|Naruto's Back ~The Tracks of His Friends
-    20|414|414|Infinite Tsukuyomi: The Invocation (ongoing currently)
+    20|414|479|Infinite Tsukuyomi: The Invocation
+    21|480|500|Epilogue
   </anime>
   <anime tvdbid="81797" name="One Piece">
-    01|001|061|East Blue
-    02|062|077|Entering into the Grand Line
+    01|001|061|East Blue - Gathering the Crew
+    02|062|077|Entering into the Grand Line (Whiskey Peak and Little Garden)
     03|078|092|Introducing Chopper at the Winter Island
-    04|093|130|Arrival and Fierce Fighting at Alabasta
-    05|131|143|TV Original
-    06|144|195|Sky Island Skypiea / Golden Bell
-    07|196|228|Escape! The Naval Fortress and The Foxy Pirate Crew
+    04|093|135|Arrival and Fierce Fighting at Alabasta
+    05|136|195|Sky Island Skypiea / Golden Bell
+    06|196|206|Escape! The Naval Fortress G8
+    07|207|228|Davy Back Games - The Foxy Pirate Crew
     08|229|263|Water Seven
     09|264|335|Enies Lobby
     10|337|381|Thriller Bark
     11|382|405|Sabaody Archipelago
-    12|408|421|Island of Women
-    13|422|458|Impel Down
-    14|459|516|Marineford
-    15|517|573|Fishman Island
-    16|574|628|Punk Hazard
+    12|408|421|Island of Women / Amazon Lily
+    13|422|456|Impel Down
+    14|457|516|Marineford
+    15|517|574|Fishman Island
+    16|575|628|Punk Hazard
     17|629|746|Dressrosa
-    18|747|750|Silver Mine Arc
-    19|751|751|Zou Arc (Currently Airing)
+    18|747|782|Zou Arc
+    19|783|783|Whole Cake Island Arc
   </anime>
   <anime tvdbid="289906" name="Seraph of the End">
     01|001|012|Vampire Reign
