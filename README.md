@@ -243,8 +243,8 @@ Include the following logs (in any case, specify if file not present):
 - [...]/Plex Media Server/Logs/Plex Media Scanner (custom ASS) filelist.log (library file list)
 
 And post in:
-- Support thread for Scanner (you are unsure): https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest
-- Github issue page (you have a bug):          https://github.com/ZeroQI/Absolute-Series-Scanner/issues
+- [Plex Support thread for Scanner (you are unsure)] (https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest)
+- [Github issue page (you have a bug)] (Scanner GitHub Page](https://github.com/ZeroQI/Absolute-Series-Scanner/issues)
 
 Known issues:
 
