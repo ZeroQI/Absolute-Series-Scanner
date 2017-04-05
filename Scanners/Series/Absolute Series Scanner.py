@@ -350,12 +350,16 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   guid = ""
   if not re.search(SOURCE_IDS, folder_show, re.IGNORECASE):
     for file in SOURCE_ID_FILES:
-      if os.path.isfile(os.path.join(root, path, file)):
-        with open(os.path.join(root, path, file), 'r') as guid_file:
+      if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
+        Log.info("Forced ID file in serie folder")
+        with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
           guid         = guid_file.read().strip()
-          folder_show  = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(os.path.basename(file))[0], guid)
+          folder_show  = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], guid)
         break
-    else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+    else:
+      Log.info("No forced ID - file: %s, present: %s"% (os.path.join(root, os.sep.join(list(reversed(reverse_path)))), str(os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), 'tvdb2.id')))))
+      folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+  else:  Log.info("Forced ID in serie folder name")
   
   ### Forced id mode - Capture if absolute numbering should be applied for all episode numbers  ###
   tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
@@ -618,3 +622,4 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   Log.info("")
   import Stack                                            # Scan
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
+  
