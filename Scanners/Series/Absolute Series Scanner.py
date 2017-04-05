@@ -7,6 +7,7 @@ import time                                             # strftime
 import re                                               # match, compile, sub
 from lxml import etree                                  # fromstring
 import Utils                                            # SplitPath
+import VideoFiles                                       # VideoFiles.Scan(path, files, mediaList, subdirs, None) # Scan for video files.
 try:                 from urllib.request import urlopen # urlopen Python 3.0 and later
 except ImportError:  from urllib2        import urlopen # urlopen Python 2.x #import urllib2 # urlopen
 
@@ -622,4 +623,3 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   Log.info("")
   import Stack                                            # Scan
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
-  
