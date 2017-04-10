@@ -196,14 +196,12 @@ Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
 
 Install
 =======
-- https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/Scanners/Series/Absolute%20Series%20Scanner.py
-Into:
-- [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
+- Download https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/Scanners/Series/Absolute%20Series%20Scanner.py
+- Save into [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
 Note:
 - "Scanners" and "Series" folder are not created by default and will need creating.
-- "Scanners" folder will be besides "Plug-in Support" folder in the same parent directory.
-
-Put latest scanner file from:
+- "Scanners" folder will be at the same level as "Plug-in Support" folder (in other words the same parent directory)
+- "Absolute Series Scanner.py" resides in Series folder, do not create an additional folder not listed like "absolute-series-scanner-master"
 
 Linux install script example
 <PRE><CODE>
@@ -228,13 +226,14 @@ List of configuration files:
 
 Troubleshooting:
 ================
-- Update the scanner to the latest
+- Update the scanner to the latest (on windows, powershell script in same folder as the scanner can be used to update)
 - If the scanner not listed in scanner list
   - Make sure you did create a "Series" library, as a "Movie" library will not show a "Series" scanner like ASS
-  - Check scanner file size and open the scanner file to check if it does have html/xml tags. If it does, it was saved incorrectly and you should feel bad.
+  - Make sure it is saved in [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
+  - Check scanner file size and open the scanner file to check if it does have html/xml tags.
 - Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
 - if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
-- If Episodes are missing, wrong seasons or episode numbers, or serie(s) missing, please include all "(custom ASS)" logs
+- If Episodes are missing, wrong seasons or episode numbers, or serie(s) missing, check all "(custom ASS)" logs
 - If library doesn't add new content then most likelly the scanner is crashing (after scanner update) and will revert any changes to the library so nothing changes...
 
 Include the following logs (in any case, specify if file not present):
@@ -247,7 +246,7 @@ And post in:
 - [Github issue page (you have a bug)](https://github.com/ZeroQI/Absolute-Series-Scanner/issues)
 
 Known issues:
-
+=============
 <PRE><CODE>
 Nov 16, 2016 18:48:53.594 [0x7f48c2324800] DEBUG - Adding subdirectory for scanner: /home/plex/things/anime/Ah! My Goddess 2
 Nov 16, 2016 18:48:53.597 [0x7f48c2324800] ERROR - No module in VideoFiles
