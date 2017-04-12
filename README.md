@@ -167,8 +167,7 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
     - "tvdb4" will not work correctly with any other modes so all folders of a series will have to have this mode
 
 ##### Examples: 
-<PRE><CODE>
-== Example 1 ==
+<PRE><CODE>== Example 1 ==
 - "Bakuman      [anidb2-7251]" = "Bakuman      [tvdb-193811-s1]" = "Bakuman [tvdb-193811]"
 - "Bakuman 2011 [anidb2-8150]" = "Bakuman 2011 [tvdb-193811-s2]"
 - "Bakuman 2012 [anidb2-8836]" = "Bakuman 2012 [tvdb-193811-s3]"
@@ -198,7 +197,6 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
       01|001|012|Vampire Reign
       02|013|024|Battle in Nagoya
     &lt;/anime&gt;
-```
 
   "Black Lagoon                         [tvdb4-79604]"
   "Black Lagoon - The Second Barrage    [tvdb4-79604-s2]"
