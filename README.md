@@ -105,18 +105,16 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
 
 ### Forcing the series ID
-You can specify the guid to use the following way:
-- In custom search serie name by adding " [guid_type-id_number]" at the end
-- In Serie folder name by adding " [guid_type-id_number]" at the end
-- In guid_type.id inside serie folder with the id in it (ex: tvdb.id file with tvdbid "114801" without double quotes in it)
-
 Hama supports the following guid_type:
 - anidb for AniDB.net (and and the behaviour changing mode anidb2)
 - tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
-- tmdb  For TheMovieDB.net (and the serie part of TheMovieDB: tsdb)
-- imdb  For the International Movie DataBase (ids starts with "tt...")
+- [deprecated] tmdb  For TheMovieDB.net (and the serie part of TheMovieDB: tsdb)
+- [deprecated] imdb  For the International Movie DataBase (ids starts with "tt...")
 
-You can have **absolutely numbered series** (i.e. without season number apart from Specials/season 0) being **displayed in Plex with seasons** without the need to rename the files with season numbering or creating season folders and moving absolutely numbered episodes inside by using the following custom modes, and episodes will be displayed as:
+You can specify the guid to use the following way:
+- In guid_type.id inside serie folder with the id in it (ex: tvdb.id file with tvdbid "114801" without double quotes in it)
+- In Serie folder name by adding " [guid_type-id_number]" at the end
+- In custom search serie name by adding " [guid_type-id_number]" at the end
 
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering     </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
@@ -153,36 +151,22 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 </TBODY>
 </TABLE>
 
-####### tvdb4
-<PRE><CODE>
-The arc definition to split into seasons the absolute numbering is done using the following order:
-    - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
-    - in a local "tvdb4.mapping" file inside serie folder with the following format lines, one per arc/season:
-      <CODE>\<season_num\>|\<starting_ep_num\>|\<ending_ep_num\>|\<freeform_text_naming_the_season\>(optional)</CODE>
-    - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
-
-####### Advanced modes
+##### Advanced modes
 For when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
-- " [anidb2-xxxxx]"
-  - will find the season & eposide offset defiend in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
-- " [tvdb/2/3/4-xxxxx-sY]"
-  - episode numbers found in the files are left alone and added to season Y
-- " [tvdb/2/3/4-xxxxx-eZ]"
-  - episode numbers found in the files are adjusted (epNum+Z-1)
-- " [tvdb/2/3/4-xxxxx-sYeZ]" 
-  - episode numbers found in the files are adjusted (epNum+Z-1) and added to season Y
-  - Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
-- **!!IMPORTANT NOTES FOR ADVANCED MODES!!**
-  - When defining you modes on your folders:
+- " [anidb2-xxxxx]" will find the season & eposide offset defiend in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
+- " [tvdb/2/3/4-xxxxx-sY]" episode numbers found in the files are left alone and added to season Y
+- " [tvdb/2/3/4-xxxxx-eZ]" episode numbers found in the files are adjusted (epNum+Z-1)
+- " [tvdb/2/3/4-xxxxx-sYeZ]" episode numbers found in the files are adjusted (epNum+Z-1) and added to season Y, Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
+- **!!IMPORTANT NOTES!!**
+  - When defining your modes on your folders:
     - If you don't use the same mode or compatible modes for all separate folders for a series, you will run into issues.
-      - "anidb2", "tvdb", & "tvdb2" will work together
-    - You might have to manually merge Plex series if "anidb2"/"tvdb2" or "tvdb"/"tvdb2" are both used.
+      - "anidb2", "tvdb" & "tvdb2" will work together
+    - You might have to manually merge Plex series together if "anidb2"/"tvdb2" or "tvdb"/"tvdb2" are both used.
     - "anidb2"/"tvdb" should automatically merge (but Plex is not perfect so you still might have to manually merge)
     - "tvdb3" will not work correctly with any other modes so all folders of a series will have to have this mode
     - "tvdb4" will not work correctly with any other modes so all folders of a series will have to have this mode
 
-####### Examples: 
-
+##### Examples: 
 <PRE><CODE>
 == Example 1 ==
 - "Bakuman      [anidb2-7251]" = "Bakuman      [tvdb-193811-s1]" = "Bakuman [tvdb-193811]"
@@ -198,22 +182,29 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
   "Bleach movie 1 Memories in the Rain       [tvdb3-74796-s0e3]"
   "Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
   
-== Example 4 ==
-  https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml
+== Example 4 == tvdb4 Custom selected Arcs as seasons (as tvdb use them as half seasons for black lagoon for example)
+  The arc definition to split into seasons the absolute numbering is done using the following order:
+    - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
+    - in a local "tvdb4.mapping" file inside serie folder with the following format lines, one per arc/season:
+      <CODE>\<season_num\>|\<starting_ep_num\>|\<ending_ep_num\>|\<freeform_text_naming_the_season\>(optional)</CODE>
+    - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
+    
     \<anime tvdbid="79604" name="Black Lagoon"\>
       01|001|012|The First Barrage
       02|013|024|The Second Barrage
       03|025|029|Roberta's Blood Trail
     \</anime\>
-    &lt;tvdb4entries&gt;
-    &lt;anime tvdbid="289906" name="Seraph of the End"&gt;
+    \<anime tvdbid="289906" name="Seraph of the End"\>
     01|001|012|Vampire Reign
     02|013|024|Battle in Nagoya
-    &lt;/anime&gt;
+   \</anime\>
 
-  "Black Lagoon [tvdb4-79604]"  (or "[tvdb4-79604-s1]")
-  "Black Lagoon - The Second Barrage [tvdb4-79604-s2]"
+  "Black Lagoon                         [tvdb4-79604]"
+  "Black Lagoon - The Second Barrage    [tvdb4-79604-s2]"
   "Black Lagoon - Roberta`s Blood Trail [tvdb4-79604-s3]"
+  
+  "Seraph of the End - Vampire Reign    [tvdb4-79604]"
+  "Seraph of the End - Battle in Nagoya [tvdb4-79604-s2]"
 </CODE></PRE>
 
 ## Install
