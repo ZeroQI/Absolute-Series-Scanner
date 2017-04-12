@@ -10,22 +10,22 @@ A Plex series scanner choose the following from the folders and file names:
 
 The Plex metadata agent will find metadata (Serie Title, summary year, episode title, summary, posters, fanart, tags, ... ) for files showing in Plex. Anything missing there while the file shows up in Plex is an Agent issue, refer to the Agent readme here: https://github.com/ZeroQI/Hama.bundle/blob/master/README.md
 
-### Which Metadata/Title source to select?
+## Which Metadata/Title source to select?
 - Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" serie). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
 - TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniDB.net, but they do not carry porn series so no metadata for this type. TheTVDB uses seasons which can be practical for long anime.
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
 
-### File Naming Conventions
+## File Naming Conventions
 This scanner supports absolute and season numbering, but here are two references for guidelines
 - Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
 - Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
 - Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
 
-##### Grouping folder
+### Grouping folder
 - If you used to use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
   You can just add it as additionnal root folder in the library: "D:/Anime/Dragon Ball/" for "D:/Anime/Dragon Ball/[2] Dragon Ball Z" folder for example...
 
-##### Season folders
+### Season folders
 - Seasons folders can have serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")
 - Files in "Extras" folders will be ignored.
 - Allow grouping in Ark xxxxx folders transparently with seasons folders inside, or within a season folder
@@ -35,7 +35,7 @@ This scanner supports absolute and season numbering, but here are two references
   - You can use Anidb numbering for specials (OP1a, NCOP, etc...) or explicitely label them as follow (s00e101, etc...).
   - Include all files not recognised as Season 0 episode 501+
 
-##### Files
+### Files
 <TABLE>
 <THEAD>
 <TR> <TH> File naming convention </TH> <TH> Template / Folder </TH> <TH>Exemple </TH> </TR>
