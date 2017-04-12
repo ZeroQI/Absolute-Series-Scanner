@@ -114,7 +114,7 @@ Movie libraries can have "Extra" in a specifically named folders or with the fol
 </ul>
 Note: "Extras" folder is skipped by the absolute series scanner, put unsorted files in there, it won't show up in Plex
 
-### Forcing the series ID
+### Forcing the movie/series ID
 Hama supports the following guid_type:
 - anidb for AniDB.net (and and the behaviour changing mode anidb2)
 - tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
