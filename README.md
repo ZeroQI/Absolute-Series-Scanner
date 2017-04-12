@@ -122,7 +122,12 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering     </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
 <TBODY>
-        <TR> <TD> anidb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Map to the tvdb at the right season and ep number to show 1 serie only</TD> </TR>
+        <TR> <TD> anidb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Map Anidb entries to the tvdb at the right season and ep number to show one Plex serie entry only (need to be within a single tvdb entry)
+        <UL><LI>Sword Art online                           [anidb2-8692]</LI>
+            <LI>Sword Art online II                        [anidb2-10376]</LI>
+            <LI>Sword Art Online Extra Edition             [anidb2-10022]</LI>
+            <LI>Gekijouban Sword Art Online: Ordinal Scale [anidb2-11681]</LI>
+        </UL></TD> </TR>
         <TR> <TD> tvdb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Multiple single season series (Sword Art online)</TD> </TR>
         <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan)<UL><LI>Metantei Conan [tvdb2-72454] </LI></UL></TD> </TR>
         <TR> <TD> tvdb4     </TD> <TD> Absolute, random season </TD> <TD> Abs/Custom/Arc db   </TD> <TD>Absolute          </TD> <TD>Long series with arc (one piece, dragon ball)</TD> </TR>
