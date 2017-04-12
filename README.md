@@ -183,13 +183,16 @@ Advanced modes for when you have episodes of a series in SEPARATE parent folders
 Bakuman      [anidb2-7251]  =  Bakuman      [tvdb-193811-s1]      = Bakuman [tvdb-193811]
 Bakuman 2011 [anidb2-8150]  =  Bakuman 2011 [tvdb-193811-s2]
 Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
+
 == Example 2 ==
   "Sailor Moon Crystal [tvdb2-275039]"
   "Sailor Moon Crystal Season 3 [anidb2-11665]"  (or "[tvdb-275039-s3]" or "[tvdb2-275039-s3]")
+  
 == Example 3 ==
   "Bleach [tvdb3-74796]"
   "Bleach movie 1 Memories in the Rain [tvdb3-74796-s0e3]"
   "Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
+  
 == Example 4 ==
   https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml
     \<anime tvdbid="79604" name="Black Lagoon"\>
