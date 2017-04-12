@@ -128,10 +128,14 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
             <LI>Sword Art Online Extra Edition             [anidb2-10022]</LI>
             <LI>Gekijouban Sword Art Online: Ordinal Scale [anidb2-11681]</LI>
         </UL></TD> </TR>
-        <TR> <TD> tvdb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Multiple single season series (Sword Art online)</TD> </TR>
-        <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan)<UL><LI>Metantei Conan [tvdb2-72454] </LI></UL></TD> </TR>
-        <TR> <TD> tvdb4     </TD> <TD> Absolute, random season </TD> <TD> Abs/Custom/Arc db   </TD> <TD>Absolute          </TD> <TD>Long series with arc (one piece, dragon ball)</TD> </TR>
-        <TR> <TD> tvdb5     </TD> <TD> TVDB                    </TD> <TD>Absolute             </TD> <TD>Absolute          </TD> <TD>Chronological order (Star Wars: The Clone Wars)</TD> </TR>
+        <TR> <TD> tvdb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Will show a single absolute numbering serie with TVDB seasons reseting hte episode number at one each season, best for multiple single season series (Sword Art online)</TD> </TR>
+        <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan, DBZ, one piece) will be added to the right TVDB season but keeping the absolute episode number, best for long series<UL><LI>Metantei Conan [tvdb3-72454] </LI></UL></TD> </TR>
+        <TR> <TD> tvdb4     </TD> <TD> Absolute, random season </TD> <TD> Abs/Custom/Arc db   </TD> <TD>Absolute          </TD> <TD>Better for long series with arcs (one piece, dragon ball) being used instead of TVDB seasons, will take the arc definitions from tvdb4.mapping.xml and posters from tvdb4.posters.xml unless the absolute numbered episodes were placed in season folders already
+          <UL><LI>One Piece [tvdb4-81797] </LI></UL>        
+        </TD> </TR>
+        <TR> <TD> tvdb5     </TD> <TD> TVDB                    </TD> <TD>Absolute             </TD> <TD>Absolute          </TD> <TD>Chronological order (specifically for Star Wars: The Clone Wars) will remove seasons present and use the chronological order to re-sort the episodes. First ep is s02e15 from memory...
+<UL><LI>Star Wars: The Clone Wars [tvdb5-83268] </LI></UL>
+</TD> </TR>
 </TBODY>
 </TABLE>
 
