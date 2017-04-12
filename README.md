@@ -103,7 +103,7 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 </TBODY>
 </TABLE>
 
-Extras need the following at the end of the filename (hyphen important, no space afterwards) or in a folder:
+Movie libraries can have "Extra" in a specifically named folders or with the following at the end of the filename (hyphen important, no space afterwards):
 <ul><li>"Behind The Scenes" folder or "-behindthescenes" at the end of the filename
     <li>"Deleted Scenes" folder or "-deleted" at the end of the filename
     <li>"Featurettes" folder or "-featurette" at the end of the filename
@@ -112,6 +112,7 @@ Extras need the following at the end of the filename (hyphen important, no space
     <li>"Shorts" folder or "-short" at the end of the filename
     <li>"Trailers" folder or "-trailer" at the end of the filename
 </ul>
+Note: "Extras" folder is skipped by the absolute series scanner, put unsorted files in there, it won't show up in Plex
 
 ### Forcing the series ID
 Hama supports the following guid_type:
