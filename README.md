@@ -1,4 +1,4 @@
-#Absolute Series Scanner
+#Absolute Series Scanner#
 
 The Plex Scanner will make the video files showing in Plex, if not showing in Plex, it is a scanner issue.
 A Plex series scanner choose the following from the folders and file names:
@@ -10,29 +10,22 @@ A Plex series scanner choose the following from the folders and file names:
 
 The Plex metadata agent will find metadata (Serie Title, summary year, episode title, summary, posters, fanart, tags, ... ) for files showing in Plex. Anything missing there while the file shows up in Plex is an Agent issue, refer to the Agent readme here: https://github.com/ZeroQI/Hama.bundle/blob/master/README.md
 
-###Which Metadata/Title source to select?
+###Which Metadata/Title source to select?###
 - Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" serie). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
 - TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniDB.net, but they do not carry porn series so no metadata for this type. TheTVDB uses seasons which can be practical for long anime.
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
 
-###File Naming Conventions
+###File Naming Conventions###
 This scanner supports absolute and season numbering, but here are two references for guidelines
 - Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
 - Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
-
-Naming
 - Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
 
-Grouping folder
+#####Grouping folder#####
 - If you used to use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
   You can just add it as additionnal root folder in the library: "D:/Anime/Dragon Ball/" for "D:/Anime/Dragon Ball/[2] Dragon Ball Z" folder for example...
 
-Movie files in Series libraries (since this is a Series Scanner) are supported if:
--  Files are in a folder with the same name or with a single file inside it
--  Files are numbered (01|ep 01|s01e01)
--  Filename contain " - Complete Movie"
-
-Season folders
+#####Season folders#####
 - Seasons folders can have serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")
 - Files in "Extras" folders will be ignored.
 - Allow grouping in Ark xxxxx folders transparently with seasons folders inside, or within a season folder
@@ -42,7 +35,7 @@ Season folders
   - You can use Anidb numbering for specials (OP1a, NCOP, etc...) or explicitely label them as follow (s00e101, etc...).
   - Include all files not recognised as Season 0 episode 501+
 
-Files
+#####Files#####
 <TABLE>
 <THEAD>
 <TR> <TH> File naming convention </TH> <TH> Template / Folder </TH> <TH>Exemple </TH> </TR>
@@ -59,7 +52,39 @@ Files
 </TBODY>
 </TABLE>
 
-Local metadata
+#####Movie files in Series libraries (since this is a Series Scanner) are supported if:#####
+-  Files are in a folder with the same name or with a single file inside it
+-  Files are numbered (01|ep 01|s01e01)
+-  Filename contain " - Complete Movie"
+
+#####Specials#####
+Hama is a anidb (single season) & tvdb (multiple seasons) agent so either naming convention is fine.
+It will detect either successfully but you can convert one convention to the other whicle displaying by forcing ids (further down)
+
+Let's use One piece special "Heart of Gold":
+
+TVDB seasons
+- http://thetvdb.com/?tab=episode&seriesid=81797&seasonid=31892&id=5687281&lid=7
+- "One piece/One Piece s00e35 Heart of Gold [sub fr].ext"
+
+Anidb (single) season
+- http://anidb.net/perl-bin/animedb.pl?show=anime&aid=69
+- "One piece/One Piece s00e23 Heart of Gold [sub fr].ext"
+- "One piece/One Piece S23 Heart of Gold [sub fr].ext"
+
+#######Anidb type special numbering is detailed below:#######
+<TABLE> 
+<THEAD> <TR> <TH> Type     </TH> <TH> Internal letter </TH> <TH>  Episode number   </TH> </TR> </THEAD>
+<TBODY> <TR> <TD> Specials </TD> <TD> S               </TD> <TD>  Episodes 001-100 </TD> </TR>
+        <TR> <TD> OPs      </TD> <TD> C               </TD> <TD>  Episodes 101-150 </TD> </TR>
+        <TR> <TD> EDs      </TD> <TD> C               </TD> <TD>  Episodes 151-200 </TD> </TR>
+        <TR> <TD> Trailers </TD> <TD> T               </TD> <TD>  Episodes 201-300 </TD> </TR>
+        <TR> <TD> OPs/EDs  </TD> <TD> P               </TD> <TD>  Episodes 301-400 </TD> </TR>
+        <TR> <TD> Others   </TD> <TD> O               </TD> <TD>  Episodes 401-500 </TD> </TR>
+        <TR> <TD> unmapped </TD> <TD>                 </TD> <TD>  Episodes 501-600 </TD> </TR> </TBODY>
+</TABLE>
+
+#####Local metadata#####
 It is supported but through "local media assets" agent, add it and and put it before HAMA in the priority order.<BR />
 https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
@@ -78,34 +103,8 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 </TBODY>
 </TABLE>
 
-Specials
-Hama is a anidb (single season) & tvdb (multiple seasons) agent so either naming convention is fine.
-It will detect either successfully but you can convert one convention to the other whicle displaying by forcing ids (further down)
 
-Let's use One piece special "Heart of Gold":
-
-TVDB seasons
-- http://thetvdb.com/?tab=episode&seriesid=81797&seasonid=31892&id=5687281&lid=7
-- "One piece/One Piece s00e35 Heart of Gold [sub fr].ext"
-
-Anidb (single) season
-- http://anidb.net/perl-bin/animedb.pl?show=anime&aid=69
-- "One piece/One Piece s00e23 Heart of Gold [sub fr].ext"
-- "One piece/One Piece S23 Heart of Gold [sub fr].ext"
-
-Anidb type special numbering is detailed below:
-<TABLE> 
-<THEAD> <TR> <TH> Type     </TH> <TH> Internal letter </TH> <TH>  Episode number   </TH> </TR> </THEAD>
-<TBODY> <TR> <TD> Specials </TD> <TD> S               </TD> <TD>  Episodes 001-100 </TD> </TR>
-        <TR> <TD> OPs      </TD> <TD> C               </TD> <TD>  Episodes 101-150 </TD> </TR>
-        <TR> <TD> EDs      </TD> <TD> C               </TD> <TD>  Episodes 151-200 </TD> </TR>
-        <TR> <TD> Trailers </TD> <TD> T               </TD> <TD>  Episodes 201-300 </TD> </TR>
-        <TR> <TD> OPs/EDs  </TD> <TD> P               </TD> <TD>  Episodes 301-400 </TD> </TR>
-        <TR> <TD> Others   </TD> <TD> O               </TD> <TD>  Episodes 401-500 </TD> </TR>
-        <TR> <TD> unmapped </TD> <TD>                 </TD> <TD>  Episodes 501-600 </TD> </TR> </TBODY>
-</TABLE>
-
-###Forcing the series ID
+###Forcing the series ID###
 You can specify the guid to use the following way:
 - In custom search serie name by adding " [guid_type-id_number]" at the end
 - In Serie folder name by adding " [guid_type-id_number]" at the end
@@ -181,7 +180,7 @@ Advanced modes for when you have episodes of a series in SEPARATE parent folders
 
   Examples: <PRE><CODE>
 == Example 1 ==
-Bakuman [anidb2-7251]       =  Bakuman [tvdb-193811-s1]      = Bakuman [tvdb-193811]
+Bakuman      [anidb2-7251]  =  Bakuman      [tvdb-193811-s1]      = Bakuman [tvdb-193811]
 Bakuman 2011 [anidb2-8150]  =  Bakuman 2011 [tvdb-193811-s2]
 Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
 == Example 2 ==
