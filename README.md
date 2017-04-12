@@ -1,4 +1,4 @@
-#Absolute Series Scanner#
+# Absolute Series Scanner
 
 The Plex Scanner will make the video files showing in Plex, if not showing in Plex, it is a scanner issue.
 A Plex series scanner choose the following from the folders and file names:
@@ -10,22 +10,22 @@ A Plex series scanner choose the following from the folders and file names:
 
 The Plex metadata agent will find metadata (Serie Title, summary year, episode title, summary, posters, fanart, tags, ... ) for files showing in Plex. Anything missing there while the file shows up in Plex is an Agent issue, refer to the Agent readme here: https://github.com/ZeroQI/Hama.bundle/blob/master/README.md
 
-###Which Metadata/Title source to select?###
+### Which Metadata/Title source to select?
 - Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" serie). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
 - TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniDB.net, but they do not carry porn series so no metadata for this type. TheTVDB uses seasons which can be practical for long anime.
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
 
-###File Naming Conventions###
+### File Naming Conventions
 This scanner supports absolute and season numbering, but here are two references for guidelines
 - Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
 - Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
 - Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
 
-#####Grouping folder#####
+##### Grouping folder
 - If you used to use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
   You can just add it as additionnal root folder in the library: "D:/Anime/Dragon Ball/" for "D:/Anime/Dragon Ball/[2] Dragon Ball Z" folder for example...
 
-#####Season folders#####
+##### Season folders
 - Seasons folders can have serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")
 - Files in "Extras" folders will be ignored.
 - Allow grouping in Ark xxxxx folders transparently with seasons folders inside, or within a season folder
@@ -35,7 +35,7 @@ This scanner supports absolute and season numbering, but here are two references
   - You can use Anidb numbering for specials (OP1a, NCOP, etc...) or explicitely label them as follow (s00e101, etc...).
   - Include all files not recognised as Season 0 episode 501+
 
-#####Files#####
+##### Files
 <TABLE>
 <THEAD>
 <TR> <TH> File naming convention </TH> <TH> Template / Folder </TH> <TH>Exemple </TH> </TR>
@@ -52,12 +52,12 @@ This scanner supports absolute and season numbering, but here are two references
 </TBODY>
 </TABLE>
 
-#####Movie files in Series libraries (since this is a Series Scanner) are supported if:#####
+##### Movie files in Series libraries (since this is a Series Scanner) are supported if:
 -  Files are in a folder with the same name or with a single file inside it
 -  Files are numbered (01|ep 01|s01e01)
 -  Filename contain " - Complete Movie"
 
-#####Specials#####
+##### Specials
 Hama is a anidb (single season) & tvdb (multiple seasons) agent so either naming convention is fine.
 It will detect either successfully but you can convert one convention to the other whicle displaying by forcing ids (further down)
 
@@ -72,7 +72,7 @@ Anidb (single) season
 - "One piece/One Piece s00e23 Heart of Gold [sub fr].ext"
 - "One piece/One Piece S23 Heart of Gold [sub fr].ext"
 
-#######Anidb type special numbering is detailed below:#######
+####### Anidb type special numbering is detailed below:
 <TABLE> 
 <THEAD> <TR> <TH> Type     </TH> <TH> Internal letter </TH> <TH>  Episode number   </TH> </TR> </THEAD>
 <TBODY> <TR> <TD> Specials </TD> <TD> S               </TD> <TD>  Episodes 001-100 </TD> </TR>
@@ -84,7 +84,7 @@ Anidb (single) season
         <TR> <TD> unmapped </TD> <TD>                 </TD> <TD>  Episodes 501-600 </TD> </TR> </TBODY>
 </TABLE>
 
-#####Local metadata#####
+##### Local metadata
 It is supported but through "local media assets" agent, add it and and put it before HAMA in the priority order.<BR />
 https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
@@ -104,7 +104,7 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 </TABLE>
 
 
-###Forcing the series ID###
+### Forcing the series ID
 You can specify the guid to use the following way:
 - In custom search serie name by adding " [guid_type-id_number]" at the end
 - In Serie folder name by adding " [guid_type-id_number]" at the end
@@ -202,8 +202,7 @@ Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
   "Black Lagoon - Roberta`s Blood Trail [tvdb4-79604-s3]"
 </CODE></PRE>
 
-Install
-=======
+## Install
 - Download https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/Scanners/Series/Absolute%20Series%20Scanner.py
 - Save into [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
 Note:
@@ -219,7 +218,7 @@ chown -R plex:plex '/var/lib/plexmediaserver/Library/Application Support/Plex Me
 chmod 775 -R '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Scanners'
 </CODE></PRE>
 
-###Logs
+## Logs
 Absolute series Scanner uses a pre-made list of folders to try to locate Plex Logs folder. 
 If custom logs are not present, then either you created a library using default Plex scanner and not my "Absolute Series Scanner" or you have an unknown Logs folder location and will need to forward me the path to add in the source code...
 If the scanner crash, you will get either no files (library creation) or no change (library already created) and will need to attach the Plex log "Plex Media Scanner.log"
@@ -232,8 +231,7 @@ List of logs files:
 List of configuration files:
 - "X-Plex-Token.id: Allow to get the library name to get a log per library (optional). Fill with plex token by following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token. **_Do not share that file when uploading the whole Logs folders_**
 
-Troubleshooting:
-================
+## Troubleshooting:
 - Update the scanner to the latest (on windows, powershell script in same folder as the scanner can be used to update)
 - If the scanner not listed in scanner list
   - Make sure you did create a "Series" library, as a "Movie" library will not show a "Series" scanner like ASS
@@ -253,8 +251,7 @@ And post in:
 - [Plex Support thread for Scanner (you are unsure)](https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest)
 - [Github issue page (you have a bug)](https://github.com/ZeroQI/Absolute-Series-Scanner/issues)
 
-Known issues:
-=============
+### Known issues:
 <PRE><CODE>
 Nov 16, 2016 18:48:53.594 [0x7f48c2324800] DEBUG - Adding subdirectory for scanner: /home/plex/things/anime/Ah! My Goddess 2
 Nov 16, 2016 18:48:53.597 [0x7f48c2324800] ERROR - No module in VideoFiles
@@ -301,7 +298,7 @@ Rights issues on Windows 2008 R2, solved by changing rights for:
 
 On linux, permissions issues could prevent the scanner execution.
 
-###Task list
+### Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
 - [ ] Shall i write a Movie scanner using the same code? The Plex default movie scanner does an good job i believe ?
 
