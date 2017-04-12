@@ -84,7 +84,7 @@ Anidb (single) season
         <TR> <TD> unmapped </TD> <TD>                 </TD> <TD>  Episodes 501-600 </TD> </TR> </TBODY>
 </TABLE>
 
-##### Local metadata
+##### Local media assets
 It is supported but through "local media assets" agent, add it and and put it before HAMA in the priority order.<BR />
 https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 
@@ -102,6 +102,14 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 <TR> <TD> Plexignore files  </TD> <TD> .plexignore  </TD> <TD> </TD> <TR>
 </TBODY>
 </TABLE>
+Extras need the following at the end of the filename (hyphen important, no space afterwards):
+- -behindthescenes
+- -deleted
+- -featurette
+- -interview
+- -scene
+- -short
+- -trailer
 
 
 ### Forcing the series ID
