@@ -189,7 +189,7 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
       <CODE>\<season_num\>|\<starting_ep_num\>|\<ending_ep_num\>|\<freeform_text_naming_the_season\>(optional)</CODE>
     - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
     
-    ``` html
+```
     <anime tvdbid="79604" name="Black Lagoon">
       01|001|012|The First Barrage
       02|013|024|The Second Barrage
@@ -199,7 +199,7 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
     01|001|012|Vampire Reign
     02|013|024|Battle in Nagoya
     </anime>
-    ``` html
+```
 
   "Black Lagoon                         [tvdb4-79604]"
   "Black Lagoon - The Second Barrage    [tvdb4-79604-s2]"
