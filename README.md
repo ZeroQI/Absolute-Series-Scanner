@@ -154,19 +154,15 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 </TABLE>
 
 ####### tvdb4
-  The arc definition to split into seasons the absolute numbering is done using the following order:
+<PRE><CODE>
+The arc definition to split into seasons the absolute numbering is done using the following order:
     - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
     - in a local "tvdb4.mapping" file inside serie folder with the following format lines, one per arc/season:
       <CODE>\<season_num\>|\<starting_ep_num\>|\<ending_ep_num\>|\<freeform_text_naming_the_season\>(optional)</CODE>
     - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
-      Format:<PRE><CODE>&lt;tvdb4entries&gt;
-&lt;anime tvdbid="289906" name="Seraph of the End"&gt;
-01|001|012|Vampire Reign
-02|013|024|Battle in Nagoya
-&lt;/anime&gt;
-</CODE></PRE>
 
-Advanced modes for when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
+####### Advanced modes
+For when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
 - " [anidb2-xxxxx]"
   - will find the season & eposide offset defiend in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
 - " [tvdb/2/3/4-xxxxx-sY]"
@@ -209,16 +205,15 @@ Advanced modes for when you have episodes of a series in SEPARATE parent folders
       02|013|024|The Second Barrage
       03|025|029|Roberta's Blood Trail
     \</anime\>
+    &lt;tvdb4entries&gt;
+    &lt;anime tvdbid="289906" name="Seraph of the End"&gt;
+    01|001|012|Vampire Reign
+    02|013|024|Battle in Nagoya
+    &lt;/anime&gt;
+
   "Black Lagoon [tvdb4-79604]"  (or "[tvdb4-79604-s1]")
   "Black Lagoon - The Second Barrage [tvdb4-79604-s2]"
   "Black Lagoon - Roberta`s Blood Trail [tvdb4-79604-s3]"
-  
-  &lt;tvdb4entries&gt;
-&lt;anime tvdbid="289906" name="Seraph of the End"&gt;
-01|001|012|Vampire Reign
-02|013|024|Battle in Nagoya
-&lt;/anime&gt;
-
 </CODE></PRE>
 
 ## Install
