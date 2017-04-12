@@ -103,14 +103,14 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 </TBODY>
 </TABLE>
 
-Extras need the following at the end of the filename (hyphen important, no space afterwards):
-<ul><li>-behindthescenes
-    <li>-deleted
-    <li>-featurette
-    <li>-interview
-    <li>-scene
-    <li>-short
-    <li>-trailer
+Extras need the following at the end of the filename (hyphen important, no space afterwards) or in a folder:
+<ul><li>"Behind The Scenes" folder or "-behindthescenes" at the end of the filename
+    <li>"Deleted Scenes" folder or "-deleted" at the end of the filename
+    <li>"Featurettes" folder or "-featurette" at the end of the filename
+    <li>"Interviews" folder or "-interview" at the end of the filename
+    <li>"Scenes" folder or "-scene" at the end of the filename
+    <li>"Shorts" folder or "-short" at the end of the filename
+    <li>"Trailers" folder or "-trailer" at the end of the filename
 </ul>
 
 ### Forcing the series ID
