@@ -198,8 +198,8 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
     <anime tvdbid="289906" name="Seraph of the End">
     01|001|012|Vampire Reign
     02|013|024|Battle in Nagoya
-   </anime>
-  ``` html
+    </anime>
+    ``` html
 
   "Black Lagoon                         [tvdb4-79604]"
   "Black Lagoon - The Second Barrage    [tvdb4-79604-s2]"
