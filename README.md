@@ -121,16 +121,31 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering     </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
 <TBODY>
+        <TR> <TD> anidb     </TD> <TD> Absolute                </TD> <TD> 1                </TD> <TD>AniDb          </TD> <TD>Force the anidb serie id. Serie will follow anidb episode numbering convention including specials
+        <UL><LI>Sword Art online                           [anidb-8692]</LI>
+        </UL></TD> </TR>
         <TR> <TD> anidb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Map Anidb entries to the tvdb at the right season and ep number to show one Plex serie entry only (need to be within a single tvdb entry)
         <UL><LI>Sword Art online                           [anidb2-8692]</LI>
             <LI>Sword Art online II                        [anidb2-10376]</LI>
             <LI>Sword Art Online Extra Edition             [anidb2-10022]</LI>
             <LI>Gekijouban Sword Art Online: Ordinal Scale [anidb2-11681]</LI>
         </UL></TD> </TR>
-        <TR> <TD> tvdb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Will show a single absolute numbering serie with TVDB seasons reseting hte episode number at one each season, best for multiple single season series (Sword Art online)</TD> </TR>
-        <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>Long series (Detective Conan, DBZ, one piece) will be added to the right TVDB season but keeping the absolute episode number, best for long series<UL><LI>Metantei Conan [tvdb3-72454] </LI></UL></TD> </TR>
-        <TR> <TD> tvdb4     </TD> <TD> Absolute, random season </TD> <TD> Abs/Custom/Arc db   </TD> <TD>Absolute          </TD> <TD>Better for long series with arcs (one piece, dragon ball) being used instead of TVDB seasons, will take the arc definitions from tvdb4.mapping.xml and posters from tvdb4.posters.xml unless the absolute numbered episodes were placed in season folders already
-          <UL><LI>One Piece [tvdb4-81797] </LI></UL>        
+        <TR> <TD> tvdb     </TD> <TD> Season                   </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Force the tvdbid, serie will follow tvdb episode numbering convention including specials
+        <UL>
+          <LI>Sword Art Online [tvdb-259640]</LI>
+          <LI>Season 1 - Sword Art Online [1-25]/ep ##.ext with ## from 1 to 25
+          <LI>Season 2 - Alfheim & Gun Gale Online [1-25]/ep ##.ext ## from 1 to 25
+        </UL>        
+        </TD> </TR>
+        <TR> <TD> tvdb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>for absolute numbering displayed virtually as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online(1-50, will be split into Season 1 [1-25] and Season 2 [1-25])
+        <UL>
+          <LI>Sword Art Online [tvdb2-259640]/Ep ##.ext with ## from 1 to 50</LI>
+        </UL>        
+        </TD> </TR>
+        <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>For absolute numbering episodes displayed virtually using tvdb season numbering for long running series like One piece (1-700+, will be split into seasons while keeping the absolute episode number intact without having to create seasons in the real folder
+        <UL><LI>Metantei Conan [tvdb3-72454] </LI></UL></TD> </TR>
+        <TR> <TD> tvdb4     </TD> <TD> Absolute, random season </TD> <TD> Abs/Custom/Arc db   </TD> <TD>Absolute          </TD> <TD>For absolute numbering episodes displayed using series arc as season for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end' numbered 1-24 splitted into 2 seasons). Will take the arc definitions from tvdb4.mapping.xml and posters from tvdb4.posters.xml unless the absolute numbered episodes were placed in season folders already
+        <UL><LI>One Piece [tvdb4-81797] </LI></UL>        
         </TD> </TR>
         <TR> <TD> tvdb5     </TD> <TD> TVDB                    </TD> <TD>Absolute             </TD> <TD>Absolute          </TD> <TD>Chronological order (specifically for Star Wars: The Clone Wars) will remove seasons present and use the chronological order to re-sort the episodes. First ep is s02e15 from memory...
 <UL><LI>Star Wars: The Clone Wars [tvdb5-83268] </LI></UL>
@@ -138,15 +153,7 @@ You can have **absolutely numbered series** (i.e. without season number apart fr
 </TBODY>
 </TABLE>
 
-Examples of force guid in all modes and their applications:
-
-When you have all episodes of a series in a single parent folder:
-- " [anidb-xxxxx]" for anime in absolute numbering. Force the anidb serie id
-- " [tvdb-xxxxxx]" for tvdb season numbering. You can put separate anidb series as seasons as per tvdb numbering.
-    SAO can be split at file level into "Season 1 - Sword Art Online" [1-25], "Season 2 - Alfheim & Gun Gale Online [1-25]".
-- " [tvdb2-xxxxx]" for absolute numbering displayed virtually as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online(1-50, will be split into Season 1 [1-25] and Season 2 [1-25])
-- " [tvdb3-xxxxx]" for absolute numbering episodes displayed virtually using tvdb season numbering for long running series like One piece (1-700+, will be split into seasons while keeping the absolute episode number intact without having to create seasons in the real folder
-- " [tvdb4-xxxxx]" for absolute numbering episodes displayed using series arc as season for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end' numbered 1-24 splitted into 2 seasons).
+####### tvdb4
   The arc definition to split into seasons the absolute numbering is done using the following order:
     - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
     - in a local "tvdb4.mapping" file inside serie folder with the following format lines, one per arc/season:
@@ -178,19 +185,21 @@ Advanced modes for when you have episodes of a series in SEPARATE parent folders
     - "tvdb3" will not work correctly with any other modes so all folders of a series will have to have this mode
     - "tvdb4" will not work correctly with any other modes so all folders of a series will have to have this mode
 
-  Examples: <PRE><CODE>
+####### Examples: 
+
+<PRE><CODE>
 == Example 1 ==
-Bakuman      [anidb2-7251]  =  Bakuman      [tvdb-193811-s1]      = Bakuman [tvdb-193811]
-Bakuman 2011 [anidb2-8150]  =  Bakuman 2011 [tvdb-193811-s2]
-Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
+- "Bakuman      [anidb2-7251]" = "Bakuman      [tvdb-193811-s1]" = "Bakuman [tvdb-193811]"
+- "Bakuman 2011 [anidb2-8150]" = "Bakuman 2011 [tvdb-193811-s2]"
+- "Bakuman 2012 [anidb2-8836]" = "Bakuman 2012 [tvdb-193811-s3]"
 
 == Example 2 ==
-  "Sailor Moon Crystal [tvdb2-275039]"
-  "Sailor Moon Crystal Season 3 [anidb2-11665]"  (or "[tvdb-275039-s3]" or "[tvdb2-275039-s3]")
+- "Sailor Moon Crystal [tvdb2-275039]"
+- "Sailor Moon Crystal Season 3 [anidb2-11665]" = "[tvdb-275039-s3]" | "[tvdb2-275039-s3]" (depending if you keep absolute numbered eps in seasons)
   
 == Example 3 ==
-  "Bleach [tvdb3-74796]"
-  "Bleach movie 1 Memories in the Rain [tvdb3-74796-s0e3]"
+  "Bleach                                    [tvdb3-74796]"
+  "Bleach movie 1 Memories in the Rain       [tvdb3-74796-s0e3]"
   "Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
   
 == Example 4 ==
@@ -203,6 +212,13 @@ Bakuman 2012 [anidb2-8836]  =  Bakuman 2012 [tvdb-193811-s3]
   "Black Lagoon [tvdb4-79604]"  (or "[tvdb4-79604-s1]")
   "Black Lagoon - The Second Barrage [tvdb4-79604-s2]"
   "Black Lagoon - Roberta`s Blood Trail [tvdb4-79604-s3]"
+  
+  &lt;tvdb4entries&gt;
+&lt;anime tvdbid="289906" name="Seraph of the End"&gt;
+01|001|012|Vampire Reign
+02|013|024|Battle in Nagoya
+&lt;/anime&gt;
+
 </CODE></PRE>
 
 ## Install
