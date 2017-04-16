@@ -310,7 +310,8 @@ Rights issues on Windows 2008 R2, solved by changing rights for:
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Plug-Ins
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Scanners
 
-On linux, permissions issues could prevent the scanner execution.
+On linux(And Mac OS-X), permissions issues could prevent the scanner execution.
+On "Mac OS-X" the logs don't go in default logs folder but a user folder: '/Users/renaldobryan/Library/Application Support/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log'. After creating folder and setting proper permissions, all was working
 
 ### Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
