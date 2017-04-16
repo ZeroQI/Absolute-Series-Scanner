@@ -46,7 +46,7 @@ IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'sound
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',    #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', #
                     'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']                                                                 # DVD: 'ifo', 'bup', 'vob'
-FILTER_CHARS    = "\\/:*?<>|~;_."                                                                                                                                       # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+FILTER_CHARS    = "\\/:*?<>|~"  #_;.                                                                                                                                     # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 WHACK_PRE_CLEAN = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC", 
   'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
   "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release",
@@ -92,8 +92,8 @@ import logging, logging.handlers                        #
 RootLogger     = logging.getLogger('main')
 RootHandler    = None
 RootFormatting = logging.Formatter('%(message)s') #%(asctime)-15s %(levelname)s - 
-RootLogger.setLevel(logging.DEBUG);
-Log = RootLogger
+RootLogger.setLevel(logging.DEBUG)
+Log             = RootLogger
 
 FileListLogger     = logging.getLogger('FileListLogger')
 FileListHandler    = None
@@ -115,6 +115,13 @@ def set_logging(instance, filename):
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
 import inspect
 LOG_PATH         = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", "..", "Logs"))
+if not os.path.isdir(LOG_PATH):
+  path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
+                    'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
+                    'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
+  try:  path = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
+  except: pass 
+
 LOG_FILE_LIBRARY = LOG_FILE = 'Plex Media Scanner (custom ASS).log'                # Log filename library will include the library name, LOG_FILE not and serve as reference
 set_logging("Root", LOG_FILE_LIBRARY)
 PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
@@ -193,7 +200,7 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
         asian_language = any([mapping["from"] <= x <= mapping["to"] for mapping in ranges for x in char_list])
         Log.info("str: '%s'" % str([mapping["from"] <= x <= mapping["to"] for mapping in ranges for x in char_list]))
       except: asian_language = False
-      if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char )
+      if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char ); Log.info("*Character remapped in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char_list, original_string))
       elif not asian_language:    Log.warning("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char_list, original_string))
       i += char_len
   return original_string if asian_language else ''.join(string)
