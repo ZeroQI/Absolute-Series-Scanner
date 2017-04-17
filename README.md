@@ -20,6 +20,7 @@ This scanner supports absolute and season numbering, but here are two references
 - Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
 - Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
 - Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
+- Do not use semicolon: ';', as plex give only the title up to this character to media.title if movie else media.show
 
 ### Grouping folder
 - If you used to use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
