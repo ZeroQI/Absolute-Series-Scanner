@@ -545,7 +545,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     
     #remove cleansed folder name from cleansed filename or keywords otherwise
     #Log.info("filename1: '%s'" % filename)
-    if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):              ep, title,      = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
+    if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):  ep, title  = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
     else:
       for prefix in array:
         if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
@@ -559,9 +559,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
     elif len(files)==1 and not folder_season:
       if   ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
-    if folder_show and folder_season > 1:                                                                                                                                         # 
-      for prefix in ("%s s%d" % (folder_show, folder_season), "%s s%02d" % (folder_show, folder_season)):                                                         #"%s %d " % (folder_show, folder_season), 
-        if ep.lower().startswith(prefix.lower()):  ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
+    if folder_show and folder_season >= 1:                                                                                                                                         # 
+      for prefix in ("s%d" % folder_season, "s%02d" % folder_season):                                                         #"%s %d " % (folder_show, folder_season), 
+        if prefix in ep.lower() or prefix in misc_count and misc_count[prefix]>1:  ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
     if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
     
     # Word search for ep number in scrubbed title
