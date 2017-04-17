@@ -46,7 +46,7 @@ IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'sound
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',    #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', #
                     'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']                                                                 # DVD: 'ifo', 'bup', 'vob'
-FILTER_CHARS    = "\\/:*?<>|~"  #_;.                                                                                                                                     # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
+FILTER_CHARS    = "\\/:*?<>|~;"  #_;.                                                                                                                                     # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 WHACK_PRE_CLEAN = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC", 
   'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
   "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release",
@@ -280,7 +280,7 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
-  global LOG_FILE_LIBRARY;
+  global LOG_FILE_LIBRARY
   LOG_FILE_LIBRARY = LOG_FILE[:-4] + " - " + PLEX_LIBRARY[root] + LOG_FILE[-4:] if root in PLEX_LIBRARY else LOG_FILE  ### Rename log file with library name if XML file can be accessed or token file present in log folder. LOG_FILE stays un-touched, and is used to custom update LOG_FILE_LIBRARY with the library name
   if LOG_FILE_LIBRARY != LOG_FILE:  set_logging("Root", LOG_FILE_LIBRARY)
   FILELIST = LOG_FILE_LIBRARY[:-4] + " - filelist " + LOG_FILE_LIBRARY[-4:]           # custom log file per library root folder
@@ -400,7 +400,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % tvdb_guid)[0].text.strip()
           for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
             season = line.strip().split("|")
-            for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
+            for absolute_episode in range(int(season[1]), int(season[2])+(99 if season[1]==season[2] else 1)):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
             if "(unknown length)" in season[3].lower(): unknown_series_length = True
         except Exception as e:
           tvdb_mapping, tvdb4_mapping_content = {}, "" 
