@@ -114,14 +114,8 @@ def set_logging(instance, filename):
 
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
 import inspect
-LOG_PATH         = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", "..", "Logs"))
-if not os.path.isdir(LOG_PATH):
-  path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
-                    'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
-                    'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
-  try:  path = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
-  except: pass 
-
+LOG_PATH = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", "..", "Logs"))
+if not os.path.isdir(LOG_PATH):  os.makedirs(fullpathDirectory)  # User folder on MacOS-X
 LOG_FILE_LIBRARY = LOG_FILE = 'Plex Media Scanner (custom ASS).log'                # Log filename library will include the library name, LOG_FILE not and serve as reference
 set_logging("Root", LOG_FILE_LIBRARY)
 PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
