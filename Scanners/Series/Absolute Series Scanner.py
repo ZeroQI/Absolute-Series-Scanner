@@ -405,7 +405,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % tvdb_guid)[0].text.strip()
           for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
             season = line.strip().split("|")
-            for absolute_episode in range(int(season[1]), int(season[2])+(99 if season[1]==season[2] else 1)):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
+            for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
             if "(unknown length)" in season[3].lower(): unknown_series_length = True
         except Exception as e:
           tvdb_mapping, tvdb4_mapping_content = {}, "" 
