@@ -311,8 +311,9 @@ Rights issues on Windows 2008 R2, solved by changing rights for:
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Plug-Ins
 - ...\Users\Administrator\AppData\Local\Plex Media Server\Scanners
 
-On linux(And Mac OS-X), permissions issues could prevent the scanner execution.
-On "Mac OS-X" the logs don't go in default logs folder but a user folder: '/Users/renaldobryan/Library/Application Support/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log'. After creating folder and setting proper permissions, all was working
+On linux (and Mac OS-X), permissions issues could prevent the scanner execution, but after creating folder and setting proper permissions, all was working. Exemples solved by creating folders and setting proper permissions:
+- Mac OS-X" the logs don't go in default logs folder but a user folder: '/Users/renaldobryan/Library/Application Support/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log'. 
+- "Feral Hosting Seedbox" error "IOError: (2, 'No such file or directory', '/media/sdt1/jusjtk91/Library/Application Support/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log')".
 
 ### Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
