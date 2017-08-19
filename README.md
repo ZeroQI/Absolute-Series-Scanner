@@ -26,8 +26,11 @@ This scanner supports absolute and season numbering, but here are two references
 - If you used to use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will now be skipped.
   You can just add it as additionnal root folder in the library: "D:/Anime/Dragon Ball/" for "D:/Anime/Dragon Ball/[2] Dragon Ball Z" folder for example...
 
+Latest version supporting grouping folders without having to add the folder is from the 15th of November 2015 and also support plexignore files which are not supported with the scanner currently (let me know if i am  wrong)
+https://github.com/ZeroQI/Absolute-Series-Scanner/blob/3d059940580065d6896b3c4d677401a862084d70/Scanners/Series/Absolute%20Series%20Scanner.py
+
 ### Season folders
-- Seasons folders can have serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima")
+- Seasons folders can have serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima"
 - Files in "Extras" folders will be ignored.
 - Allow grouping in Ark xxxxx folders transparently with seasons folders inside, or within a season folder
 - Specials go in "Specials" or "Season 0" folders.
