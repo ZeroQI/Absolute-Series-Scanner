@@ -328,7 +328,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           break
         else:  continue
     if match and rx!=SEASON_RX[-1]:  break              # cascade break if not skipped folder since season number found
-    if not match and len(reverse_path)>1 and path.count(os.sep):         #if grouping folders, skip and add them as additionnal folders
+    if not match and len(reverse_path)>1 and path.count(os.sep) and not "[grouping]" in reverse_path[1] and not "[multi-releases]" in reverse_path[0]:         #if grouping folders, skip and add them as additionnal folders
       Log.warning("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path)
       Log.info("".ljust(157, '-'))
       return
@@ -373,21 +373,25 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
             absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
             if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
       except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
+      
     elif tvdb_mode=="4" and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
-      if os.path.isfile(os.path.join(root, path, "tvdb4.mapping.xml")):  tvdb4_mapping_content = open(os.path.join(root, path, "tvdb4.mapping.xml")).read().strip()
-      else: ###load remote tvdb4 mapping file since no season folders, no local files###
-        Log.info("TVDB season mode (%s) enabled, tvdb4 mapping url: '%s'" % (tvdb_mode, ASS_MAPPING_URL))
-        try:
-          tvdb4_anime           = etree.fromstring( urlopen(ASS_MAPPING_URL).read() )
+      url = ASS_MAPPING_URL
+      try:
+        if   os.path.isfile(os.path.join(root, path, "tvdb4.mapping")):  tvdb4_mapping_content ,url = open(os.path.join(root, path, "tvdb4.mapping")).read().strip(), temp;        Log.info("TVDB4 local file missing: '%s'" % temp)
+        else:
+          url                   = ASS_MAPPING_URL
+          tvdb4_anime           = etree.fromstring( urlopen(url).read().strip() )
           tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % tvdb_guid)[0].text.strip()
-          for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
-            season = line.strip().split("|")
-            for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
-            if "(unknown length)" in season[3].lower(): unknown_series_length = True
-        except Exception as e:
-          tvdb_mapping, tvdb4_mapping_content = {}, "" 
-          if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
-          else:                                    Log.error("Error opening remote tvdb4.mapping.xml, Exception: '%s'" % e)
+        Log.info("TVDB season mode (%s) enabled, tvdb4 mapping url: '%s'" % (tvdb_mode, url))
+        for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
+          season = line.strip().split("|")
+          for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
+          if "(unknown length)" in season[3].lower(): unknown_series_length = True
+      except Exception as e:
+        tvdb_mapping, tvdb4_mapping_content = {}, "" 
+        if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
+        else:                                    Log.error("Error opening remote tvdb4.mapping.xml, Exception: '%s'" % e)
+      
     elif tvdb_mode=="5": ##Star wars: Clone attack chronological order#
       Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (tvdb_mode, TVDB_HTTP_API_URL % tvdb_guid))
       tvdb_guid_url= TVDB_HTTP_API_URL % tvdb_guid
