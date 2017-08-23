@@ -610,15 +610,14 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       file_abs = os.path.join(subdir,file)
       if   os.path.isfile(file_abs):  subdir_files.append(file_abs)
       elif os.path.isdir(file_abs):   subdir_subdirs.append(file_abs)
-    #Log.info("Calling Scan on path='" + os.path.relpath(subdir,root) + "'")
     Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries)
 
   if path: return
   else:
-    #Log.info("".ljust(157, '=')); Log.info("Sorting then adding in all files into Plex"); Log.info("".ljust(157, '='))
+    set_logging("Root", os.path.join(CACHE_PATH, '_root_.log'), mode='a')
+    #Sorting then adding in all files into Plex
     plex_entries = sorted(plex_entries, key=lambda x: "%s s%04de%03d" % (x[3], x[4], x[5]))
     for entry in plex_entries:  add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10], entry[11], entry[12], entry[13], entry[14], entry[15])
-    #for entry in mediaList:     Log.debug("'mediaList' Entry: %s" % entry)
 
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
   Log.info("")
