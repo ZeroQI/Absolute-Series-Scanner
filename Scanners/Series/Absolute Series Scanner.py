@@ -283,10 +283,19 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   set_logging("Main", os.path.join(CACHE_PATH, (path.split(os.sep, 1)[0] if os.sep in path else path or '_root_')+'.log'), mode='a')
   Log.info("Library: '%s', root: '%s', path: '%s', dirs: '%d', subdirs: '%s', files: '%d', Scan date: %s" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(subdirs or []), str(subdirs), len(files or []), time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))  
+
+  if not path:                    # root call so start with an empty list 
+    Log.info("Setting blank 'plex_entries'")
+    plex_entries = []
+  elif 'plex_entries' in kwargs:  # non-root call but 'plex_entries' exists from a manual subdir Scan call
+    Log.info("Using passed 'plex_entries'")
+    plex_entries = kwargs['plex_entries']
+  else:                           # non-root call but from Plex
+    Log.info("Skipping Plex's non-root sub directory scan");  return
+
   for subdir in subdirs or []:
     if root in subdir:
       subdir=subdir.replace(root, '')[1:]
-      
     for rx in IGNORE_DIRS_RX:
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log.info("\"%s\" match IGNORE_DIRS_RX: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
   reverse_path, files_to_remove = list(reversed(Utils.SplitPath(path))), []
@@ -301,11 +310,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       else:  Log.info(file.replace(root, "").lstrip(os.sep)) 
     else:  files.remove(file)
   Log.info("".ljust(157, '-'))
-  for subdir in subdirs or []:
-    subdir_files=[]
-    for item in os.listdir(subdir):  subdir_files.append(item)
-    Scan(subdir, subdir_files, mediaList, [], language, root)
-  if not files:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
   ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
   if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
@@ -566,7 +570,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       break
     else:  loop_completed = True
     if not loop_completed and ep.isdigit():  
-      add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  continue
+      plex_entries.append([file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList])
+      continue
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
     movie_list, AniDB_op, counter, ep = {}, {}, 500, filename
@@ -590,14 +595,29 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
           if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
           ep = offset + int(ep) 
-        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
+        plex_entries.append([file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList])
         break
     if match: continue  # next file iteration
     
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]))
     counter = counter+1                                          #                    #
-    add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "", length)
+    plex_entries.append([file, root, path, show, 0, counter, title.strip(), year, None, "", length, None, None, None, None, None])
+
+  for subdir in subdirs:
+    subdir_files, subdir_subdirs = [], []
+    for file in os.listdir(subdir):
+      file_abs = os.path.join(subdir,file)
+      if   os.path.isfile(file_abs):  subdir_files.append(file_abs)
+      elif os.path.isdir(file_abs):   subdir_subdirs.append(file_abs)
+    Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries)
+
+  if path: return
+  else:
+    set_logging("Root", os.path.join(CACHE_PATH, '_root_.log'), mode='a')
+    #Sorting then adding in all files into Plex
+    plex_entries = sorted(plex_entries, key=lambda x: "%s s%04de%03d" % (x[3], x[4], x[5]))
+    for entry in plex_entries:  add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10], entry[11], entry[12], entry[13], entry[14], entry[15])
 
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
   Log.info("")
