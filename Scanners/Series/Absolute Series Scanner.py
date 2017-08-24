@@ -344,7 +344,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 
           break
         else:  continue
-    if match and rx!=SEASON_RX[-1] and "[grouping]" in reverse_path[1]:  break              # cascade break if not skipped folder since season number found
+    if match and rx!=SEASON_RX[-1] and is_grouping_scan and not "[grouping]" in reverse_path[1]:  break              # cascade break if not skipped folder since season number found
     if not match and len(reverse_path)>1 and path.count(os.sep) and not "[grouping]" in reverse_path[1]:         #if grouping folders, skip and add them as additionnal folders
       Log.warning("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path)
       Log.info("".ljust(157, '-'))
