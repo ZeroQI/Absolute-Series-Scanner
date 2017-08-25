@@ -285,11 +285,15 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   Log.info("".ljust(157, '='))  
 
   reverse_path = list(reversed(Utils.SplitPath(path)))
-  if (len(reverse_path) > 3): Log.info("Skipping scan as folder is to deep from the library root"); Log.info("".ljust(157, '-')); return
+  if ( "[grouping]" in reverse_path[-1] and (len(reverse_path) > 3) ) or ( "[grouping]" not in reverse_path[-1] and (len(reverse_path) > 2) ):
+    Log.info("Skipping scan as folder is to deep from the library root"); Log.info("".ljust(157, '-')); return
 
   is_grouping_scan = False
-  for file in os.listdir(root):
-    if os.path.isdir(os.path.join(root,file)) and "[grouping]" in file: is_grouping_scan = True; break
+  if 'is_grouping_scan' in kwargs:
+    is_grouping_scan = kwargs['is_grouping_scan']
+  else:
+    for file in os.listdir(root):
+      if os.path.isdir(os.path.join(root,file)) and "[grouping]" in file: is_grouping_scan = True; break
 
   if is_grouping_scan:
     if not path:                    # root call so start with an empty list 
@@ -622,7 +626,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         file_abs = os.path.join(subdir,file)
         if   os.path.isfile(file_abs):  subdir_files.append(file_abs)
         elif os.path.isdir(file_abs):   subdir_subdirs.append(file_abs)
-      Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries)
+      Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries, is_grouping_scan=is_grouping_scan)
 
     if path: return
     else:
