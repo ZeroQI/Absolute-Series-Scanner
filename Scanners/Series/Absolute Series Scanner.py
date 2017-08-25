@@ -317,13 +317,6 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     else:  files.remove(file)
   Log.info("".ljust(157, '-'))
 
-  if not is_grouping_scan:
-    for subdir in subdirs or []:
-      subdir_files=[]
-      for item in os.listdir(subdir):  subdir_files.append(item)
-      Scan(subdir, subdir_files, mediaList, [], language, root)
-    if not files:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
-
   ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
   if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
     for temp in ['stream', 'bdmv', 'video_ts']:
@@ -617,8 +610,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]))
     counter = counter+1                                          #                    #
-    if is_grouping_scan: plex_entries.append([file, root, path, show, 0, counter, title.strip(), year, None, "", length, None, None, None, None, None])
-    else:    add_episode_into_plex(mediaList, file, root, path, show, 0, counter, title.strip(), year, None, "", length, None, None, None, None, None)
+    if is_grouping_scan: plex_entries.append([file, root, path, show, 0, counter, title.strip(), year, None, "", length])
+    else:    add_episode_into_plex(mediaList, file, root, path, show, 0, counter, title.strip(), year, None, "", length)
 
   if is_grouping_scan:
     for subdir in subdirs:
@@ -634,7 +627,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       set_logging("Root", os.path.join(CACHE_PATH, '_root_.log'), mode='a')
       #Sorting then adding in all files into Plex
       plex_entries = sorted(plex_entries, key=lambda x: "%s s%04de%03d" % (x[3], x[4], x[5]))
-      for entry in plex_entries:  add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10], entry[11], entry[12], entry[13], entry[14], entry[15])
+      for entry in plex_entries:
+        if len(entry) == 16: add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10], entry[11], entry[12], entry[13], entry[14], entry[15])
+        else:                add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10])
 
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
   Log.info("")
