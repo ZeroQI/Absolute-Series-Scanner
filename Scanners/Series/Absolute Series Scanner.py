@@ -286,16 +286,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
 
   is_grouping_scan = False
   for file in os.listdir(root):
-    file_abs = os.path.join(root,file)
-    if os.path.isdir(file_abs) and "[grouping]" in file: is_grouping_scan = True; break
+    if os.path.isdir(os.path.join(root,file)) and "[grouping]" in file: is_grouping_scan = True; break
 
   if is_grouping_scan:
     if not path:                    # root call so start with an empty list 
       Log.info("Setting blank 'plex_entries'")
       plex_entries = []
+      scan_depth = 0
     elif 'plex_entries' in kwargs:  # non-root call but 'plex_entries' exists from a manual subdir Scan call
-      Log.info("Using passed 'plex_entries'")
       plex_entries = kwargs['plex_entries']
+      scan_depth = kwargs['scan_depth']
+      Log.info("Using passed 'plex_entries' & scan_depth = '%s'" % scan_depth)
     else:                           # non-root call but from Plex
       Log.info("Skipping Plex's non-root sub directory scan");  return
 
@@ -614,13 +615,18 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     else:    add_episode_into_plex(mediaList, file, root, path, show, 0, counter, title.strip(), year, None, "", length)
 
   if is_grouping_scan:
-    for subdir in subdirs:
-      subdir_files, subdir_subdirs = [], []
-      for file in os.listdir(subdir):
-        file_abs = os.path.join(subdir,file)
-        if   os.path.isfile(file_abs):  subdir_files.append(file_abs)
-        elif os.path.isdir(file_abs):   subdir_subdirs.append(file_abs)
-      Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries)
+    if scan_depth < 3:
+      for subdir in subdirs:
+        subdir_files, subdir_subdirs = [], []
+        for file in os.listdir(subdir):
+          file_abs = os.path.join(subdir,file)
+          if   os.path.isfile(file_abs):  subdir_files.append(file_abs)
+          elif os.path.isdir(file_abs):   subdir_subdirs.append(file_abs)
+        Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries, scan_depth=scan_depth + 1)
+    else: 
+      Log.info("Skipping manual scan of all sub-directories below as scan depth is limited to 3 folders deep:")
+      for subdir in subdirs: Log.info(subdir)
+      Log.info("".ljust(157, '-'))
 
     if path: return
     else:
