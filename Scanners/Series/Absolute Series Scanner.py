@@ -284,6 +284,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   Log.info("Library: '%s', root: '%s', path: '%s', dirs: '%d', subdirs: '%s', files: '%d', Scan date: %s" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(subdirs or []), str(subdirs), len(files or []), time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))  
 
+  reverse_path = list(reversed(Utils.SplitPath(path)))
+  if (len(reverse_path) > 3): Log.info("Skipping scan as folder is to deep from the library root"); Log.info("".ljust(157, '-')); return
+
   is_grouping_scan = False
   for file in os.listdir(root):
     if os.path.isdir(os.path.join(root,file)) and "[grouping]" in file: is_grouping_scan = True; break
@@ -292,20 +295,18 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     if not path:                    # root call so start with an empty list 
       Log.info("Setting blank 'plex_entries'")
       plex_entries = []
-      scan_depth = 0
     elif 'plex_entries' in kwargs:  # non-root call but 'plex_entries' exists from a manual subdir Scan call
+      Log.info("Using passed 'plex_entries'")
       plex_entries = kwargs['plex_entries']
-      scan_depth = kwargs['scan_depth']
-      Log.info("Using passed 'plex_entries' & scan_depth = '%s'" % scan_depth)
     else:                           # non-root call but from Plex
-      Log.info("Skipping Plex's non-root sub directory scan");  return
+      Log.info("Skipping Plex's non-root sub directory scan"); Log.info("".ljust(157, '-')); return
 
   for subdir in subdirs or []:
     if root in subdir:
       subdir=subdir.replace(root, '')[1:]
     for rx in IGNORE_DIRS_RX:
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log.info("\"%s\" match IGNORE_DIRS_RX: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
-  reverse_path, files_to_remove = list(reversed(Utils.SplitPath(path))), []
+
   for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
     ext = os.path.splitext(file)[1].lstrip('.').lower()
     if ext in VIDEO_EXTS:
@@ -615,18 +616,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     else:    add_episode_into_plex(mediaList, file, root, path, show, 0, counter, title.strip(), year, None, "", length)
 
   if is_grouping_scan:
-    if scan_depth < 3:
-      for subdir in subdirs:
-        subdir_files, subdir_subdirs = [], []
-        for file in os.listdir(subdir):
-          file_abs = os.path.join(subdir,file)
-          if   os.path.isfile(file_abs):  subdir_files.append(file_abs)
-          elif os.path.isdir(file_abs):   subdir_subdirs.append(file_abs)
-        Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries, scan_depth=scan_depth + 1)
-    else: 
-      Log.info("Skipping manual scan of all sub-directories below as scan depth is limited to 3 folders deep:")
-      for subdir in subdirs: Log.info(subdir)
-      Log.info("".ljust(157, '-'))
+    for subdir in subdirs:
+      subdir_files, subdir_subdirs = [], []
+      for file in os.listdir(subdir):
+        file_abs = os.path.join(subdir,file)
+        if   os.path.isfile(file_abs):  subdir_files.append(file_abs)
+        elif os.path.isdir(file_abs):   subdir_subdirs.append(file_abs)
+      Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries)
 
     if path: return
     else:
