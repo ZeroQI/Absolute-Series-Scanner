@@ -89,20 +89,6 @@ CHARACTERS_MAP = {
   53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' , 50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                       #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3'] #'×' ['\xc3', '\x97'],
   49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½', 52352:'', 52353:''}                                                    #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #  ['\xcc', '\x81'] 
 
-### Log + CACHE_PATH calculated once for all calls ###
-handler = None
-Log     = logging.getLogger('main')
-Log.setLevel(logging.DEBUG)
-
-def set_logging(instance, filename, backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
-  global Log, handler
-  if handler: Log.removeHandler(handler)
-  if backup_count:  handler = logging.handlers.RotatingFileHandler(os.path.join(CACHE_PATH, filename), maxBytes=10*1024*1024, backupCount=backup_count)
-  else:             handler = logging.FileHandler                 (os.path.join(CACHE_PATH, filename), mode=mode)
-  handler.setFormatter(logging.Formatter(format))
-  handler.setLevel(logging.DEBUG)
-  Log.addHandler(handler)
-
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
 import inspect
 PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
@@ -111,10 +97,36 @@ if not os.path.isdir(PLEX_ROOT):
                     'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
                     'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
   PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
-CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs', 'Series')
-if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
-set_logging("Root", os.path.join(CACHE_PATH, '_root_.log'), mode='w')
-#set_logging("Root", os.path.join(PLEX_ROOT, 'Logs', '_root_0.log'))
+
+CACHE_PATH = ""
+def update_cache_path(folder=''):
+  global CACHE_PATH
+  CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
+  if folder: CACHE_PATH = os.path.join(CACHE_PATH, folder)
+  if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
+
+### Log + CACHE_PATH calculated once for all calls ###
+handler = None
+Log     = logging.getLogger('main')
+Log.setLevel(logging.DEBUG)
+
+def os_filename_clean_string(string):
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:                             # remove leftover parenthesis (work with code a bit above)
+    if char in string:                                           string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
+  return string
+
+def set_logging(foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
+  global Log, handler
+  update_cache_path(os_filename_clean_string(foldername))
+  filename = os_filename_clean_string(filename) if filename else '_root_.log'
+  if handler: Log.removeHandler(handler)
+  if backup_count:  handler = logging.handlers.RotatingFileHandler(os.path.join(CACHE_PATH, filename), maxBytes=10*1024*1024, backupCount=backup_count)
+  else:             handler = logging.FileHandler                 (os.path.join(CACHE_PATH, filename), mode=mode)
+  handler.setFormatter(logging.Formatter(format))
+  handler.setLevel(logging.DEBUG)
+  Log.addHandler(handler)
+
+set_logging()
 
 ### Plex Library XML ###
 PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
@@ -279,13 +291,15 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
-  if root in path:  path = path.replace(root, "")[1:] #can only call sub-sub-folder fullpath
-  set_logging("Main", os.path.join(CACHE_PATH, (path.split(os.sep, 1)[0] if os.sep in path else path or '_root_')+'.log'), mode='a')
+  if root in path:  path = os.path.relpath(path,root) #can only call sub-sub-folder fullpath
+  log_foldername = '' if not root else '-'.join(root.split(os.sep)[-2:]) if len(root.split(os.sep)) > 1 else root.split(os.sep)[-1]
+  set_logging(foldername=log_foldername, filename=('' if not path else path.split(os.sep, 1)[0] + '.log'), mode='a')
+
   Log.info("Library: '%s', root: '%s', path: '%s', dirs: '%d', subdirs: '%s', files: '%d', Scan date: %s" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(subdirs or []), str(subdirs), len(files or []), time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))  
 
   reverse_path = list(reversed(Utils.SplitPath(path)))
-  if ( "[grouping]" in reverse_path[-1] and (len(reverse_path) > 3) ) or ( "[grouping]" not in reverse_path[-1] and (len(reverse_path) > 2) ):
+  if ("[grouping]" in reverse_path[-1] and len(reverse_path) > 3) or ("[grouping]" not in reverse_path[-1] and len(reverse_path) > 2):
     Log.info("Skipping scan as folder is to deep from the library root"); Log.info("".ljust(157, '-')); return
 
   is_grouping_scan = False
@@ -630,12 +644,13 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
 
     if path: return
     else:
-      set_logging("Root", os.path.join(CACHE_PATH, '_root_.log'), mode='a')
       #Sorting then adding in all files into Plex
       plex_entries = sorted(plex_entries, key=lambda x: "%s s%04de%03d" % (x[3], x[4], x[5]))
       for entry in plex_entries:
+        set_logging(foldername=log_foldername, filename=('' if not entry[2] else entry[2].split(os.sep, 1)[0] + '.log'), mode='a')
         if len(entry) == 16: add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10], entry[11], entry[12], entry[13], entry[14], entry[15])
         else:                add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10])
 
+  set_logging(foldername=log_foldername, mode='a')
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
   Log.info("")
