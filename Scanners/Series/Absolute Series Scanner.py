@@ -320,8 +320,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       Log.info("Skipping Plex's non-root sub directory scan"); Log.info("".ljust(157, '-')); return
 
   for subdir in subdirs or []:
-    if root in subdir:
-      subdir=subdir.replace(root, '')[1:]
+    if root in subdir:  subdir = os.path.relpath(subdir,root)
     for rx in IGNORE_DIRS_RX:
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log.info("\"%s\" match IGNORE_DIRS_RX: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
 
@@ -333,7 +332,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           Log.info("File:   '%s' match IGNORE_FILES_RX: '%s'" % (file, rx))
           files.remove(file)
           break
-      else:  Log.info(file.replace(root, "").lstrip(os.sep)) 
+      else:  Log.info(os.path.relpath(file,root) if root in file else file) 
     else:  files.remove(file)
   Log.info("".ljust(157, '-'))
 
