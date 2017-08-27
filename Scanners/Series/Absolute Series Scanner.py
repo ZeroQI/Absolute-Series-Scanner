@@ -327,7 +327,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
     ext = os.path.splitext(file)[1].lstrip('.').lower()
     if ext in VIDEO_EXTS:
       for rx in IGNORE_FILES_RX:  # Filter trailers and sample files
-        if re.match(rx, file, re.IGNORECASE):
+        if re.match(rx, os.path.basename(file), re.IGNORECASE):
           Log.info("File:   '%s' match IGNORE_FILES_RX: '%s'" % (file, rx))
           files.remove(file)
           break
