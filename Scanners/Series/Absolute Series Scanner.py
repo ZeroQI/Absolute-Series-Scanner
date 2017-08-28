@@ -292,15 +292,6 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
   if root in path:  path = os.path.relpath(path,root) #can only call sub-sub-folder fullpath
-  log_foldername = '' if not root else '-'.join(root.split(os.sep)[-2:]) if len(root.split(os.sep)) > 1 else root.split(os.sep)[-1]
-  set_logging(foldername=log_foldername, filename=('' if not path else path.split(os.sep, 1)[0] + '.log'), mode='a')
-
-  Log.info("Library: '%s', root: '%s', path: '%s', dirs: '%d', subdirs: '%s', files: '%d', Scan date: %s" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(subdirs or []), str(subdirs), len(files or []), time.strftime("%Y-%m-%d %H:%M:%S")))
-  Log.info("".ljust(157, '='))  
-
-  reverse_path = list(reversed(Utils.SplitPath(path)))
-  if ("[grouping]" in reverse_path[-1] and len(reverse_path) > 3) or ("[grouping]" not in reverse_path[-1] and len(reverse_path) > 2):
-    Log.info("Skipping scan as folder is to deep from the library root"); Log.info("".ljust(157, '-')); return
 
   is_grouping_scan = False
   if 'is_grouping_scan' in kwargs:
@@ -308,6 +299,17 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
   else:
     for file in os.listdir(root):
       if os.path.isdir(os.path.join(root,file)) and "[grouping]" in file: is_grouping_scan = True; break
+
+  log_foldername = '' if not root else '-'.join(root.split(os.sep)[-2:]) if len(root.split(os.sep)) > 1 else root.split(os.sep)[-1]
+  set_logging(foldername=log_foldername, filename=('' if not path else path.split(os.sep, 1)[0] + '.log'), 
+    mode=('a' if path and len(path.split(os.sep)) > 1 else 'w' if (is_grouping_scan and 'is_grouping_scan' in kwargs) or not is_grouping_scan or not path else 'a') )
+
+  Log.info("Library: '%s', root: '%s', path: '%s', dirs: '%d', subdirs: '%s', files: '%d', Scan date: %s" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(subdirs or []), str(subdirs), len(files or []), time.strftime("%Y-%m-%d %H:%M:%S")))
+  Log.info("".ljust(157, '='))  
+
+  reverse_path = list(reversed(Utils.SplitPath(path)))
+  if ("[grouping]" in reverse_path[-1] and len(reverse_path) > 3) or ("[grouping]" not in reverse_path[-1] and len(reverse_path) > 2):
+    Log.info("Skipping scan as folder is to deep from the library root"); Log.info("".ljust(157, '-')); return
 
   if is_grouping_scan:
     if not path:                    # root call so start with an empty list 
