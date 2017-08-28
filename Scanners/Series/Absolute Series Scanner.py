@@ -144,7 +144,8 @@ except:  Log.info("Place correct Plex token in X-Plex-Token.id file in logs fold
 def replace_insensitive (ep, word, sep=" "):
   if ep.lower()==word.lower(): return ""
   position = ep.lower().find(word.lower())
-  if position > -1 and len(ep)>len(word):  return (""  if position==0 else ep[:position].lstrip()) + (sep if len(ep) < position+len(word) else ep[position+len(word):].lstrip())
+  if position > -1 and len(ep)>len(word):  return ("" if position==0 else ep[:position].lstrip()) + (sep if len(ep) < position+len(word) else ep[position+len(word):].lstrip())
+  return ep
 
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] ###############################################################################
 def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):  return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
