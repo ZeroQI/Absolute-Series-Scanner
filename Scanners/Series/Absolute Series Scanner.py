@@ -302,7 +302,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
 
   log_foldername = '' if not root else '-'.join(root.split(os.sep)[-2:]) if len(root.split(os.sep)) > 1 else root.split(os.sep)[-1]
   set_logging(foldername=log_foldername, filename=('' if not path else path.split(os.sep, 1)[0] + '.log'), 
-    mode=('a' if path and len(path.split(os.sep)) > 1 else 'w' if (is_grouping_scan and 'is_grouping_scan' in kwargs) or not is_grouping_scan or not path else 'a') )
+    mode=('a' if path and len(path.split(os.sep)) > 1 or len(files or []) == 0 and not is_grouping_scan else 'w' if (is_grouping_scan and 'is_grouping_scan' in kwargs) or not is_grouping_scan or not path else 'a') )
 
   Log.info("Library: '%s', root: '%s', path: '%s', dirs: '%d', subdirs: '%s', files: '%d', Scan date: %s" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(subdirs or []), str(subdirs), len(files or []), time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))  
