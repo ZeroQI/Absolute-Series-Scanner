@@ -89,20 +89,6 @@ CHARACTERS_MAP = {
   53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' , 50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,                       #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3'] #'×' ['\xc3', '\x97'],
   49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½', 52352:'', 52353:''}                                                    #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #  ['\xcc', '\x81'] 
 
-### Log + CACHE_PATH calculated once for all calls ###
-handler = None
-Log     = logging.getLogger('main')
-Log.setLevel(logging.DEBUG)
-
-def set_logging(instance, filename, backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
-  global Log, handler
-  if handler: Log.removeHandler(handler)
-  if backup_count:  handler = logging.handlers.RotatingFileHandler(os.path.join(CACHE_PATH, filename), maxBytes=10*1024*1024, backupCount=backup_count)
-  else:             handler = logging.FileHandler                 (os.path.join(CACHE_PATH, filename), mode=mode)
-  handler.setFormatter(logging.Formatter(format))
-  handler.setLevel(logging.DEBUG)
-  Log.addHandler(handler)
-
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
 import inspect
 PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
@@ -111,10 +97,36 @@ if not os.path.isdir(PLEX_ROOT):
                     'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
                     'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
   PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
-CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs', 'Series')
-if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
-set_logging("Root", os.path.join(CACHE_PATH, '_root_.log'), mode='w')
-#set_logging("Root", os.path.join(PLEX_ROOT, 'Logs', '_root_0.log'))
+
+CACHE_PATH = ""
+def update_cache_path(folder=''):
+  global CACHE_PATH
+  CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
+  if folder: CACHE_PATH = os.path.join(CACHE_PATH, folder)
+  if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
+
+### Log + CACHE_PATH calculated once for all calls ###
+handler = None
+Log     = logging.getLogger('main')
+Log.setLevel(logging.DEBUG)
+
+def os_filename_clean_string(string):
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:                             # remove leftover parenthesis (work with code a bit above)
+    if char in string:                                           string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
+  return string
+
+def set_logging(foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
+  global Log, handler
+  update_cache_path(os_filename_clean_string(foldername))
+  filename = os_filename_clean_string(filename) if filename else '_root_.log'
+  if handler: Log.removeHandler(handler)
+  if backup_count:  handler = logging.handlers.RotatingFileHandler(os.path.join(CACHE_PATH, filename), maxBytes=10*1024*1024, backupCount=backup_count)
+  else:             handler = logging.FileHandler                 (os.path.join(CACHE_PATH, filename), mode=mode)
+  handler.setFormatter(logging.Formatter(format))
+  handler.setLevel(logging.DEBUG)
+  Log.addHandler(handler)
+
+set_logging()
 
 ### Plex Library XML ###
 PLEX_LIBRARY, PLEX_LIBRARY_URL = {}, "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
@@ -132,7 +144,8 @@ except:  Log.info("Place correct Plex token in X-Plex-Token.id file in logs fold
 def replace_insensitive (ep, word, sep=" "):
   if ep.lower()==word.lower(): return ""
   position = ep.lower().find(word.lower())
-  if position > -1 and len(ep)>len(word):  return (""  if position==0 else ep[:position].lstrip()) + (sep if len(ep) < position+len(word) else ep[position+len(word):].lstrip())
+  if position > -1 and len(ep)>len(word):  return ("" if position==0 else ep[:position].lstrip()) + (sep if len(ep) < position+len(word) else ep[position+len(word):].lstrip())
+  return ep
 
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] ###############################################################################
 def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):  return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
@@ -279,34 +292,52 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #get called for root and each root folder
-  if root in path:  path = path.replace(root, "")[1:] #can only call sub-sub-folder fullpath
-  set_logging("Main", os.path.join(CACHE_PATH, (path.split(os.sep, 1)[0] if os.sep in path else path or '_root_')+'.log'), mode='a')
+  if root in path:  path = os.path.relpath(path,root) #can only call sub-sub-folder fullpath
+
+  is_grouping_scan = False
+  if 'is_grouping_scan' in kwargs:
+    is_grouping_scan = kwargs['is_grouping_scan']
+  else:
+    for file in os.listdir(root):
+      if os.path.isdir(os.path.join(root,file)) and "[grouping]" in file: is_grouping_scan = True; break
+
+  log_foldername = '' if not root else '-'.join(root.split(os.sep)[-2:]) if len(root.split(os.sep)) > 1 else root.split(os.sep)[-1]
+  set_logging(foldername=log_foldername, filename=('' if not path else path.split(os.sep, 1)[0] + '.log'), 
+    mode=('a' if path and len(path.split(os.sep)) > 1 or len(files or []) == 0 and not is_grouping_scan else 'w' if (is_grouping_scan and 'is_grouping_scan' in kwargs) or not is_grouping_scan or not path else 'a') )
+
   Log.info("Library: '%s', root: '%s', path: '%s', dirs: '%d', subdirs: '%s', files: '%d', Scan date: %s" % (PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(subdirs or []), str(subdirs), len(files or []), time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))  
+
+  reverse_path = list(reversed(Utils.SplitPath(path)))
+  if ("[grouping]" in reverse_path[-1] and len(reverse_path) > 3) or ("[grouping]" not in reverse_path[-1] and len(reverse_path) > 2):
+    Log.info("Skipping scan as folder is to deep from the library root"); Log.info("".ljust(157, '-')); return
+
+  if is_grouping_scan:
+    if not path:                    # root call so start with an empty list 
+      Log.info("Setting blank 'plex_entries'")
+      plex_entries = []
+    elif 'plex_entries' in kwargs:  # non-root call but 'plex_entries' exists from a manual subdir Scan call
+      Log.info("Using passed 'plex_entries'")
+      plex_entries = kwargs['plex_entries']
+    else:                           # non-root call but from Plex
+      Log.info("Skipping Plex's non-root sub directory scan"); Log.info("".ljust(157, '-')); return
+
   for subdir in subdirs or []:
-    if root in subdir:
-      subdir=subdir.replace(root, '')[1:]
-      
     for rx in IGNORE_DIRS_RX:
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE): subdirs.remove(subdir);  Log.info("\"%s\" match IGNORE_DIRS_RX: \"%s\"" % (subdir, rx));  break  #skip dirs to be ignored
-  reverse_path, files_to_remove = list(reversed(Utils.SplitPath(path))), []
+
   for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
     ext = os.path.splitext(file)[1].lstrip('.').lower()
     if ext in VIDEO_EXTS:
       for rx in IGNORE_FILES_RX:  # Filter trailers and sample files
-        if re.match(rx, file, re.IGNORECASE):
+        if re.match(rx, os.path.basename(file), re.IGNORECASE):
           Log.info("File:   '%s' match IGNORE_FILES_RX: '%s'" % (file, rx))
           files.remove(file)
           break
-      else:  Log.info(file.replace(root, "").lstrip(os.sep)) 
+      else:  Log.info(os.path.relpath(file,root) if root in file else file) 
     else:  files.remove(file)
   Log.info("".ljust(157, '-'))
-  for subdir in subdirs or []:
-    subdir_files=[]
-    for item in os.listdir(subdir):  subdir_files.append(item)
-    Scan(subdir, subdir_files, mediaList, [], language, root)
-  if not files:  return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
-  
+
   ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
   if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
     for temp in ['stream', 'bdmv', 'video_ts']:
@@ -327,8 +358,8 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 
           break
         else:  continue
-    if match and rx!=SEASON_RX[-1]:  break              # cascade break if not skipped folder since season number found
-    if not match and len(reverse_path)>1 and path.count(os.sep) and not "[grouping]" in reverse_path[1] and not "[multi-releases]" in reverse_path[0]:         #if grouping folders, skip and add them as additionnal folders
+    if match and rx!=SEASON_RX[-1] and is_grouping_scan and len(reverse_path)>1 and not "[grouping]" in reverse_path[1]:  break               # cascade break if not skipped folder since season number found
+    if not match and len(reverse_path)>1 and path.count(os.sep) and not "[grouping]" in reverse_path[1]:         #if grouping folders, skip and add them as additionnal folders
       Log.warning("Grouping folder: '%s' skipped, need to be added as root folder if needed" % path)
       Log.info("".ljust(157, '-'))
       return
@@ -375,9 +406,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
       
     elif tvdb_mode=="4" and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
-      url = ASS_MAPPING_URL
       try:
-        if   os.path.isfile(os.path.join(root, path, "tvdb4.mapping")):  tvdb4_mapping_content ,url = open(os.path.join(root, path, "tvdb4.mapping")).read().strip(), temp;        Log.info("TVDB4 local file missing: '%s'" % temp)
+        url = os.path.join(root, path, "tvdb4.mapping")
+        if   os.path.isfile(url):  tvdb4_mapping_content = open(url).read().strip();  Log.info("TVDB4 local file missing: '%s'" % url)
         else:
           url                   = ASS_MAPPING_URL
           tvdb4_anime           = etree.fromstring( urlopen(url).read().strip() )
@@ -566,7 +597,9 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       break
     else:  loop_completed = True
     if not loop_completed and ep.isdigit():  
-      add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  continue
+      if is_grouping_scan: plex_entries.append([file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList])
+      else:    add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, "None", length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+      continue
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
     movie_list, AniDB_op, counter, ep = {}, {}, 500, filename
@@ -590,14 +623,35 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
           if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
           ep = offset + int(ep) 
-        add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList); 
+        if is_grouping_scan: plex_entries.append([file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList])
+        else:    add_episode_into_plex(mediaList, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
         break
     if match: continue  # next file iteration
     
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:]))
     counter = counter+1                                          #                    #
-    add_episode_into_plex(mediaList, file, root, path , show, 0, counter, title.strip(), year, None, "", length)
+    if is_grouping_scan: plex_entries.append([file, root, path, show, 0, counter, title.strip(), year, None, "", length])
+    else:    add_episode_into_plex(mediaList, file, root, path, show, 0, counter, title.strip(), year, None, "", length)
 
+  if is_grouping_scan:
+    for subdir in subdirs:
+      subdir_files, subdir_subdirs = [], []
+      for file in os.listdir(subdir):
+        file_abs = os.path.join(subdir,file)
+        if   os.path.isfile(file_abs):  subdir_files.append(file_abs)
+        elif os.path.isdir(file_abs):   subdir_subdirs.append(file_abs)
+      Scan(os.path.relpath(subdir,root), sorted(subdir_files), [], sorted(subdir_subdirs), root=root, plex_entries=plex_entries, is_grouping_scan=is_grouping_scan)
+
+    if path: return
+    else:
+      #Sorting then adding in all files into Plex
+      plex_entries = sorted(plex_entries, key=lambda x: "%s s%04de%03d" % (x[3], x[4], x[5]))
+      for entry in plex_entries:
+        set_logging(foldername=log_foldername, filename=('' if not entry[2] else entry[2].split(os.sep, 1)[0] + '.log'), mode='a')
+        if len(entry) == 16: add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10], entry[11], entry[12], entry[13], entry[14], entry[15])
+        else:                add_episode_into_plex(mediaList, entry[0], entry[1], entry[2], entry[3], entry[4], entry[5], entry[6], entry[7], entry[8], entry[9], entry[10])
+
+  set_logging(foldername=log_foldername, mode='a')
   Stack.Scan(path, files, mediaList, subdirs) if "Stack" in sys.modules else Log.info("Stack.Scan() doesn't exists")
   Log.info("")
