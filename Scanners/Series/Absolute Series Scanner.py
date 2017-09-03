@@ -421,7 +421,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       except Exception as e:
         tvdb_mapping, tvdb4_mapping_content = {}, "" 
         if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
-        else:                                    Log.error("Error opening remote tvdb4.mapping.xml, Exception: '%s'" % e)
+        else:                                    Log.error("Error opening url '%s', Exception: '%s'" % (url, e))
       
     elif tvdb_mode=="5": ##Star wars: Clone attack chronological order#
       Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (tvdb_mode, TVDB_HTTP_API_URL % tvdb_guid))
