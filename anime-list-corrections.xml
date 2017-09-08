@@ -1,17 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <anime-list>
-    <anime anidbid="9227" tvdbid="262098" defaulttvdbseason="1" episodeoffset="" tmdbid="" imdbid="">
-        <name>Girls und Panzer</name>
-        <mapping-list>
-            <mapping anidbseason="0" tvdbseason="0">;0-3;3-4;4-5;5-6;6-7;7-8;8-9;9-10;10-11;11-12;12-13;13-14;14-15;15-16;16-16;17-34;18-29;19-23;20-25;21-17;22-21;23-27;24-18;25-22;26-28;27-19;28-26;29-0;30-20;31-24;32-0;33-33;34-0;</mapping>
-        </mapping-list>
-    </anime>
-    <anime anidbid="10009" tvdbid="262098" defaulttvdbseason="0" episodeoffset="" tmdbid="" imdbid="">
-        <name>Girls und Panzer: Kore ga Hontou no Anzio-sen Desu!</name>
-        <mapping-list>
-            <mapping anidbseason="1" tvdbseason="0">;1-3;</mapping>
-        </mapping-list>
-    </anime>
     <anime anidbid="8691" tvdbid="257516" defaulttvdbseason="1" episodeoffset="" tmdbid="" imdbid="">
         <name>Accel World</name>
         <mapping-list>
