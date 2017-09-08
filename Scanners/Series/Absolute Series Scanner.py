@@ -17,7 +17,7 @@ except ImportError:  from urllib2        import urlopen # urlopen Python 2.x #im
 TVDB_HTTP_API_URL         = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
 ASS_MAPPING_URL           = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
 ANIDB_TVDB_MAPPING        = 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
-ANIDB_TVDB_MAPPING_MOD    = 'http://rawgit.com/Dingmatt/AMSA/master/Plug-in%20Support/Data/com.plexapp.agents.amsa/DataItems/anime-list-corrections.xml'
+ANIDB_TVDB_MAPPING_MOD    = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'
 ANIDB_TVDB_MAPPING_CUSTOM = 'anime-list-custom.xml'                                                                            # custom local correction for ScudLee mapping file url
 SOURCE_IDS                = ".*? ?\[(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
 SOURCE_ID_FILES           = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id"]
