@@ -460,7 +460,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
           try:     scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
           except:  Log.info("Invalid local custom mapping file content")
           else:
-            Log.info("Loading local custom mapping - url: '%s'" % os.path.join(root, ANIDB_TVDB_MAPPING_CUSTOM))
+            Log.info("Loading local custom mapping from local: %s" % scudlee_filename_custom)
             a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
             break
       dir = os.path.dirname(dir)
@@ -481,10 +481,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
             scudlee_file.write( scudlee_file_content )
           if os.path.exists(scudlee_filename): os.remove(scudlee_filename)
           os.rename(tmp_filename, scudlee_filename)
-      except Exception as e:  Log.error("Error downloading ScudLee's file mod from local/GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING_MOD, e)) 
+      except Exception as e:  Log.error("Error downloading ASS's file mod from local/GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING_MOD, e)) 
       else:
         try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring( scudlee_file_content ), anidb_id)
-        except Exception as e:  Log.error("Error parsing ScudLee's file mod content, Exception: '%s'" % e)
+        except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
     
     #ANIDB_TVDB_MAPPING
     if not a2_tvdbid:
@@ -502,10 +502,10 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
             scudlee_file.write( scudlee_file_content )
           if os.path.exists(scudlee_filename): os.remove(scudlee_filename)
           os.rename(tmp_filename, scudlee_filename)
-      except Exception as e:  Log.error("Error parsing ScudLee's file mod content, Exception: '%s'" % e)
+      except Exception as e:  Log.error("Error downloading ScudLee's file from local/GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
       else:
         try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(scudlee_file_content), anidb_id)
-        except Exception as e:  Log.error("Error parsing ScudLee's file from local/url '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
+        except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
     
     #Build AniDB2 Offsets
     if a2_tvdbid:
