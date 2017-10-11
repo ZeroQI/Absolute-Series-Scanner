@@ -130,6 +130,10 @@ You can specify the guid to use the following way:
 - In Serie folder name by adding " [guid_type-id_number]" at the end
 - In custom search serie name by adding " [guid_type-id_number]" at the end
 
+Note:
+- The guid is assigned when assigning a match to the serie the first time
+- When adding the guid file the series guid isn't updated. You have to re-match the series
+
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering     </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
 <TBODY>
