@@ -226,7 +226,7 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
 Note:
 - "Scanners" and "Series" folder are not created by default and will need creating.
 - "Scanners" folder will be at the same level as "Plug-in Support" folder (in other words the same parent directory)
-- "Absolute Series Scanner.py" resides in Series folder, do not create an additional folder not listed like "absolute-series-scanner-master"
+- "Absolute Series Scanner.py" resides in Series folder, do not create an additional folder not listed like "absolute-series-scanner-master" and add the correct permissions on the init.py file. This should be done with chmod +x under linux
 - Once the scanner is installed correctly, when creating a library you can select the custom scanner, otherwise the drop-down selection list is not shown
 
 Linux install script example
