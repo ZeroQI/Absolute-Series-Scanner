@@ -220,8 +220,8 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
   "Seraph of the End - Battle in Nagoya [tvdb4-79604-s2]"
 </CODE></PRE>
 
-## Install
-- Download https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/Scanners/Series/Absolute%20Series%20Scanner.py
+## Install / Update
+- Download  https://raw.githubusercontent.com/ZeroQI/Absolute-Series-Scanner/master/Scanners/Series/Absolute%20Series%20Scanner.py
 - Save into [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
 Note:
 - "Scanners" and "Series" folder are not created by default and will need creating.
