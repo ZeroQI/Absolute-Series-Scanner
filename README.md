@@ -258,7 +258,7 @@ List of configuration files:
   - Check scanner file size and open the scanner file to check if it does have html/xml tags.
 - Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
 - if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
-- If Episodes are missing, wrong seasons or episode numbers, or series(s) missing, check all "(custom ASS)" logs
+- If Episodes are missing, wrong seasons or episode numbers, or series missing, check all "(custom ASS)" logs
 - If library doesn't add new content then most likelly the scanner is crashing (after scanner update) and will revert any changes to the library so nothing changes...
 
 Include the following logs (in any case, specify if file not present):
