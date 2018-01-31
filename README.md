@@ -2,16 +2,16 @@
 
 The Plex Scanner will make the video files showing in Plex, if not showing in Plex, it is a scanner issue.
 A Plex series scanner choose the following from the folders and file names:
-- Serie name
+- Series name
 - Season number
 - Episode number
 - Episode title (not filled by plex default series scanner, until the metadata agent refreshes it)
 - Episode year
 
-The Plex metadata agent will find metadata (Serie Title, summary year, episode title, summary, posters, fanart, tags, ... ) for files showing in Plex. Anything missing there while the file shows up in Plex is an Agent issue, refer to the Agent readme here: https://github.com/ZeroQI/Hama.bundle/blob/master/README.md
+The Plex metadata agent will find metadata (Series Title, summary year, episode title, summary, posters, fanart, tags, ... ) for files showing in Plex. Anything missing there while the file shows up in Plex is an Agent issue, refer to the Agent readme here: https://github.com/ZeroQI/Hama.bundle/blob/master/README.md
 
 ## Which Metadata/Title source to select?
-- Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" serie). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
+- Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have hoorrors like "bombshells from the sky" for "Asobi ni Iku yo!" series). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
 - TV Series: TheTVDB.com or TVrage or TheMovieDB (yep support series now), no db site will store (DVD) boxset specific files (nor sport or porn for tvdb). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniDB.net, but they do not carry porn series so no metadata for this type. TheTVDB uses seasons which can be practical for long anime.
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext" </LI>
 
@@ -30,7 +30,7 @@ Latest version supporting grouping folders without having to add the folder is f
 https://raw.githubusercontent.com/ZeroQI/Absolute-Series-Scanner/master/Scanners/Series/Absolute%20Series%20Scanner.py
 
 ### Season folders
-- Seasons folders can have serie name afterwards ("Zero no tsukaima / Season 1 Zero no tsukaima"
+- Seasons folders can have series name afterwards ("Zero no Tsukaima / Season 1 Zero no Tsukaima"
 - Files in "Extras" folders will be ignored.
 - Allow grouping in Ark xxxxx folders transparently with seasons folders inside, or within a season folder
 - Specials go in "Specials" or "Season 0" folders.
@@ -98,7 +98,7 @@ https://support.plex.tv/hc/en-us/articles/200220717-Local-Media-Assets-TV-Shows
 </THEAD>
 <TBODY>
 <TR> <TD> fanart  </TD> <TD> art/backdrop/background/fanart-1.ext</TD> <TD> -1 can be ommited (same level as Video TS) </TD> </TR>
-<TR> <TD> Serie poster </TD> <TD> Serie folder: Show name-1/folder/poster/show.ext</TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>
+<TR> <TD> Series poster </TD> <TD> Series folder: Show name-1/folder/poster/show.ext</TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>
 <TR> <TD> Season poster</TD> <TD> Season folder: Season01a.ext </TD> <TD> (jpg, jpeg, png, tbn) </TD> <TR>          
 <TR> <TD> Banner    </TD> <TD> banner/banner-1.jpg  </TD> <TD> </TD> </TR>
 <TR> <TD> Theme song</TD> <TD> theme.mp3  </TD> <TD> </TD> <TR>
@@ -122,27 +122,27 @@ Note: "Extras" folder is skipped by the absolute series scanner, put unsorted fi
 Hama supports the following guid_type:
 - anidb for AniDB.net (and and the behaviour changing mode anidb2)
 - tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
-- [deprecated] tmdb  For TheMovieDB.net (and the serie part of TheMovieDB: tsdb)
+- [deprecated] tmdb  For TheMovieDB.net (and the series part of TheMovieDB: tsdb)
 - [deprecated] imdb  For the International Movie DataBase (ids starts with "tt...")
 
 You can specify the guid to use the following way:
-- In guid_type.id inside serie folder with the id in it (ex: tvdb.id file with tvdbid "114801" without double quotes in it)
-- In Serie folder name by adding " [guid_type-id_number]" at the end
-- In custom search serie name by adding " [guid_type-id_number]" at the end
+- In guid_type.id inside series folder with the id in it (ex: tvdb.id file with tvdbid "114801" without double quotes in it)
+- In Series folder name by adding " [guid_type-id_number]" at the end
+- In custom search series name by adding " [guid_type-id_number]" at the end
 
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering     </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
 <TBODY>
-        <TR> <TD> anidb     </TD> <TD> Absolute                </TD> <TD> 1                </TD> <TD>AniDb          </TD> <TD>Force the anidb serie id. Serie will follow anidb episode numbering convention including specials
+        <TR> <TD> anidb     </TD> <TD> Absolute                </TD> <TD> 1                </TD> <TD>AniDb          </TD> <TD>Force the anidb series id. Series will follow anidb episode numbering convention including specials
         <UL><LI>Sword Art online                           [anidb-8692]</LI>
         </UL></TD> </TR>
-        <TR> <TD> anidb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Map Anidb entries to the tvdb at the right season and ep number to show one Plex serie entry only (need to be within a single tvdb entry)
+        <TR> <TD> anidb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Map Anidb entries to the tvdb at the right season and ep number to show one Plex series entry only (need to be within a single tvdb entry)
         <UL><LI>Sword Art online                           [anidb2-8692]</LI>
             <LI>Sword Art online II                        [anidb2-10376]</LI>
             <LI>Sword Art Online Extra Edition             [anidb2-10022]</LI>
             <LI>Gekijouban Sword Art Online: Ordinal Scale [anidb2-11681]</LI>
         </UL></TD> </TR>
-        <TR> <TD> tvdb     </TD> <TD> Season                   </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Force the tvdbid, serie will follow tvdb episode numbering convention including specials
+        <TR> <TD> tvdb     </TD> <TD> Season                   </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Force the tvdbid, series will follow tvdb episode numbering convention including specials
         <UL>
           <LI>Sword Art Online [tvdb-259640]</LI>
           <LI>Season 1 - Sword Art Online [1-25]/ep ##.ext with ## from 1 to 25
@@ -198,7 +198,7 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
 == Example 4 == tvdb4 Custom selected Arcs as seasons (as tvdb use them as half seasons for black lagoon for example)
   The arc definition to split into seasons the absolute numbering is done using the following order:
     - Seasons folders manually created by the user with absolute numbered episodes inside (seasons already mapped manually)
-    - in a local "tvdb4.mapping" file inside serie folder with the following format lines, one per arc/season:
+    - in a local "tvdb4.mapping" file inside series folder with the following format lines, one per arc/season:
       <CODE>\<season_num\>|\<starting_ep_num\>|\<ending_ep_num\>|\<freeform_text_naming_the_season\>(optional)</CODE>
     - without doing anything using the online arc database [github tvdb4.mapping.xml](https://github.com/ZeroQI/Absolute-Series-Scanner/blob/master/tvdb4.mapping.xml)
     
@@ -258,7 +258,7 @@ List of configuration files:
   - Check scanner file size and open the scanner file to check if it does have html/xml tags.
 - Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
 - if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
-- If Episodes are missing, wrong seasons or episode numbers, or serie(s) missing, check all "(custom ASS)" logs
+- If Episodes are missing, wrong seasons or episode numbers, or series missing, check all "(custom ASS)" logs
 - If library doesn't add new content then most likelly the scanner is crashing (after scanner update) and will revert any changes to the library so nothing changes...
 
 Include the following logs (in any case, specify if file not present):
