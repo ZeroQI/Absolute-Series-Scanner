@@ -8,10 +8,15 @@ import re                                               # match, compile, sub
 from lxml import etree                                  # fromstring
 import Utils                                            # SplitPath
 import VideoFiles                                       # VideoFiles.Scan(path, files, mediaList, subdirs, None) # Scan for video files.
+import ssl                                              # SSLContext
 try:                 from urllib.request import urlopen # urlopen Python 3.0 and later
 except ImportError:  from urllib2        import urlopen # urlopen Python 2.x #import urllib2 # urlopen
 
+try:                 from ssl import PROTOCOL_TLS    as SSL_PROTOCOL # protocol for Python 2.7.13 and later
+except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL
+
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
+SSL_CONTEXT 	          = ssl.SSLContext(SSL_PROTOCOL)
 TVDB_HTTP_API_URL         = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
 ASS_MAPPING_URL           = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
 ANIDB_TVDB_MAPPING        = 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
@@ -128,7 +133,7 @@ if os.path.isfile(os.path.join(LOG_PATH, "X-Plex-Token.id")):
   Log.info("'X-Plex-Token.id' file present")
   with open(os.path.join(LOG_PATH, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL += "?X-Plex-Token=" + token_file.read().strip()
 try:
-  library_xml = etree.fromstring(urlopen(PLEX_LIBRARY_URL).read())
+  library_xml = etree.fromstring(urlopen(PLEX_LIBRARY_URL, context=SSL_CONTEXT).read())
   for library in library_xml.iterchildren('Directory'):
     for path in library.iterchildren('Location'):  PLEX_LIBRARY[path.get("path")] = library.get("title")
 except:  Log.info("Place correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
@@ -379,7 +384,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       tvdb_guid_url, ep_count, abs_manual_placement_info, number_set = TVDB_HTTP_API_URL % tvdb_guid, 0, [], False
       Log.info("TVDB season mode (%s) enabled, serie url: '%s'" % (tvdb_mode, tvdb_guid_url))
       try:
-        tvdbanime = etree.fromstring( urlopen(tvdb_guid_url).read() )
+        tvdbanime = etree.fromstring( urlopen(tvdb_guid_url, context=SSL_CONTEXT).read() )
         for episode in tvdbanime.xpath('Episode'):
           if episode.xpath('SeasonNumber')[0].text != '0':
             ep_count = ep_count + 1
@@ -401,7 +406,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       else: ###load remote tvdb4 mapping file since no season folders, no local files###
         Log.info("TVDB season mode (%s) enabled, tvdb4 mapping url: '%s'" % (tvdb_mode, ASS_MAPPING_URL))
         try:
-          tvdb4_anime           = etree.fromstring( urlopen(ASS_MAPPING_URL).read() )
+          tvdb4_anime           = etree.fromstring( urlopen(ASS_MAPPING_URL, context=SSL_CONTEXT).read() )
           tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % tvdb_guid)[0].text.strip()
           for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
             season = line.strip().split("|")
@@ -415,7 +420,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
       Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (tvdb_mode, TVDB_HTTP_API_URL % tvdb_guid))
       tvdb_guid_url= TVDB_HTTP_API_URL % tvdb_guid
       try:
-        tvdbanime = etree.fromstring( urlopen(tvdb_guid_url).read() )
+        tvdbanime = etree.fromstring( urlopen(tvdb_guid_url, context=SSL_CONTEXT).read() )
         for episode in tvdbanime.xpath('Episode'):
           if episode.xpath('SeasonNumber')[0].text != '0' and episode.xpath('absolute_number')[0].text:
             mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
@@ -465,7 +470,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         else:
           Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING_MOD) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
           with open(tmp_filename, 'w') as scudlee_file:
-            scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING_MOD).read()
+            scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING_MOD, context=SSL_CONTEXT).read()
             scudlee_file.write( scudlee_file_content )
           if os.path.exists(scudlee_filename): os.remove(scudlee_filename)
           os.rename(tmp_filename, scudlee_filename)
@@ -486,7 +491,7 @@ def Scan(path, files, mediaList, subdirs, language=None, root=None, **kwargs): #
         else:
           Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
           with open(tmp_filename, 'w') as scudlee_file:
-            scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING).read()
+            scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING, context=SSL_CONTEXT).read()
             scudlee_file.write( scudlee_file_content )
           if os.path.exists(scudlee_filename): os.remove(scudlee_filename)
           os.rename(tmp_filename, scudlee_filename)
