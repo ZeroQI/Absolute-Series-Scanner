@@ -1,73 +1,73 @@
-# -*- coding: utf-8 -*-
-### Python library  ####### Functions and structures ###  #import Stack, VideoFiles, fnmatch ### Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
-import sys                                              # getdefaultencoding, getfilesystemencoding, platform
-import os                                               # path, listdir
-import tempfile                                         # NamedTemporaryFile
-import time                                             # strftime
-import re                                               # match, compile, sub
-import logging, logging.handlers                        #
-import Utils                                            # SplitPath
-import VideoFiles                                       # VideoFiles.Scan(path, files, mediaList, dirs, None) # Scan for video files.
-import Stack                                            # Scan
-from lxml import etree                                  # fromstring
-import ssl                                              # SSLContext
-try:                 from urllib.request import urlopen # urlopen Python 3.0 and later
-except ImportError:  from urllib2        import urlopen # urlopen Python 2.x #import urllib2 # urlopen
-
-try:                 from ssl import PROTOCOL_TLS    as SSL_PROTOCOL # protocol for Python 2.7.13 and later
-except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL
+X-Plex-Token.id in Plex root folder# -*- coding: utf-8 -*-
+### Python library - Functions and structures - Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
+import Media                                                                    # Episode
+import sys                                                                      # getdefaultencoding, getfilesystemencoding, platform
+import os                                                                       # path, listdir
+import tempfile                                                                 # NamedTemporaryFile
+import time                                                                     # strftime
+import re                                                                       # match, compile, sub
+import Utils                                                                    # SplitPath
+import Stack                                                                    # Scan
+import inspect                                                                  # getfile, currentframe
+import logging, logging.handlers                                                # getLogger, Formatter | RotatingFileHandler
+import unicodedata                                                              # normalize
+import ssl                                                                      # SSLContext
+try:                 from ssl            import PROTOCOL_TLS    as SSL_PROTOCOL # protocol for Python 2.7.13 and later
+except ImportError:  from ssl            import PROTOCOL_SSLv23 as SSL_PROTOCOL #
+try:                 from urllib.request import urlopen                         # urlopen Python 3.0 and later
+except ImportError:  from urllib2        import urlopen                         # urlopen Python 2.x #import urllib2 # urlopen
+from lxml import etree                                                          # fromstring
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
-SSL_CONTEXT 	          = ssl.SSLContext(SSL_PROTOCOL)
+SSL_CONTEXT 	            = ssl.SSLContext(SSL_PROTOCOL)
 TVDB_HTTP_API_URL         = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
-ASS_MAPPING_URL           = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
-ANIDB_TVDB_MAPPING        = 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
-ANIDB_TVDB_MAPPING_MOD    = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'
+ASS_MAPPING_URL           = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
+ANIDB_TVDB_MAPPING        = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
+ANIDB_TVDB_MAPPING_MOD    = 'https://rawgit.com/Dingmatt/AMSA/master/Plug-in%20Support/Data/com.plexapp.agents.amsa/DataItems/anime-list-corrections.xml'
 ANIDB_TVDB_MAPPING_CUSTOM = 'anime-list-custom.xml'                                                                            # custom local correction for ScudLee mapping file url
 SOURCE_IDS                = ".*? ?\[(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb)-(tt)?[0-9]{1,7}-?(s[0-9]{1,3})?(e[0-9]{1,3})?\]"
 SOURCE_ID_FILES           = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id"]
 TVDB_MODE_IDS             = ".*?\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"
 TVDB_MODE_ID_OFFSET       = ".*? ?\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"
 ANIDB2_MODE               = ".*? ?\[anidb2-(?P<guid>[0-9]{1,7})\]"
-SEASON_RX = [                                                                                                                                                                       ### Seasons Folders 
-  'Specials',                                                                                                                                                                       # Specials (season 0)
-  '(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                             # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
-  '(?P<show>.*?)[\._\- ]+[sS](?P<season>[0-9]{2})',                                                                                                                                 # (title) S01
-  '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                                            # ##a Stagione
-  '(?P<season>[0-9]{1,2}).*',	                                                                                                                                                      # ##
-  '((([Ss]tory )?[Aa][Rr][KkCc]).*|.* [Aa][Rr][KkCc])']                                                                                                                             # Last entry in array, folder name droped but files kept: Story, Arc, Ark, Video                                                                          #
+SEASON_RX = [                                                                                                                                                           ### Seasons Folders 
+ 'Specials',                                                                                                                                                            # Specials (season 0)
+ '(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                                  # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
+ '(?P<season>[0-9]{1,2}).*',																																			# ## (Season with only numbers)
+ '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                                 # ##a Stagione
+ '(([Ss]tory )?[Aa]r[kc]|[Vv]ideo).*' ]                                                                                                                                 # Last entry in array, folder name droped but files kept: Story, Arc, Ark, Video                                                                          #
 SERIES_RX = [                                                                                                                                                                       ######### Series regex - "serie - xxx - title" ###
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})(([_\-Xx]|[_\-][0-9]{1,2}[Xx])(?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                            #  0 # 1x01
   '(^|(?P<show>.*?)[ _\.\-]+)s(?P<season>[0-9]{1,2})([ _\.\-])?(e| e|ep| ep|)(?P<ep>[0-9]{1,3})(([ _\.\-]|(e|ep)|[ _\.\-](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*?)$)',  #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
-  '^(?P<show>.*?) - (E|e|Ep|ep|EP)?(?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?(v[0-9]{1})?( - |.)?(?P<title>.*)$',                                                                                  #  3 # Serie - xx - title.ext | ep01-ep02 | e01-02
+  '^(?P<show>.*?) - (E|e|Ep|ep|EP)?(?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?(v[0-9]{1})?( - |.)?(?P<title>.*)$',                                                                    #  3 # Serie - xx - title.ext | ep01-ep02 | e01-02
   '^(?P<show>.*?) \[(?P<season>[0-9]{1,2})\] \[(?P<ep>[0-9]{1,3})\] (?P<title>.*)$']                                                                                                #  4 # Serie [Sxx] [Exxx] title.ext                     
-ANIDB_OFFSET = [0, 100, 150, 200, 400, 0, 0]; ANIDB_RX  = [                                                                                                                         ######### AniDB Specials regex ### 
-  #'(^|(?P<show>.*?)[ _\.\-]+)(SP|SPECIAL|OAV|OVA) ?(?P<ep>\d{1,2})(-(?P<ep2>[0-9]{1,3}))?(v0|v1|v2|v3|v4|v5)? ?(?P<title>.*)$',                                                                             #  5 # 001-099 Specials
-  '(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v0|v1|v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                                  #  6 # 100-149 Openings
-  '(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v0|v1|v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                                   #  7 # 150-199 Endings
-  '(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v0|v1|v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                                      #  8 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
-  '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2}) ?(v0|v1|v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                                    #  9 # 400-499 Others
-  '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v0|v1|v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                              # 10 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
-  '(^|(?P<show>.*?)[ _\.\-]+)SP? ?(?P<ep>\d{1,2}) ?(?P<title>.*)$']                                                                                                                   # 11 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
+ANIDB_OFFSET = [0, 100, 150, 200, 400, 0, 0]; ANIDB_RX  = [                                                                                                             ######### AniDB Specials regex ### 
+  #'(^|(?P<show>.*?)[ _\.\-]+)(SP|SPECIAL|OAV|OVA) ?(?P<ep>\d{1,2})(-(?P<ep2>[0-9]{1,3}))? ?(?P<title>.*)$',                                                                 #  5 # 001-099 Specials
+  '(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v0|v1|v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                      #  6 # 100-149 Openings
+  '(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING) ?(?P<ep>\d{1,2}[a-z]?)? ?(v0|v1|v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                       #  7 # 150-199 Endings
+  '(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T) ?(?P<ep>\d{1,2}) ?(v0|v1|v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                                                          #  8 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
+  '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2}) ?(v0|v1|v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                        #  9 # 400-499 Others
+  '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e |ep |e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)? ?(v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',                  # 10 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
+  '(^|(?P<show>.*?)[ _\.\-]+)SP?(?P<ep>\d{1,2}) ?(?P<title>.*)$']                                                                                                       # 11 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
 IGNORE_DIRS_RX  = [ '@Recycle', '.@__thumb', 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir', 'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]# Filters.py  removed '\..*',        
-IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.plexignore', '\.xml$', '\.smi$']         #, '.*\.log$'                                               # Skipped files (samples, trailers)                                                          
+IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '.plexignore', '\.xml$', '\.smi$']                                                       # Skipped files (samples, trailers)                                                          
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',    #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm', #
                     'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']                                                                 # DVD: 'ifo', 'bup', 'vob'
 FILTER_CHARS    = "\\/:*?<>|~;"  #_;.                                                                                                                                     # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
-WHACK_PRE_CLEAN = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC", 
-  'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
+WHACK_PRE_CLEAN = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC",
+  'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed',
   "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release",
   "By UniversalFreedom", "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
   'xvid-saints', "XviD-T00NG0D", "XViD-ViCKY", "XviD-BiA", "XVID-FHW", "PROPER-LOL", "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "WEB_DL",
   "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
-  "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
-  "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
+  "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs",
+  "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__",
   "(BD 1920x1080 Hi10P, JPN+ENG)", "(BD 1280x720 Hi10P)", "(DVD_480p)", "(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", "x264-RedBlade",
   "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p.BluRay", "FLAC5.1", "x264-CTR",
   "1080p-Hi10p", "FLAC2.0",
   "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)",
-  "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV", "SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
+  "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV", "SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)",
   "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0", "AAC", 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
   "(Exiled_Destiny)", "1080p", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en",
   "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5",
@@ -75,7 +75,7 @@ WHACK_PRE_CLEAN = ["x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", 
   "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits", "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement"]                                                                                                                                      #include spaces, hyphens, dots, underscore, case insensitive
 WHACK = [ #lowercase                                                                                                                                                    ### Tags to remove ###
   'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi", '8bit', '8-bit', 'hi10', 'hi10p', '10bit', '10-bit', 'crf24', 'crf 24', 'hevc',                       # Video Codecs (color depth and encoding, Resolution)
-  '480p', '576p', '720p', '1080p', '1080i',                                                                                                                             #       
+  '480p', '576p', '720p', '1080p', '1080i',                                                                                                                             #
   '24fps', '25fps', 'ntsc', 'pal', 'ntsc-u', 'ntsc-j',                                                                                                                  # Refresh rate, Format
   'mp3', 'ogg', 'ogm', 'vorbis', 'aac', 'dts', 'ac3', 'ac-3', '5.1ch', '5.1', '7.1ch',  'qaac',                                                                         # Audio Codecs, channels
   'dc', 'se', 'extended', 'unrated', 'multi', 'multisubs', 'dubbed', 'dub', 'subbed', 'sub', 'engsub', 'eng', 'french', 'fr', 'jap', "JPN+ENG",                         # edition (dc = directors cut, se = special edition), subs and dubs
@@ -86,7 +86,7 @@ WHACK = [ #lowercase                                                            
   'ddc', 'dvdrip', 'dvd', 'r1', 'r3', 'r5', "dvd", 'svcd', 'vcd', 'sd', 'hd', 'dvb', "release",                                                                         # DVD, VCD, S-VCD
   'dsr', 'dsrip', 'hdtv', 'pdtv', 'ppv', 'stv', 'tvrip', 'complete movie', "hiei", "metis", "norar",                                                                    # dtv, stv
   'cam', 'bdscr', 'dvdscr', 'dvdscreener', 'scr', 'screener', 'tc', 'telecine', 'ts', 'telesync', 'mp4',                                                                # screener
-  "mthd", "thora", 'sickrage', 'brrip', "remastered", "yify", "tsr", "reidy", "gerdhanse",                                                                              #'limited', 
+  "mthd", "thora", 'sickrage', 'brrip', "remastered", "yify", "tsr", "reidy", "gerdhanse",                                                                              #'limited',
   'rikou', 'hom?', "it00nz", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a"]                                                             #
 CHARACTERS_MAP = {
   14844057:"'", 14844051:'-', 14844052:'-', 14844070:'...', 15711386:':', 14846080:'∀', 15711646:'~',                                                                   #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
@@ -98,7 +98,6 @@ CHARACTERS_MAP = {
   49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½' , 52352:''  , 52353:''}                                                    #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #  ['\xcc', '\x81'] 
 
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
-import inspect
 PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
 if not os.path.isdir(PLEX_ROOT):
   path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
@@ -107,8 +106,8 @@ if not os.path.isdir(PLEX_ROOT):
   PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
 
 def os_filename_clean_string(string):
-  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:                             # remove leftover parenthesis (work with code a bit above)
-    if char in string:                                           string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:    # remove leftover parenthesis (work with code a bit above)
+    if char in string:  string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
   return string
 
 def set_logging(foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
@@ -142,7 +141,7 @@ try:
   for library in library_xml.iterchildren('Directory'):
     for path in library.iterchildren('Location'):
       PLEX_LIBRARY[path.get("path")] = library.get("title")
-except:  Log.info("Place correct Plex token in X-Plex-Token.id file in logs folder or in PLEX_LIBRARY_URL variable to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
+except:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
 
 ### replace a string by another while retaining original string case ##############################################################################################
 def replace_insensitive (ep, word, sep=" "):
@@ -155,24 +154,22 @@ def replace_insensitive (ep, word, sep=" "):
 def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):  return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
 
 ### Return number of bytes of Unicode characters ########################################################
-def unicodeCharLen (char):                                           # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
+def unicodeCharLen (char):                                       # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
   for x in range(1,6):                                           # start at 1, 6 times 
     if ord(char) < 256-pow(2, 7-x)+(2 if x==6 else 0): return x  # 256-2pow(x) with x(7->0) = 128 192 224 240 248 252 254 255 = 1 to 8 bits at 1 from the left, 256-2pow(7-x) starts form left
   #Log.info("ord(char): '%d'" % ord(char))
 
-def unicodeLen (string):                                           # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
+def unicodeLen (string):  # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
   length=0
-  for char in string:
-    length += unicodeCharLen(char)
+  for char in string:  length += unicodeCharLen(char)
   return length
   
 ### Decode string back to Unicode ###   #Unicodize in utils?? #fixEncoding in unicodehelper
 def encodeASCII(string, language=None): #from Unicodize and plex scanner and other sources
-  import unicodedata                                      # normalize
   if string=="": return ""
-  ranges = [ {"from": u"\u3300" , "to": u"\u33ff" },
-             {"from": u"\ufe30" , "to": u"\ufe4f" },
-             {"from": u"\uf900" , "to": u"\ufaff" }, # compatibility ideographs
+  ranges = [ {"from": u"\u3300" , "to": u"\u33ff" }, #
+             {"from": u"\ufe30" , "to": u"\ufe4f" }, #
+             {"from": u"\uf900" , "to": u"\ufaff" }, #compatibility ideographs
              {"from": u"\u30a0" , "to": u"\u30ff" }, #cjk radicals supplement                 - Japanese Kana    
              {"from": u"\u2e80" , "to": u"\u2eff" }, #cjk radicals supplement                 - Japanese Kana    
              {"from": u"\u4e00" , "to": u"\u9fff" }, #CJK Unified Ideographs                  - Chinese Han Ideographs, Common
@@ -242,7 +239,6 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", length=0, tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
-  import Media                                            # Episode
   # Mapping List 
   ep_orig, ep_orig_padded = "s%de%d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%s" % ep2), "s%02de%02d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%02d" % ep2)
   ep_orig_single          = "s%de%d"   % (season, ep)
@@ -251,7 +247,6 @@ def add_episode_into_plex(mediaList, file, root, path, show, season=1, ep=1, tit
     season, ep = mappingList[ep_orig_single][1:].split("e")
     if '-' in ep or  '+' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None
     season, ep, ep2 = int(season), int(ep), int(ep)+multi_ep if multi_ep else ep2
-    
   elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep, season = ep + int (mappingList['s%d' % season][2]), int(mappingList['s%d' % season][3])
   elif season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   
@@ -321,7 +316,14 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
           files.remove(file)
           break
       else:  Log.info(os.path.relpath(file,root) if root in file else file) 
+    #elif ext == 'zip':
+    #  zip_archive = zipfile.ZipFile(file)
+    #  for zip_archive_filename in zip_archive.namelist():
+    #    zname, zext = os.path.splitext(zip_archive_filename); zext = zext[1:]
+    #    if zext in VIDEO_EXTS:  files.append(zip_archive_filename)
+    #      #filecontents = zip_archive.read(zip_archive_filename)
     else:  files.remove(file)
+  #if len(files)==0:  Log.info("Empty folder"); return  # If direct scanner call on folder (not root) then skip if no files as will be called on subfolders too
   
   ### Logging to *.scanner.log ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if path.count(os.sep) else 'w') #if 'log_filename' in kwargs
