@@ -8,7 +8,10 @@
     [    0Num]|[First Ep Num]|[Last Ep Num]|[    0Name]
     [    0Num]|[First Ep Num]|[First Ep Num]|[    0Name] (unknown length)
   </anime>
-    <anime tvdbid="303730" name="Active Raid">
+  <anime tvdbid="309530" name="91 Days">
+    01|001|013|91 Days with Ep 13
+  </anime>
+  <anime tvdbid="303730" name="Active Raid">
     01|001|012|Active Raid 1st Cour
     02|013|024|Active Raid 2nd Cour
   </anime>
@@ -43,6 +46,12 @@
     02|014|025|Blood+ 2
     03|026|038|Blood+ 3
     04|039|050|Blood+ 4
+  </anime>
+  <anime tvdbid="321285" name="Boruto: Naruto Next Generations">
+    01|001|018|Academy Arc
+    02|019|024|Sarada Arc
+    03|025|032|Field Trip Arc
+    04|033|033| Graduation Arc (unknown length)
   </anime>
   <anime tvdbid="305075" name="Bungo Stray Dogs">
     01|001|012|Bungo Stray Dogs 1st Cour
@@ -120,6 +129,10 @@
     06|093|136|Chimera Ant Arc
     07|137|148|13th Hunter Chairman Arc
   </anime>
+  <anime tvdbid="74474" name="Mobile Suit Gundam SEED">
+    01|001|025|First Season
+    02|026|050|Second Season
+  </anime>
   <anime tvdbid="78857" name="Naruto">
     01|001|035|1st Stage
     02|036|083|2nd Stage
@@ -163,25 +176,29 @@
     21|480|500|Epilogue
   </anime>
   <anime tvdbid="81797" name="One Piece">
-    01|001|061|East Blue - Gathering the Crew
-    02|062|077|Entering into the Grand Line (Whiskey Peak and Little Garden)
-    03|078|092|Introducing Chopper at the Winter Island
-    04|093|135|Arrival and Fierce Fighting at Alabasta
-    05|136|195|Sky Island Skypiea / Golden Bell
-    06|196|206|Escape! The Naval Fortress G8
-    07|207|228|Davy Back Games - The Foxy Pirate Crew
-    08|229|263|Water Seven
-    09|264|326|Enies Lobby
-    10|327|384|Thriller Bark
-    11|385|407|Sabaody Archipelago
-    12|408|421|Island of Women / Amazon Lily
-    13|422|456|Impel Down
-    14|457|516|Marineford
-    15|517|574|Fishman Island
-    16|575|628|Punk Hazard
-    17|629|746|Dressrosa
-    18|747|782|Zou Arc
-    19|783|783|Whole Cake Island Arc (unknown length)
+    01|001|030|East Blue - Gathering the Crew
+    02|031|044|Arlong Park
+    03|045|063|Entering into the Grand Line 
+    04|064|077|Whiskey Peak and Little Garden
+    05|078|092|Drum Island
+    06|093|135|Alabasta
+    07|136|152|Jaya Arc
+    08|153|195|Skypiea
+    09|196|206|The Naval Fortress G8
+    10|207|228|Davy Back Games - The Foxy Pirate Crew
+    11|229|263|Water Seven
+    12|264|326|Enies Lobby
+    13|327|384|Thriller Bark
+    14|385|407|Sabaody Archipelago
+    15|408|421|Island of Women / Amazon Lily
+    16|422|456|Impel Down
+    17|457|489|Marineford
+    18|490|516|Post-War Arc
+    19|517|574|Fishman Island
+    20|575|628|Punk Hazard
+    21|629|746|Dressrosa
+    22|747|782|Zou Arc
+    23|783|783|Whole Cake Island Arc (unknown length)
   </anime>
   <anime tvdbid="289906" name="Seraph of the End">
     01|001|012|Vampire Reign
