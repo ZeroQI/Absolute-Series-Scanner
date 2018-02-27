@@ -1,4 +1,4 @@
-X-Plex-Token.id in Plex root folder# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 ### Python library - Functions and structures - Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common ###
 import Media                                                                    # Episode
 import sys                                                                      # getdefaultencoding, getfilesystemencoding, platform
@@ -19,7 +19,7 @@ except ImportError:  from urllib2        import urlopen                         
 from lxml import etree                                                          # fromstring
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
-SSL_CONTEXT 	            = ssl.SSLContext(SSL_PROTOCOL)
+SSL_CONTEXT 	          = ssl.SSLContext(SSL_PROTOCOL)
 TVDB_HTTP_API_URL         = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
 ASS_MAPPING_URL           = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
 ANIDB_TVDB_MAPPING        = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
