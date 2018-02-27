@@ -16,7 +16,7 @@ try:                 from ssl import PROTOCOL_TLS    as SSL_PROTOCOL # protocol 
 except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###  ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
-SSL_CONTEXT 	          = ssl.SSLContext(SSL_PROTOCOL)
+SSL_CONTEXT               = ssl.SSLContext(SSL_PROTOCOL)
 TVDB_HTTP_API_URL         = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
 ASS_MAPPING_URL           = 'http://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
 ANIDB_TVDB_MAPPING        = 'http://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
