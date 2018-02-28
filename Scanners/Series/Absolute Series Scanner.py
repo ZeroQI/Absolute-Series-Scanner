@@ -71,7 +71,7 @@ ANIDB_RX        = [                                                             
                     '(^|(?P<show>.*?)[ _\.\-]+)SP? ?(?P<ep>\d{1,2}) ?(?P<title>.*)$']                                                                                               # 11 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
 IGNORE_DIRS_RX  = [ '@Recycle', '.@__thumb', 'lost\+found', '.AppleDouble','$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir',        ###### Ignored folders
                     'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]                                   #      source: Filters.py  removed '\..*',        
-IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.plexignore', '\.xml$', '\.smi$', '.*\.id']            #, '.*\.log$'                   # Skipped files (samples, trailers)                                                          
+IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.xml$', '\.smi$']#, '\.plexignore', '.*\.id']            #, '.*\.log$'                   # Skipped files (samples, trailers)                                                          
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',                #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm',             #
                     'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']                                                                             # DVD: 'ifo', 'bup', 'vob'
@@ -329,8 +329,12 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
      
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
   msg=[]  #allow to queue strings to write once filelist is done
-  if not path or not len(kwargs)==0:  #root or manual calls only since other cached and may not run
+  #filelist: not path, path and norm call, path and subnormal call not both
+  # 
+  #if path and len(reverse_path)>1 and len(kwargs)==0 and not season_folder_first:  return  #root call or normal folder call pass, other loaded through calling scan from root 
+  if files and (not path or kwargs):  #root or manual calls only since other cached and may not run
     set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='a' if path.count(os.sep) else 'w') #add grouping folders filelist
+    Log.info("Filelist:")
     for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
       ext = os.path.splitext(file)[1].lstrip('.').lower()
       if ext in VIDEO_EXTS:
@@ -340,22 +344,22 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
             files.remove(file)
             break
         else:  Log.info(os.path.relpath(file,root) if root in file else file) 
+      else:
+        files.remove(file)
       
-      # ZIP
-      elif ext == 'zip':
-        zip_archive = zipfile.ZipFile(file)
-        for zip_archive_filename in zip_archive.namelist():
-          zname, zext = os.path.splitext(zip_archive_filename); zext = zext[1:]
-          if zext in VIDEO_EXTS:  files.append(zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
-      
-      #RAR
-      #import rarfile  https://rarfile.readthedocs.io/en/latest/api.html
-      #rar_archive = rarfile.RarFile('myarchive.rar')
-      #for rar_archive_filename in rar_archive.infolist():
-      #  zname, zext = os.path.splitext(rar_archive_filename.filename); zext = zext[1:]
-      #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
-      
-      else:  files.remove(file)
+        ### ZIP ###
+        if ext == 'zip':
+          zip_archive = zipfile.ZipFile(file)
+          for zip_archive_filename in zip_archive.namelist():
+            zname, zext = os.path.splitext(zip_archive_filename); zext = zext[1:]
+            if zext in VIDEO_EXTS:  files.append(zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
+        
+        ### RAR ###
+        #import rarfile  https://rarfile.readthedocs.io/en/latest/api.html
+        #rar_archive = rarfile.RarFile('myarchive.rar')
+        #for rar_archive_filename in rar_archive.infolist():
+        #  zname, zext = os.path.splitext(rar_archive_filename.filename); zext = zext[1:]
+        #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
   
   ### Logging to *.scanner.log ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if path.count(os.sep) else 'w') #if 'log_filename' in kwargs
@@ -386,7 +390,7 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
         break
 
   ####
-  if path and not len(reverse_path)==1 and len(kwargs)==0 and not season_folder_first:  return  #root call or normal folder call pass, other loaded through calling scan from root 
+  if path and len(reverse_path)>1 and len(kwargs)==0 and not season_folder_first:  return  #root call or normal folder call pass, other loaded through calling scan from root 
   folder_show = reverse_path[0] if reverse_path else ""
   
   ### Capture guid from folder name or id file in serie or serie/Extras folder ###
@@ -556,23 +560,22 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
         if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+"|"; break
       else:   misc+= clean_string(os.path.basename(file), True)+"|"
     for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|') 
-    misc = "|".join([s for s in misc.split('|') if s])
-    #Log.info("misc: '%s'" % misc)
+    misc = "|".join([s for s in misc.split('|') if s])  #Log.info("misc: '%s'" % misc)
     for item in misc.split('|'): 
       if item in misc_count:  misc_count[item] +=1
       else:                   misc_count[item] = 1
     for item in misc_count:
       if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) and max(misc_count.values())>3 ):
         misc_words = misc_words + (item,)
-      misc = misc.replace("|%s|" % item, '|')
-    #Log.info("misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
+      misc = misc.replace("|%s|" % item, '|')  #Log.info("misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
   
   ### File main loop ###
   for file in files:
     show, season, ep2, title, year = folder_show, folder_season if folder_season is not None else 1, None, "", ""
+    ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
+    if ext not in VIDEO_EXTS:  continue
     
     #DVD/BluRay folders
-    ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
     if ext=="ifo" and not file.upper()=="VIDEO_TS.IFO":  continue
     if disc:  filename = ep
     else:
@@ -698,7 +701,6 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
         path_item = os.path.join(root, path, dir, item)
         if os.path.isdir(path_item):  subdir_dirs.append (path_item)
         else:                         subdir_files.append(path_item)
-      Log.info("")
       Scan(os.path.join(path, dir), sorted(subdir_files), mediaList, sorted(subdir_dirs), language=language, root=root, plexignore_dirs=plexignore_dirs, plexignore_files=plexignore_files, manual=True)
   
   Stack.Scan(path, files, mediaList, dirs)
