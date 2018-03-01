@@ -49,7 +49,7 @@ TVDB_MODE_ID_OFFSET       = ".*? ?\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(
 ANIDB2_MODE               = ".*? ?\[anidb2-(?P<guid>[0-9]{1,7})\]"                                                                                                                  #
 SEASON_RX                 = [                                                                                                                                                       ### Seasons Folders 
                               'Specials',                                                                                                                                           # Specials (season 0)
-                              '(Season|Series|Book|Saison|Livre|Seanoт|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                 # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
+                              '(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                 # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
                               '(?P<show>.*?)[\._\- ]+[sS](?P<season>[0-9]{2})',                                                                                                     # (title) S01
                               '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                # ##a Stagione
                               '(?P<season>[0-9]{1,2}).*',	                                                                                                                          # ##
@@ -317,9 +317,9 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
   reverse_path = list(reversed(Utils.SplitPath(path)))
   log_filename = path.split(os.sep, 1)[0] if path else '_root_'
   
-  ### .plexignore file loading ###
-  plexignore_files = []
-  plexignore_dirs  = []
+  ### .plexignore file ###
+  plexignore_files = kwargs['plexignore_files'] if 'plexignore_files' in kwargs else []
+  plexignore_dirs  = kwargs['plexignore_dirs' ] if 'plexignore_dirs'  in kwargs else []
   if os.path.isfile(os.path.join(root, path, ".plexignore")):
     with open(os.path.join(root, path, ".plexignore"), 'r') as plexignore:           # open file with auto close
       for pattern in plexignore:                                                     # loop through each line
@@ -354,6 +354,8 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='a' if path.count(os.sep) else 'w') #add grouping folders filelist
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))
+  #if kwargs:
+  #  if Log.info("")
   for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
     if ext in VIDEO_EXTS:
@@ -364,15 +366,18 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
           break
       else:  Log.info(file) 
     else:
-      Log.info("# File: '{}' extension does not match 'VIDEO_EXTS'".format(file))
-      files.remove(file)
+      files.remove(file)  #Log.info("# File: '{}' extension does not match 'VIDEO_EXTS'".format(file))
     
       ### ZIP ###
       if ext == 'zip':
         zip_archive = zipfile.ZipFile(file)
         for zip_archive_filename in zip_archive.namelist():
           zname, zext = os.path.splitext(zip_archive_filename); zext = zext[1:]
-          if zext in VIDEO_EXTS:  files.append(zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
+          if zext in VIDEO_EXTS:
+            files.append(zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
+            Log.info("# File: '{}' added from zip archive".format(zip_archive_filename))
+      
+      ### 7zip ###
       
       ### RAR ###
       #import rarfile  https://rarfile.readthedocs.io/en/latest/api.html
@@ -380,6 +385,7 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
       #for rar_archive_filename in rar_archive.infolist():
       #  zname, zext = os.path.splitext(rar_archive_filename.filename); zext = zext[1:]
       #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
+  
   Log.info("")
   
   ### Logging to *.scanner.log ###
@@ -388,9 +394,11 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
   Log.info("".ljust(157, '='))
   
   #### Grouping folders skip ###
-  if path and not kwargs and len(reverse_path)>1 and not season_folder_first:  return  #Grouping folders Plex call, but mess after one season folder is ok
+  if path and not kwargs and len(reverse_path)>1 and not season_folder_first:  Log.info("");  return  #Grouping folders Plex call, but mess after one season folder is ok
+  #if not files and not kwargs:                                                 Log.info("");  return  #Grouping folders could call subfolders
   
-  ### Forced id mode - Capture if absolute numbering should be applied for all episode numbers  ###
+  ### Forced guid modes ###
+  Log.info("Forced guid modes") #!#
   guid=""
   if not re.search(SOURCE_IDS, folder_show, re.IGNORECASE):  # Capture guid from folder name first or id file in serie or serie/Extras folder
     for file in SOURCE_ID_FILES:
@@ -402,11 +410,25 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
         break
     else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
   
+  ### forced guid modes - TheTVDB ###
   tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
-  mappingList, offset_season, offset_episode, offset_match = {}, 0, 0, re.search(TVDB_MODE_ID_OFFSET, folder_show, re.IGNORECASE)
+  mappingList, offset_season, offset_episode = {}, 0, 0
   if tvdb_mode_search:
-    tvdb_mode, tvdb_guid = tvdb_mode_search.group('mode').lower(), tvdb_mode_search.group('guid').lower();
-    #Log.info("folder_show: '%s', folder_season: '%s', tvdb mode: '%s', tvdb id: '%s'" % (folder_show, folder_season, tvdb_mode, tvdb_guid)) # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
+    
+    ### Calculate offset for season or episode ###
+    offset_match = re.search(TVDB_MODE_ID_OFFSET, folder_show, re.IGNORECASE)
+    if offset_match:
+      match_source, match_season, match_episode = offset_match.group('source'), "", ""
+      if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
+      if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-1
+      if tvdb_mapping and match_season!='s0': 
+        season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if match_source in ['tvdb3','tvdb4'] else 1
+        offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
+      folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
+      if offset_season+offset_episode:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
+
+    #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
+    tvdb_mode, tvdb_guid = tvdb_mode_search.group('mode').lower(), tvdb_mode_search.group('guid').lower()  #Log.info("folder_show: '%s', folder_season: '%s', tvdb mode: '%s', tvdb id: '%s'" % (folder_show, folder_season, tvdb_mode, tvdb_guid)) # mode 1 normal, mode 2 season mode (ep reset to 1), mode 3 hybrid mode (ep stay in absolute numbering put put in seasons)
     if tvdb_mode in ("2", "3"): 
       tvdb_guid_url, ep_count, abs_manual_placement_info, number_set = TVDB_HTTP_API_URL % tvdb_guid, 0, [], False
       Log.info("TVDB season mode (%s) enabled, serie url: '%s'" % (tvdb_mode, tvdb_guid_url))
@@ -429,6 +451,7 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
             if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if tvdb_mode=="2" else int(absolute_number))
       except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
       
+    #tvdb4 - Absolute numbering in any season arrangements aka saga mode
     elif tvdb_mode=="4" and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
       try:
         url = os.path.join(root, path, "tvdb4.mapping")
@@ -447,7 +470,8 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
         if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % tvdb_guid)
         else:                                    Log.error("Error opening url '%s', Exception: '%s'" % (url, e))
       
-    elif tvdb_mode=="5": ##Star wars: Clone attack chronological order#
+    #tvdb5 - 'Star wars: Clone attack' chronological order, might benefit other series
+    elif tvdb_mode=="5": ##S
       Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (tvdb_mode, TVDB_HTTP_API_URL % tvdb_guid))
       tvdb_guid_url= TVDB_HTTP_API_URL % tvdb_guid
       try:
@@ -458,19 +482,9 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
         Log.info("mappingList: '%s'" % str(mappingList))
       except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
     if tvdb_mapping:  Log.info("unknown_series_length: %s, tvdb_mapping: %s (showing changing seasons/episodes only)" % (unknown_series_length, str({x:tvdb_mapping[x] for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)})))  #[for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)]
-  
-  ### Calculate offset for season or episode ###
-  if offset_match:
-    match_source, match_season, match_episode = offset_match.group('source'), "", ""
-    if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
-    if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-1
-    if tvdb_mapping and match_season!='s0': 
-      season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if match_source in ['tvdb3','tvdb4'] else 1
-      offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
-    folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
-    if offset_season+offset_episode:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
-    
-  ### anidb2 mode (requires ScudLee's mapping xml file) ###
+    Log.info("".ljust(157, '-'))
+      
+  ### forced guid modes - anidb2 (requires ScudLee's mapping xml file) ###
   anidb2_match = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
   a2_tvdbid, a2_defaulttvdbseason, scudlee_mapping_content = "", "", None
   if anidb2_match:
@@ -537,9 +551,8 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
       offset_season  = int(a2_defaulttvdbseason)-1 if a2_defaulttvdbseason and a2_defaulttvdbseason.isdigit() else 0
       if 'episodeoffset' in mappingList and mappingList['episodeoffset']:  offset_episode = 0-int(mappingList['episodeoffset'][1:]) if mappingList['episodeoffset'].startswith('-') else int(mappingList['episodeoffset'])
       else:                                                                offset_episode = 0
-      
-  if tvdb_mode_search or anidb2_match:  Log.info("".ljust(157, '-'))
-  
+    Log.info("".ljust(157, '-'))
+    
   # Build misc variable to check numbers in titles
   misc, misc_words, misc_count = "|", (), {} # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
   array = ()
@@ -675,8 +688,9 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
           break
       except:  Log.info("exception: \"%s\" rx %s: \"%s\"" % (dir, 'IGNORE_DIRS_RX' if rx in IGNORE_DIRS_RX else '.plexignore pattern', rx))
     
-    #Not skipped
+    ### Not skipped
     else:
+    
       ### Extract season folder to reduce complexity and use folder as serie name ###
       reverse_path, season_folder_first = list(reversed(Utils.SplitPath(os.path.join(path, dir)))), False
       for last_folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
@@ -691,6 +705,7 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
       ### Cancel Scan() call for normal folder calls so they can be cached
       if len(reverse_path)==1 or season_folder_first:  continue  #if path and not len(reverse_path)==1 and len(kwargs)==0 and not season_folder_first:  return  #root call or normal folder call pass, other loaded through calling scan from root 
   
+      ### Call subfolders ###
       subdir_files, subdir_dirs = [], []
       for item in os.listdir(dir):
         path_item = os.path.join(root, path, dir, item)
