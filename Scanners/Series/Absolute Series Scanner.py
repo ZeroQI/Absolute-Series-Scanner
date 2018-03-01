@@ -2,7 +2,7 @@
 # Source: Plex Media Server\Plug-ins\Scanners.bundle\Contents\Resources\Common
 # 
 # Main principles and functions:
-# - using normal plex scanner calls to handle Folders following Plex naming convention so they are cached
+# - using normal plex scanner calls to handle Folders following Plex naming convention so they are cached (including multiple random folders after season folder)
 # - Allowing to add grouping folders series while on root Scan() call without folder tag (through manual calls to folder to simplify code) as subfolders of folder located at root are collated together
 # - support .plexignore
 # - support zip archives (Script to come to zip zero size library)
@@ -314,11 +314,12 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 ### Look for episodes ###################################################################################
 def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get called for root and each root folder
   if root in path:  path = os.path.relpath(path,root) #can only call sub-sub-folder fullpath
+  reverse_path = list(reversed(Utils.SplitPath(path)))
   log_filename = path.split(os.sep, 1)[0] if path else '_root_'
-   
+  
   ### .plexignore file loading ###
-  plexignore_dirs  = []
   plexignore_files = []
+  plexignore_dirs  = []
   if os.path.isfile(os.path.join(root, path, ".plexignore")):
     with open(os.path.join(root, path, ".plexignore"), 'r') as plexignore:           # open file with auto close
       for pattern in plexignore:                                                     # loop through each line
@@ -327,54 +328,12 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
         if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))  # patterns for this folder gets converted and added to files.
         elif pattern[0] != '/': plexignore_dirs.append(pattern)                      # patterns for subfolders added to folders
      
-  ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
-  msg=[]  #allow to queue strings to write once filelist is done
-  #filelist: not path, path and norm call, path and subnormal call not both
-  # 
-  #if path and len(reverse_path)>1 and len(kwargs)==0 and not season_folder_first:  return  #root call or normal folder call pass, other loaded through calling scan from root 
-  if files and (not path or kwargs):  #root or manual calls only since other cached and may not run
-    set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='a' if path.count(os.sep) else 'w') #add grouping folders filelist
-    Log.info("Filelist:")
-    for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
-      ext = os.path.splitext(file)[1].lstrip('.').lower()
-      if ext in VIDEO_EXTS:
-        for rx in IGNORE_FILES_RX + plexignore_files:  # Filter trailers and sample files
-          if re.match(rx, os.path.basename(file), re.IGNORECASE):
-            msg.append("File: '%s' match '%s': '%s'" % (file, 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore pattern', rx))
-            files.remove(file)
-            break
-        else:  Log.info(os.path.relpath(file,root) if root in file else file) 
-      else:
-        files.remove(file)
-      
-        ### ZIP ###
-        if ext == 'zip':
-          zip_archive = zipfile.ZipFile(file)
-          for zip_archive_filename in zip_archive.namelist():
-            zname, zext = os.path.splitext(zip_archive_filename); zext = zext[1:]
-            if zext in VIDEO_EXTS:  files.append(zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
-        
-        ### RAR ###
-        #import rarfile  https://rarfile.readthedocs.io/en/latest/api.html
-        #rar_archive = rarfile.RarFile('myarchive.rar')
-        #for rar_archive_filename in rar_archive.infolist():
-        #  zname, zext = os.path.splitext(rar_archive_filename.filename); zext = zext[1:]
-        #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
-  
-  ### Logging to *.scanner.log ###
-  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if path.count(os.sep) else 'w') #if 'log_filename' in kwargs
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
-  Log.info("".ljust(157, '='))
-  for entry in msg:  Log.info(entry)
-  
   ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
-  reverse_path = list(reversed(Utils.SplitPath(path)))
   if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
     for temp in ['stream', 'bdmv', 'video_ts']:
       if reverse_path[0].lower() == temp:  reverse_path.pop(0)
     ep, disc = clean_string(reverse_path[0], True), True
-    if len(reverse_path)>1:  reverse_path.pop(0)
-    Log.info("BluRay/DVD folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
+    if len(reverse_path)>1:  reverse_path.pop(0)  #Log.info("BluRay/DVD folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
   else: disc = False
   
   ### Extract season folder to reduce complexity and use folder as serie name ###
@@ -388,24 +347,61 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
           if len(reverse_path)>=2 and last_folder==reverse_path[-2:-1]:  season_folder_first = True
         break
-
-  ####
-  if path and len(reverse_path)>1 and len(kwargs)==0 and not season_folder_first:  return  #root call or normal folder call pass, other loaded through calling scan from root 
+  
   folder_show = reverse_path[0] if reverse_path else ""
   
-  ### Capture guid from folder name or id file in serie or serie/Extras folder ###
+  ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
+  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='a' if path.count(os.sep) else 'w') #add grouping folders filelist
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
+  Log.info("".ljust(157, '='))
+  for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
+    ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
+    if ext in VIDEO_EXTS:
+      for rx in IGNORE_FILES_RX + plexignore_files:  # Filter trailers and sample files
+        if re.match(rx, os.path.basename(file), re.IGNORECASE):
+          Log.info("# File: '{}' match '{}' pattern: '{}'".format(file, 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore', rx))
+          files.remove(file)
+          break
+      else:  Log.info(file) 
+    else:
+      Log.info("# File: '{}' extension does not match 'VIDEO_EXTS'".format(file))
+      files.remove(file)
+    
+      ### ZIP ###
+      if ext == 'zip':
+        zip_archive = zipfile.ZipFile(file)
+        for zip_archive_filename in zip_archive.namelist():
+          zname, zext = os.path.splitext(zip_archive_filename); zext = zext[1:]
+          if zext in VIDEO_EXTS:  files.append(zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
+      
+      ### RAR ###
+      #import rarfile  https://rarfile.readthedocs.io/en/latest/api.html
+      #rar_archive = rarfile.RarFile('myarchive.rar')
+      #for rar_archive_filename in rar_archive.infolist():
+      #  zname, zext = os.path.splitext(rar_archive_filename.filename); zext = zext[1:]
+      #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
+  Log.info("")
+  
+  ### Logging to *.scanner.log ###
+  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if path.count(os.sep) else 'w') #if 'log_filename' in kwargs
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
+  Log.info("".ljust(157, '='))
+  
+  #### Grouping folders skip ###
+  if path and not kwargs and len(reverse_path)>1 and not season_folder_first:  return  #Grouping folders Plex call, but mess after one season folder is ok
+  
+  ### Forced id mode - Capture if absolute numbering should be applied for all episode numbers  ###
   guid=""
-  if not re.search(SOURCE_IDS, folder_show, re.IGNORECASE):
+  if not re.search(SOURCE_IDS, folder_show, re.IGNORECASE):  # Capture guid from folder name first or id file in serie or serie/Extras folder
     for file in SOURCE_ID_FILES:
       if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
         with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
-          guid = guid_file.read().strip()
-          folder_show  = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], guid)
+          guid        = guid_file.read().strip()
+          folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], guid)
         Log.info("Forced ID file: '{}' with id '{}' in series folder".format(file, guid))
         break
     else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
   
-  ### Forced id mode - Capture if absolute numbering should be applied for all episode numbers  ###
   tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
   mappingList, offset_season, offset_episode, offset_match = {}, 0, 0, re.search(TVDB_MODE_ID_OFFSET, folder_show, re.IGNORECASE)
   if tvdb_mode_search:
@@ -461,8 +457,7 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
             mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
         Log.info("mappingList: '%s'" % str(mappingList))
       except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
-    if tvdb_mapping:  Log.info("unknown_series_length: %s, tvdb_mapping: %s (showing changing seasons/episodes only)" % (unknown_series_length, str({x:tvdb_mapping[x] for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)})))
-  #[for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)]
+    if tvdb_mapping:  Log.info("unknown_series_length: %s, tvdb_mapping: %s (showing changing seasons/episodes only)" % (unknown_series_length, str({x:tvdb_mapping[x] for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)})))  #[for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)]
   
   ### Calculate offset for season or episode ###
   if offset_match:
@@ -552,11 +547,10 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
   files.sort(key=natural_sort_key)
   if folder_show:
     array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
-    for file in files:     # build misc variable, to avoid numbers in titles if present in multiple filenames
-      length2=len(os.path.basename(file))
-      #http://stackoverflow.com/questions/29776299/aligning-japanese-characters-in-python
-      if length<length2: length = length2 #max len longest - dirname(file)
-      for prefix in array: # remove cleansed folder name from cleansed filename and remove potential space
+    for file in files:                     # build misc variable, to avoid numbers in titles if present in multiple filenames
+      length2=len(os.path.basename(file))  # http://stackoverflow.com/questions/29776299/aligning-japanese-characters-in-python
+      if length<length2: length = length2  # max len longest - dirname(file)
+      for prefix in array:                 # remove cleansed folder name from cleansed filename and remove potential space
         if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+"|"; break
       else:   misc+= clean_string(os.path.basename(file), True)+"|"
     for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|') 
@@ -572,7 +566,7 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
   ### File main loop ###
   for file in files:
     show, season, ep2, title, year = folder_show, folder_season if folder_season is not None else 1, None, "", ""
-    ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise .plexignore file has extension ""
+    ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
     if ext not in VIDEO_EXTS:  continue
     
     #DVD/BluRay folders
@@ -658,6 +652,7 @@ def Scan(path, files, mediaList, dirs, language=None, root=None, **kwargs): #get
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
     counter = counter+1                                          #                    #
     add_episode_into_plex(mediaList, file, root, path, show if path else title, 0, counter, title, year, counter, "", length)
+  Log.info("")
   
   ### Subfolders manual call
   for dir in sorted(dirs) or []:                                                        #
