@@ -63,7 +63,7 @@ IGNORE_DIRS_RX  = [ '@Recycle', '.@__thumb', 'lost\+found', '.AppleDouble','$Rec
 IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.xml$', '\.smi$']#, '\.plexignore', '.*\.id']            #, '.*\.log$'                   # Skipped files (samples, trailers)                                                          
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',                #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm',             #
-                    'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo']                                                                             # DVD: 'ifo', 'bup', 'vob'
+                    'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo', 'disc']                                                                             # DVD: 'ifo', 'bup', 'vob'
 FILTER_CHARS    = "\\/:*?<>|~;"  #_;.                                                                                                                                               # Windows file naming limitations + "~-,._" + ';' as plex cut title at this for the agent
 WHACK_PRE_CLEAN = [ "x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC", 
                     'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
@@ -305,17 +305,19 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
   
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder
-  if root in path:  path = os.path.relpath(path,root) #can only call sub-sub-folder fullpath
+  if path and not kwargs:  Log.info("Cancelling Plex Scanner call to jeep only manual ones");  return  #Grouping folders Plex call, but mess after one season folder is ok
+  if root in path:  path = os.path.relpath(path,root);  Log.info("path was provided fullpath") #can only call sub-sub-folder fullpath
   reverse_path = list(reversed(Utils.SplitPath(path)))
   log_filename = path.split(os.sep, 1)[0] if path else '_root_'
   
   #VideoFiles.Scan(path, files, media, dirs, root)  # If ebabled does not allow zero size files
     
   ### .plexignore file ###
-  plexignore_files = []
-  plexignore_dirs  = []
-  msg              = []
-  path_split       = [""]+path.split(os.sep) if path else [""]
+  plexignore_dirs, plexignore_files, msg = [], [], []
+
+
+
+  path_split = [""]+path.split(os.sep) if path else [""]
   for index, dir in enumerate(path_split):                                                   #enumerate to have index, which goes from 0 to n-1 for n items
     
     # Process Subdirectory pattern from previous folder(s)
@@ -399,7 +401,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       #for rar_archive_filename in rar_archive.infolist():
       #  zname, zext = os.path.splitext(rar_archive_filename.filename); zext = zext[1:]
       #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
-  if not files:  Log.info("[no files detected]")
+  if not files:
+    Log.info("[no files detected]")
+    if path:  return  #Grouping folders could call subfolders so cannot return if path is empty aka for root call
   Log.info("")
   
   ### Logging to *.scanner.log ###
@@ -409,9 +413,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
   #### Grouping folders skip ###
   if path:
-    if not kwargs and len(reverse_path)>1 and not season_folder_first:  Log.info("");  return  #Grouping folders Plex call, but mess after one season folder is ok
-    if not files:                                                       Log.info("");  return  #Grouping folders could call subfolders
-  
+    
+
+
+
     ### Forced guid modes ###
     guid=""
     if not re.search(SOURCE_IDS, folder_show, re.IGNORECASE):  # Capture guid from folder name first or id file in serie or serie/Extras folder
@@ -423,6 +428,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           Log.info("Forced ID file: '{}' with id '{}' in series folder".format(file, guid))
           break
       else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+    
     ### forced guid modes - TheTVDB ###
     tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
     mappingList, offset_season, offset_episode = {}, 0, 0
@@ -715,8 +721,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           elif ext in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)
         
         ### Call Grouping folders series ###
-        #if len(reverse_path)>1 and not season_folder_first and subdir_files:      ### Calling Scan for grouping folders only ###
-        #if not(len(reverse_path)>1 and not season_folder_first) and subdir_files:  ### Calling Scan normal    subfolders only ###
+        #if subdir_files and len(reverse_path)>1 and not season_folder_first:      ### Calling Scan for grouping folders only ###
+        #if subdir_files and not(len(reverse_path)>1 and not season_folder_first):  ### Calling Scan normal    subfolders only ###
         if subdir_files:                                                          ### Calling Scan for every folder with files ###
           Log.info("{:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(dir, len(subdir_files), reverse_path))
           file = os.path.join(CACHE_PATH, os_filename_clean_string(dir.split(os.sep, 1)[0]))
@@ -724,7 +730,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             with open(      file+'.filelist.log', 'w'):  pass
           if os.path.isfile(file+'.scanner.log'):
             with open(      file+ '.scanner.log', 'w'):  pass
-          else:  Log.info("CACHE_PATH is not a valid folder: " + CACHE_PATH)
+          #else:  Log.info("CACHE_PATH is not a valid folder: " + CACHE_PATH)
           Scan(dir, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
 
