@@ -305,18 +305,14 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
   
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder
-  if path and not kwargs:  Log.info("Cancelling Plex Scanner call to jeep only manual ones");  return  #Grouping folders Plex call, but mess after one season folder is ok
-  if root in path:  path = os.path.relpath(path,root);  Log.info("path was provided fullpath") #can only call sub-sub-folder fullpath
+  #if path and not kwargs:  Log.info("Cancelling Plex Scanner call to jeep only manual ones");  return  #Grouping folders Plex call, but mess after one season folder is ok
+  if root in path:  path = os.path.relpath(path,root)  #can only call sub-sub-folder fullpath
   reverse_path = list(reversed(Utils.SplitPath(path)))
   log_filename = path.split(os.sep, 1)[0] if path else '_root_'
-  
-  #VideoFiles.Scan(path, files, media, dirs, root)  # If ebabled does not allow zero size files
+  #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
     
   ### .plexignore file ###
   plexignore_dirs, plexignore_files, msg = [], [], []
-
-
-
   path_split = [""]+path.split(os.sep) if path else [""]
   for index, dir in enumerate(path_split):                                                   #enumerate to have index, which goes from 0 to n-1 for n items
     
@@ -325,11 +321,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       plexignore_dirs.remove(entry)                                                          #  
       if entry.startswith(dir+'/'):                                                          #
         pattern = entry.replace(dir+'/', '')                                                 #   msg.append("bazinga, pattern.count('/'): '{}', index+1: '{}', len(path_split): '{}', entry: '{}', dir: '{}', pattern: '{}'".format(pattern.count('/'), index+1, len(path_split), entry, dir, pattern))
-        if pattern.count('/')>0:  plexignore_dirs.append(pattern)                            # subfolder match so remove subfolder name and carry on
-        elif index+1==len(path_split):                                                       #
-          plexignore_files.append(fnmatch.translate(pattern))                                # only keep pattern for named folder, not subfolders
-          msg.append("# - pattern: '{}'".format(pattern))
-        
+        if pattern.count('/')>0:        plexignore_dirs.append(pattern)                      # subfolder match so remove subfolder name and carry on
+        elif index+1==len(path_split):  plexignore_files.append(fnmatch.translate(pattern));  msg.append("# - pattern: '{}'".format(pattern)) #Only keep pattern for named folder, not subfolders
+    
     # Process file patterns
     file = os.path.join(root, os.sep.join(path_split[1:index+1]), '.plexignore')             #
     if os.path.isfile(file):                                                                 #
@@ -414,9 +408,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   #### Grouping folders skip ###
   if path:
     
-
-
-
     ### Forced guid modes ###
     guid=""
     if not re.search(SOURCE_IDS, folder_show, re.IGNORECASE):  # Capture guid from folder name first or id file in serie or serie/Extras folder
@@ -721,9 +712,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           elif ext in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)
         
         ### Call Grouping folders series ###
-        #if subdir_files and len(reverse_path)>1 and not season_folder_first:      ### Calling Scan for grouping folders only ###
+        #if subdir_files and len(reverse_path)>1 and not season_folder_first:       ### Calling Scan for grouping folders only ###
         #if subdir_files and not(len(reverse_path)>1 and not season_folder_first):  ### Calling Scan normal    subfolders only ###
-        if subdir_files:                                                          ### Calling Scan for every folder with files ###
+        if subdir_files:                                                            ### Calling Scan for every folder with files ###
           Log.info("{:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(dir, len(subdir_files), reverse_path))
           file = os.path.join(CACHE_PATH, os_filename_clean_string(dir.split(os.sep, 1)[0]))
           if os.path.isfile(file+'.filelist.log'):
