@@ -304,9 +304,10 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 def extension(file):  return file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()
   
 ### Look for episodes ###################################################################################
-def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder
-  #if path and not kwargs:  Log.info("Cancelling Plex Scanner call to jeep only manual ones");  return  #Grouping folders Plex call, but mess after one season folder is ok
-  if root in path:  path = os.path.relpath(path,root)  #can only call sub-sub-folder fullpath
+def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
+  if path and not kwargs:  return  #Grouping folders Plex call, but mess after one season folder is ok
+  if root in path:  path = os.path.relpath(path,root); relative= False  #can only call sub-sub-folder fullpath
+  else:             relative = True
   reverse_path = list(reversed(Utils.SplitPath(path)))
   log_filename = path.split(os.sep, 1)[0] if path else '_root_'
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
@@ -378,15 +379,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       files.remove(file)
       
       ### ZIP ###
-      if ext == 'zip':
-        Log.info(file)
-        zip_archive = zipfile.ZipFile(file)
-        for zip_archive_filename in zip_archive.namelist():
-          zname, zext = os.path.splitext(zip_archive_filename)
-          zext        = zext[1:]
-          if zext in VIDEO_EXTS:
-            files.append( zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
-            Log.info('- '+zip_archive_filename) 
+      #if ext == 'zip':
+      #  Log.info(file)
+      #  zip_archive = zipfile.ZipFile(file)
+      #  for zip_archive_filename in zip_archive.namelist():
+      #    zname, zext = os.path.splitext(zip_archive_filename)
+      #    zext        = zext[1:]
+      #    if zext in VIDEO_EXTS:
+      #      files.append( zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
+      #      Log.info('- '+zip_archive_filename) 
       
       ### 7zip ###
       ### RAR ###
@@ -708,8 +709,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         for file in os.listdir(full_dir):
           ext       = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
           path_item = os.path.join(full_dir, file)
-          if os.path.isdir(path_item):     subdir_dirs.append(path_item);  dirs.append(path_item)
-          elif ext in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)
+          if os.path.isdir(path_item):     subdir_dirs.append(path_item);  dirs.append(path_item)  #Fullpath
+          elif ext in VIDEO_EXTS+['zip']:  subdir_files.append(file)                               #filename
         
         ### Call Grouping folders series ###
         #if subdir_files and len(reverse_path)>1 and not season_folder_first:       ### Calling Scan for grouping folders only ###
@@ -721,7 +722,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             with open(      file+'.filelist.log', 'w'):  pass
           if os.path.isfile(file+'.scanner.log'):
             with open(      file+ '.scanner.log', 'w'):  pass
-          #else:  Log.info("CACHE_PATH is not a valid folder: " + CACHE_PATH)
           Scan(dir, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
 
