@@ -130,7 +130,7 @@ def set_logging(foldername='', filename='', backup_count=0, format='%(message)s'
   if foldername: CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
   if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
   
-  filename = os_filename_clean_string(filename) if filename else '_root_.log'
+  filename = os_filename_clean_string(filename) if filename else '_root.scanner.log'
   if handler: Log.removeHandler(handler)
   if backup_count:  handler = logging.handlers.RotatingFileHandler(os.path.join(CACHE_PATH, filename), maxBytes=10*1024*1024, backupCount=backup_count)
   else:             handler = logging.FileHandler                 (os.path.join(CACHE_PATH, filename), mode=mode)
@@ -305,9 +305,6 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
   
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
-  if path and not kwargs:  return  #Grouping folders Plex call, but mess after one season folder is ok
-  if root in path:  path = os.path.relpath(path,root); relative= False  #can only call sub-sub-folder fullpath
-  else:             relative = True
   reverse_path = list(reversed(Utils.SplitPath(path)))
   log_filename = path.split(os.sep, 1)[0] if path else '_root_'
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
@@ -379,15 +376,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       files.remove(file)
       
       ### ZIP ###
-      #if ext == 'zip':
-      #  Log.info(file)
-      #  zip_archive = zipfile.ZipFile(file)
-      #  for zip_archive_filename in zip_archive.namelist():
-      #    zname, zext = os.path.splitext(zip_archive_filename)
-      #    zext        = zext[1:]
-      #    if zext in VIDEO_EXTS:
-      #      files.append( zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
-      #      Log.info('- '+zip_archive_filename) 
+      if ext == 'zip':
+        Log.info(file)
+        zip_archive = zipfile.ZipFile(file)
+        for zip_archive_filename in zip_archive.namelist():
+          zname, zext = os.path.splitext(zip_archive_filename)
+          zext        = zext[1:]
+          if zext in VIDEO_EXTS:
+            files.append( zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
+            Log.info('- '+zip_archive_filename) 
       
       ### 7zip ###
       ### RAR ###
@@ -409,6 +406,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   #### Grouping folders skip ###
   if path:
     
+    if not kwargs and len(reverse_path)>1 and not season_folder_first:  Log.info("");  return  #Grouping folders Plex call, but mess after one season folder is ok
+  
     ### Forced guid modes ###
     guid=""
     if not re.search(SOURCE_IDS, folder_show, re.IGNORECASE):  # Capture guid from folder name first or id file in serie or serie/Extras folder
@@ -579,9 +578,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         else:   misc+= clean_string(os.path.basename(file), True)+"|"
       for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|') 
       misc = "|".join([s for s in misc.split('|') if s])  #Log.info("misc: '%s'" % misc)
-      for item in misc.split('|'): 
-        if item in misc_count:  misc_count[item] +=1
-        else:                   misc_count[item] = 1
+      for item in misc.split('|'):  misc_count[item] = misc_count[item]+1 if item in misc_count else 1
+        #if item in misc_count:  misc_count[item] +=1
+        #else:                   misc_count[item] = 1
       for item in misc_count:
         if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) and max(misc_count.values())>3 ):  misc_words = misc_words + (item,)
         misc = misc.replace("|%s|" % item, '|')  #Log.info("misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
@@ -675,15 +674,16 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
     counter = counter+1                                          #                    #
     add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title, year, counter, "", length)
-  if not files:  Log.info("[no files detected]")
+  if not files:  Log.info("[no files detected]");  Log.info("")
   #if files:  Stack.Scan(path, files, media, dirs)
 
   ### Subfolders manual root level call ###
   if path:  Log.info("")
   else:
+    folders=dirs[:]
     Log.info("".ljust(157, '-'))
-    while len(dirs):  #Allow to add to the list while looping, any other method failed ([:], enumerate)
-      full_dir = dirs.pop(0)
+    while len(folders):  #Allow to add to the list while looping, any other method failed ([:], enumerate)
+      full_dir = folders.pop(0)
       dir      = os.path.relpath(full_dir, root)
 
       ### Ignore dirs ###
@@ -709,19 +709,21 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         for file in os.listdir(full_dir):
           ext       = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
           path_item = os.path.join(full_dir, file)
-          if os.path.isdir(path_item):     subdir_dirs.append(path_item);  dirs.append(path_item)  #Fullpath
-          elif ext in VIDEO_EXTS+['zip']:  subdir_files.append(file)                               #filename
+          if os.path.isdir(path_item):     subdir_dirs.append(path_item);  folders.append(path_item)  #Fullpath
+          elif ext in VIDEO_EXTS+['zip']:  subdir_files.append(file)                                  #filename
         
         ### Call Grouping folders series ###
-        #if subdir_files and len(reverse_path)>1 and not season_folder_first:       ### Calling Scan for grouping folders only ###
+        #if subdir_files:                                                           ### Calling Scan for every folder with files ###
         #if subdir_files and not(len(reverse_path)>1 and not season_folder_first):  ### Calling Scan normal    subfolders only ###
-        if subdir_files:                                                            ### Calling Scan for every folder with files ###
+        if subdir_files and len(reverse_path)>1 and not season_folder_first:        ### Calling Scan for grouping folders only ###
+          grouping_dir = full_dir.rsplit(os.sep, full_dir.count(os.sep)-1-root.count(os.sep))[0]
+          if grouping_dir in dirs:
+            Log.info(grouping_dir);  dirs.remove(grouping_dir);
+            log_filename = os.path.join(CACHE_PATH, os.path.relpath(grouping_dir, root).split(os.sep, 1)[0])
+            for filename in [log_filename+'.filelist.log', log_filename+'.scanner.log']:  #clear logs for grouping folders
+              with open(filename, 'w'):  pass
           Log.info("{:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(dir, len(subdir_files), reverse_path))
           file = os.path.join(CACHE_PATH, os_filename_clean_string(dir.split(os.sep, 1)[0]))
-          if os.path.isfile(file+'.filelist.log'):
-            with open(      file+'.filelist.log', 'w'):  pass
-          if os.path.isfile(file+'.scanner.log'):
-            with open(      file+ '.scanner.log', 'w'):  pass
           Scan(dir, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
 
