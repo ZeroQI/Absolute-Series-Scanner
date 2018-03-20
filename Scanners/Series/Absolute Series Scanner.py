@@ -393,7 +393,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
   if not files:
     Log.info("[no files detected]")
-    Log.info(os_filename_clean_string(root))
+    #Log.info(os_filename_clean_string(root))  #Test to replace absence of library name?
     if path:  return  #Grouping folders could call subfolders so cannot return if path is empty aka for root call
   Log.info("")
   
@@ -681,23 +681,21 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   if path:  Log.info("")
   else:
     Log.info("".ljust(157, '-'))
-    folders      = dirs[:]
     folder_count = {}
-    while len(folders):  #Allow to add to the list while looping, any other method failed ([:], enumerate)
-      full_dir = folders.pop(0)
-      dir      = os.path.relpath(full_dir, root)
+    subfolders   = dirs[:]
+    while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
+      full_path = subfolders.pop(0)
+      path      = os.path.relpath(full_path, root)
 
       ### Ignore dirs ###
       for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
-        try:                                                      #
-          if re.match(rx, os.path.basename(dir), re.IGNORECASE):  # if folder match rx
-            Log.info("\"%s\" match %s: \"%s\"" % (dir, 'IGNORE_DIRS_RX' if rx in IGNORE_DIRS_RX else '.plexignore pattern', rx))
-            break
-        except:  Log.info("exception: \"%s\" rx %s: \"%s\"" % (dir, 'IGNORE_DIRS_RX' if rx in IGNORE_DIRS_RX else '.plexignore pattern', rx))
+        if re.match(rx, os.path.basename(path), re.IGNORECASE):  # if folder match rx
+          Log.info("\"%s\" match %s: \"%s\"" % (path, 'IGNORE_DIRS_RX', rx))
+          break
       else:  ### Not skipped
 
         ### Extract season and transparent folder to reduce complexity and use folder as serie name ###
-        reverse_path, season_folder_first = list(reversed(Utils.SplitPath(dir))), False
+        reverse_path, season_folder_first = list(reversed(Utils.SplitPath(path))), False
         for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
           for rx in SEASON_RX :                          # in anime, more specials folders than season folders, so doing it first
             if re.match(rx, folder, re.IGNORECASE):      # get season number but Skip last entry in seasons (skipped folders)
@@ -706,27 +704,27 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               break
         
         ### Process subfolders ###
-        dir_list, subdir_dirs, subdir_files = os.listdir(full_dir), [], []
-        folder_count[full_dir]              = len(dir_list)
-        for file in dir_list:
-          path_item = os.path.join(full_dir, file) 
-          if os.path.isdir(path_item):                 subdir_dirs.append(path_item);  folders.append(path_item)  #Fullpath
+        subdir_dirs, subdir_files = [], []
+        folder_count[path]        = 0
+        for file in os.listdir(full_path):
+          path_item = os.path.join(full_path, file) 
+          if os.path.isdir(path_item):                 subdir_dirs.append(path_item);  subfolders.append(path_item);  folder_count[path] +=1  #Fullpath
           elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(file)                                  #filename only
           
         ### Call Grouping folders series ###
         #if subdir_files:                                                           ### Calling Scan for every folder with files ###
         #if subdir_files and not(len(reverse_path)>1 and not season_folder_first):  ### Calling Scan normal    subfolders only ###
-        grouping_dir = full_dir.rsplit(os.sep, full_dir.count(os.sep)-1-root.count(os.sep))[0]
+        grouping_dir = full_path.rsplit(os.sep, full_path.count(os.sep)-1-root.count(os.sep))[0]
         root_folder  = os.path.relpath(grouping_dir, root).split(os.sep, 1)[0]
-        if subdir_files and len(reverse_path)>1 and not season_folder_first and folder_count[os.path.join(root, root_folder)]>1:  ### Calling Scan for grouping folders only ###
+        if subdir_files and len(reverse_path)>1 and not season_folder_first and folder_count[root_folder]>1:  ### Calling Scan for grouping folders only ###
           if grouping_dir in dirs:
-            Log.info("[{}] Grouping folder (contain {} dirs)".format(root_folder, folder_count[os.path.join(root, root_folder)]))
+            Log.info("[{}] Grouping folder (contain {} dirs)".format(root_folder, folder_count[root_folder]))
             dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
             log_filename = os.path.join(CACHE_PATH, os_filename_clean_string(os.path.dirname(root_folder)))
             for filename in [log_filename+'.filelist.log', log_filename+'.scanner.log']:  #Clear grouping folders logs
               with open(filename, 'w'):  pass  #clear logs for grouping folders
-          Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(dir, len(subdir_files), reverse_path))
-          Scan(dir, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
+          Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
+          Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
 
 ### Command line scanner call ###
