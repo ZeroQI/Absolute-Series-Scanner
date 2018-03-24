@@ -30,7 +30,7 @@ This scanner supports absolute and season numbering, but here are two references
 ### Files
 <TABLE>
 <THEAD>
-<TR> <TH> File naming convention </TH> <TH> Template / Folder </TH> <TH>Exemple </TH> </TR>
+<TR> <TH> File naming convention </TH> <TH> Template / Folder </TH> <TH>Example </TH> </TR>
 </THEAD>
 <TBODY>
 <TR> <TD> Splitting folders:     </TD> <TD> 0-9                 </TD> <TD> 0-9, A,...,Z folder. Add EACH as folder. Do not use the parent folder </TD> </TR>
