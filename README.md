@@ -129,7 +129,7 @@ Hama supports the following guid_type:
 
 You can specify the guid to use the following way:
 - In Series folder name by adding " [guid_type-id_number]" at the end (like "Oruchuban Ebichu [anidb-150]")
-- In "series_folder/guid_type.id" file with the id in it (ex: anidb.id file with inside "150" without double quotes)
+- In "series_folder/guid_type.id" file with the id in it (ex: "Oruchuban Ebichu/anidb.id" file with "150" inside without double quotes)
 - In custom search series name by adding " [guid_type-id_number]" at the end (ex " [anidb-150]") for modes which do not change the season or episode numbers at scanner level (so anidb, tvdb and not numbered guid_types unless tvdb4 and you already put the eps in their respective seasons folders)
 
 <TABLE>
