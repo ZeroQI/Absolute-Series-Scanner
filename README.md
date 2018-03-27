@@ -128,9 +128,9 @@ Hama supports the following guid_type:
 - [deprecated] imdb  For the International Movie DataBase (ids starts with "tt...")
 
 You can specify the guid to use the following way:
-- In Series folder name by adding " [guid_type-id_number]" at the end
-- In "series_folder/guid_type.id" file with the id in it (ex: tvdb.id file with tvdbid "114801" without double quotes in it)
-- In custom search series name by adding " [guid_type-id_number]" at the end (ex " [tvdb-xxxxx]") for modes which do not change the season or episode numbers at scanner level (so anidb, tvdb and not numbered guid_types unless tvdb4 and you already put the eps in their respective seasons folders)
+- In Series folder name by adding " [guid_type-id_number]" at the end (like "Oruchuban Ebichu [anidb-150]")
+- In "series_folder/guid_type.id" file with the id in it (ex: anidb.id file with inside "150" without double quotes)
+- In custom search series name by adding " [guid_type-id_number]" at the end (ex " [anidb-150]") for modes which do not change the season or episode numbers at scanner level (so anidb, tvdb and not numbered guid_types unless tvdb4 and you already put the eps in their respective seasons folders)
 
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering     </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
