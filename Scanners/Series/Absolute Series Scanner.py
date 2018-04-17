@@ -147,6 +147,9 @@ PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get 
 if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
   Log.info("'X-Plex-Token.id' file present")
   with open(os.path.join(PLEX_ROOT, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL += "?X-Plex-Token=" + token_file.read().strip()
+elif 'X_PLEX_TOKEN' in os.environ:
+  Log.info("'X_PLEX_TOKEN' environment variable present")
+  PLEX_LIBRARY_URL += "?X-Plex-Token=" + os.environ['X_PLEX_TOKEN']
 try:
   library_xml = etree.fromstring(urlopen(PLEX_LIBRARY_URL, context=SSL_CONTEXT).read())
   for library in library_xml.iterchildren('Directory'):
