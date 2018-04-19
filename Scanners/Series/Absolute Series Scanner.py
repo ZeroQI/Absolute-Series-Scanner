@@ -147,9 +147,6 @@ PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get 
 if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
   Log.info("'X-Plex-Token.id' file present")
   with open(os.path.join(PLEX_ROOT, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL += "?X-Plex-Token=" + token_file.read().strip()
-elif 'X_PLEX_TOKEN' in os.environ:
-  Log.info("'X_PLEX_TOKEN' environment variable present")
-  PLEX_LIBRARY_URL += "?X-Plex-Token=" + os.environ['X_PLEX_TOKEN']
 try:
   library_xml = etree.fromstring(urlopen(PLEX_LIBRARY_URL, context=SSL_CONTEXT).read())
   for library in library_xml.iterchildren('Directory'):
@@ -604,7 +601,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     ### remove cleansed folder name from cleansed filename or keywords otherwise ###
     if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):  ep, title  = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
     else:
-      for prefix in array:
+      for prefix in array i f path else ():
         if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
       else:
         filename = clean_string(filename, True)
