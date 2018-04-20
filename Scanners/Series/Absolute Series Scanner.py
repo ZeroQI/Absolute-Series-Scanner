@@ -601,7 +601,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     ### remove cleansed folder name from cleansed filename or keywords otherwise ###
     if clean_string(filename, True,no_dash=True)==clean_string(folder_show, True, no_dash=True):  ep, title  = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
     else:
-      for prefix in array i f path else ():
+      for prefix in array if path else ():
         if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
       else:
         filename = clean_string(filename, True)
