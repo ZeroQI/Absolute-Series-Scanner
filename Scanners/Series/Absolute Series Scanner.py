@@ -249,7 +249,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
   return string
 
 ### Add files into Plex database ########################################################################
-def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", length=0, tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
+def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   # Mapping List 
   ep_orig, ep_orig_padded = "s%de%d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%s" % ep2), "s%02de%02d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%02d" % ep2)
   ep_orig_single          = "s%de%d"   % (season, ep)
@@ -607,7 +607,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         else:
           filename = clean_string(filename, True)
           for item in misc_words:  filename = filename.lower().replace(item, ' ', 1)
-    else: filename = clean_string(filename, True)  
+    else: filename = clean_string(filename, True)
     ep = filename
     if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
     elif len(files)==1 and not folder_season:
@@ -642,7 +642,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       break
     else:  loop_completed = True
     if not loop_completed and ep.isdigit():
-      add_episode_into_plex(media, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+      add_episode_into_plex(media, file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
       continue
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
@@ -667,14 +667,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
           if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
           ep = offset + int(ep) 
-        add_episode_into_plex(media, file, root, path, show, int(season), int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else int(ep), rx, length, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+        add_episode_into_plex(media, file, root, path, show, int(season), int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else int(ep), rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
         break
     if match: continue  # next file iteration
     
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
     counter = counter+1                                          #                    #
-    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title, year, counter, "", length)
+    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title, year, counter, "")
   if not files:  Log.info("[no files detected]");  Log.info("")
   #if files:  Stack.Scan(path, files, media, dirs)
 
