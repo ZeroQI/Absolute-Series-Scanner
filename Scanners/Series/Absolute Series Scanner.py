@@ -402,10 +402,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))
   
-  #### Grouping folders skip ###
-  folder_show = reverse_path[0] if reverse_path else ""
+  #### Folders, Forced ids, grouping folders ###
+  folder_show  = reverse_path[0] if reverse_path else ""
+  misc_words   = []
+  tvdb_mapping = {}
   if path:
     
+    #### Grouping folders skip , ###
     if not kwargs and len(reverse_path)>1 and not season_folder_first:  Log.info("");  return  #Grouping folders Plex call, but mess after one season folder is ok
   
     ### Forced guid modes ###
@@ -607,7 +610,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         else:
           filename = clean_string(filename, True)
           for item in misc_words:  filename = filename.lower().replace(item, ' ', 1)
-    else: filename = clean_string(filename, True)
+    else:  filename     = clean_string(filename, True)
     ep = filename
     if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
     elif len(files)==1 and not folder_season:
