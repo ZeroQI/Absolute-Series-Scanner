@@ -405,7 +405,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   #### Folders, Forced ids, grouping folders ###
   folder_show  = reverse_path[0] if reverse_path else ""
   misc_words   = []
-  tvdb_mapping = {}
+  tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
+  mappingList, offset_season, offset_episode                                  = {}, 0, 0
+    
   if path:
     
     #### Grouping folders skip , ###
@@ -424,8 +426,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       else:  folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
     
     ### forced guid modes - TheTVDB ###
-    tvdb_mode, tvdb_guid, tvdb_mapping, unknown_series_length, tvdb_mode_search = "", "", {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
-    mappingList, offset_season, offset_episode = {}, 0, 0
     if tvdb_mode_search:
       
       ### Calculate offset for season or episode ###
