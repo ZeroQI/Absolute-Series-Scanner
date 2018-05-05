@@ -423,7 +423,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
     ### Forced guid modes ###
     guid=""
-    match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL.*)\]', folder_show, re.IGNORECASE)
+    match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>.*)\]', folder_show, re.IGNORECASE)
     if source or id:
       Log.info("Forced ID in season folder: '{}' with id '{}' in series folder".format(source, id))
     elif match:
