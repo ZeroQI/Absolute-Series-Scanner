@@ -312,7 +312,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
     
   ### .plexignore file ###
-  plexignore_dirs, plexignore_files, msg = [], [], []
+  plexignore_dirs, plexignore_files, msg, source, id = [], [], [], '', ''
   path_split = [""]+path.split(os.sep) if path else [""]
   for index, dir in enumerate(path_split):                                                   #enumerate to have index, which goes from 0 to n-1 for n items
     
@@ -356,6 +356,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
         reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
+        
+        #youtube playlist on season folder
+        match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL.*)\]', folder, re.IGNORECASE)
+        if match:
+          id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
+          source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'YouTube'
         break
   
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
@@ -417,13 +423,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
     ### Forced guid modes ###
     guid=""
-    Log.info(folder_show)
-    #match = re.search('(.* )?\[((?P<source>[.]{1,7})-)?(?P<id>[.]{1,34})\].*', folder_show, re.IGNORECASE)
     match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL.*)\]', folder_show, re.IGNORECASE)
-    if match:
+    if source or id:
+      Log.info("Forced ID in season folder: '{}' with id '{}' in series folder".format(source, id))
+    elif match:
       id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
       source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'YouTube' 
-      Log.info("Forced ID file: '{}' with id '{}' in series folder".format(source, id))
+      Log.info("Forced ID in series folder: '{}' with id '{}' in series folder".format(source, id))
     else:
       for file in SOURCE_ID_FILES:
         if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
