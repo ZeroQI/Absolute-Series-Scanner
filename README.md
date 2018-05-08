@@ -164,6 +164,10 @@ You can specify the guid to use the following way:
         <TR> <TD> tvdb5     </TD> <TD> TVDB                    </TD> <TD>Absolute             </TD> <TD>Absolute          </TD> <TD>Chronological order (specifically for Star Wars: The Clone Wars) will remove seasons present and use the chronological order to re-sort the episodes. First ep is s02e15 from memory...
 <UL><LI>Star Wars: The Clone Wars [tvdb5-83268] </LI></UL>
 </TD> </TR>
+                
+        <TR> <TD> youtube     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) on series folder or season folder to have the youtube files downloaded with youtube-dl numbered as per the playlist order</LI></UL>
+
+</TD> </TR>
 </TBODY>
 </TABLE>
 
