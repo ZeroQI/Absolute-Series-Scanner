@@ -1,5 +1,3 @@
-## Absolute Series Scanner
-
 ## Plex scanner responsabilities
 A Plex Series Scanner makes the video files showing in Plex and populate the following for the video files:
 - Series name
@@ -26,16 +24,19 @@ Any information missing or wrong inthere in Plex is an Agent issue, refer to the
 - YouTube:   Series/Movie library YouTube-Agent for Movies '[youtube-video_id]' and Series/seasons '[youtube-playlist_id]' (starts with PL then 16/32 chars)
 
 ## Absolute series scanner functions that differes from Plex Series Scanner
-- Seamless 'Grouping folder': For example 'Dragon Ball/Dragon Ball Z/ep xxx.ext'
-- Movies in series libraries support (names same as folder or contain " - Complete Movie")
 - .plexignore' fully working including subfolders
-- Display absolute series without file renaming displayed with seasons (tvdb2/3/4) or remapped chronology wise (tvdb5) or anidb sereis grouped and displayed as tvdb series (anidb2, need mapping accurate in scudlee files to work)
-- Use sagas as seasons keeping absolute numbering with TVDB4 and it create even the seasons for you from a database if not specified
-- AniDB numbering support (OP/ED/SpXX, etc...)
 - YouTube playlist with id in series or season folder get added without numbering/renaming needed
 - Video files inside zip file gets displayed (not playable)
+- Seamless 'Grouping folder': For example 'Dragon Ball/[01] Dragon Ball/ep xxx.ext'
+- Season folder advance support: 'Season xxx title_for season'
+- Episode grouping in transparent/Ark folders: '[01] Saga xxx', '[02] Story xxx', '[03] Arc xxx'
 - Episode title is taken from the filename (to be re-written by the agent but usefull if series is not matched yet)
+- Japanese and Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
+- AniDB numbering support ((NC)OP/(NC)ED/SpXX, etc...)
+- Movies in series libraries support (names same as folder or contain " - Complete Movie")
 - Forced id in series name or id file for the agent gets passed through
+- Display absolute series without file renaming displayed with seasons (tvdb2/3/4) or remapped chronology wise (tvdb5) or anidb sereis grouped and displayed as tvdb series (anidb2, need mapping accurate in scudlee files to work)
+- Use sagas as seasons keeping absolute numbering with TVDB4 and it create even the seasons for you from a database if not specified
 - Versatile file format support. if a logical numbering format isn't supported let me know (no episode number in brackets or parenthesis though, that's moronic)
 - put per-series logs ('xxx.filelist.log' and 'xxx.scanner.log' in /Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs).
 
