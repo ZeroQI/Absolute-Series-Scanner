@@ -1,12 +1,18 @@
-# Absolute Series Scanner
-A Plex Series Scanner makes the video files showing in Plex and populate the following:
+## Absolute Series Scanner
+
+## Plex scanner responsabilities
+A Plex Series Scanner makes the video files showing in Plex and populate the following for the video files:
 - Series name
 - Series year
 - Season number
 - Episode number
 - Episode title (not filled by plex default series scanner, but ASS fills it, but this will be overwritten by the metadata agent)
-If a file is not showing in plex or showing at the wrong season and/or episode number, it is a scanner issue
 
+If a file is not showing in plex or showing at the wrong season and/or episode number, or is not passing through the forced id, then it is a scanner issue. Anything else is metadata related and agent specific.
+
+If you post anything on the scanner github or thread for any issue like poster missing/wrong, episode thumbnail/screenshot/title/summary missing/wrong, then you clearly haven't read this and need to pay the RTFM tax by donating (or you just find this the best anime scanner and/or agent, much apreciated average is 5 euros with the highest to date 25 euros)
+
+## Plex Agent responsabilities
 A Plex metadata agent will:
 - Search the metadata source using the Series name given by the scanner and assign the series a guid, a unique identifier used to download the metadataa informations
 - Update all the metadata information ((Series Title, summary year, episode title, summary, posters, fanart, tags, ...) for series and files showing in Plex thanks to the scanner. 
@@ -14,18 +20,31 @@ A Plex metadata agent will:
 Any information missing or wrong inthere in Plex is an Agent issue, refer to the Agent readme here: https://github.com/ZeroQI/Hama.bundle/blob/master/README.md
 
 ## Which Metadata/Title source to select?
-- Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have horrors like "bombshells from the sky" for "Asobi ni Iku yo!" series). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series
+- Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have horrors like "bombshells from the sky" for "Asobi ni Iku yo!" series). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series. Hama supports AniDB, TheTVDB, mainly, and if ScudLee mapping file has it, TheMoviedB, MyAnimeList, TelevisionTunes for full length theme songs, ...
 - TV Series: TheTVDB.com or TVrage or TheMovieDB (support series now), no db site will store (DVD) boxset specific files (nor sport or porn for TheTVDB). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniDB.net, but they do not carry porn series so no metadata for this type. TheTVDB uses seasons which can be practical for long anime. Episodes have titles and summary in many languages
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext"
+- YouTube:   Series/Movie library YouTube-Agent for Movies '[youtube-video_id]' and Series/seasons '[youtube-playlist_id]' (starts with PL then 16/32 chars)
 
-Hama supports AniDB, TheTVDB, mainly, and if ScudLee mapping file has it, TheMoviedB, MyAnimeList, TelevisionTunes for full length theme songs, ...
+## Absolute series scanner functions that differes from Plex Series Scanner
+- Seamless 'Grouping folder': For example 'Dragon Ball/Dragon Ball Z/ep xxx.ext'
+- Movies in series libraries support (names same as folder or contain " - Complete Movie")
+- .plexignore' fully working including subfolders
+- Display absolute series without file renaming displayed with seasons (tvdb2/3/4) or remapped chronology wise (tvdb5) or anidb sereis grouped and displayed as tvdb series (anidb2, need mapping accurate in scudlee files to work)
+- Use sagas as seasons keeping absolute numbering with TVDB4 and it create even the seasons for you from a database if not specified
+- AniDB numbering support (OP/ED/SpXX, etc...)
+- YouTube playlist with id in series or season folder get added without numbering/renaming needed
+- Video files inside zip file gets displayed (not playable)
+- Episode title is taken from the filename (to be re-written by the agent but usefull if series is not matched yet)
+- Forced id in series name or id file for the agent gets passed through
+- Versatile file format support. if a logical numbering format isn't supported let me know (no episode number in brackets or parenthesis though, that's moronic)
+- put per-series logs ('xxx.filelist.log' and 'xxx.scanner.log' in /Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs).
 
-## File Naming Conventions
+## File Naming Conventions / Numbering
 This scanner supports absolute and season numbering, but here are two references for guidelines
 - Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
 - Naming convention for XBMC:  http://wiki.xbmc.org/index.php?title=Naming_video_files/TV_shows
 - Specials chars handling ("CØDE：BREAKER") and files starting with dots (".Hack")
-- Do not use semicolon: ';', as plex give only the title up to this character to media.title (if movie) / media.show (if TV Series)
+- Do not use semicolon: ';', replace with space as plex give only the title up to this character to media.title (if movie) / media.show (if TV Series) and truncate wven file path
 
 ### Files
 <TABLE>
@@ -268,10 +287,13 @@ See this link to find your token value: https://support.plex.tv/hc/en-us/article
 If the scanner crash, you will get either no files (library creation) or no change (library already created) and will need to attach the Plex log "Plex Media Scanner.log"
 
 Include the following logs (in any case, specify if file not present):
-- [...]/Plex Media Server/Logs/Plex Media Scanner.log                       (scanner crash info)
-- [...]/Plex Media Server\Plug-in Support\Data\com.plexapp.agents.hama\DataItems\_Logs\...
+- [...]/Plex Media Server/Logs/Plex Media Scanner.log (scanner crash info, no new files added, etc...)
+- [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Library_name/Logs/root_folder_name.filelist.log
+- [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Library_name/Logs/root_folder_name.scanner.log
+- [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs/root_folder_name.filelist.log
+- [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs/root_folder_name.scanner.log
 
-You will find per-serie logs there with the following extensions:
+You will find per-serie logs there with the following extensions as HAMA and ASS gather all logs in one place
 - _root_/root folder name.filelist.log - Scanner filelist and 'plexignore logs
 - _root_/root folder name.scanner.log - Scanner logs including: serie title season, episode number and preliminary title
 - _root_/root folder name.agent-search.log - Agent search, show the assignment to the right serie
@@ -280,7 +302,7 @@ You will find per-serie logs there with the following extensions:
 And post in either:
 - [Plex Support thread for Scanner (you are unsure if it is a bug)](https://forums.plex.tv/discussion/113967/absolute-series-scanner-for-anime-mainly/#latest)
 - [Github issue page (you have a bug)](https://github.com/ZeroQI/Absolute-Series-Scanner/issues)
-- Creating a post or bug report without including relevant information like logs, serie impacted, or having not said the troubleshooting steps were followed will be redirected to the readme. This part is called Exhibit A. 
+- Creating a post or bug report without including relevant information like logs, serie impacted, or having not said the troubleshooting steps were followed will be recommended to pay the RTFM tax by donating. This part is called 'Exhibit A'. 
 
 ### Known issues:
 
@@ -336,4 +358,4 @@ On linux (and Mac OS-X), permissions issues could prevent the scanner execution,
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
 - [ ] Shall i write a Movie scanner using the same code? The Plex default movie scanner does an good job i believe ?
 
-Reference: [Link to Markdown](https://guides.github.com/features/mastering-markdown/) or https://help.github.com/articles/basic-writing-and-formatting-syntax/
+Reference for editing Read-Me: [Link to Markdown](https://guides.github.com/features/mastering-markdown/) or https://help.github.com/articles/basic-writing-and-formatting-syntax/
