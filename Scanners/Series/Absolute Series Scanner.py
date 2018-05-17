@@ -428,15 +428,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info("Forced ID in season folder: '{}' with id '{}' in series folder".format(source, id))
     elif match:
       id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
-      source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'YouTube' 
-      Log.info("Forced ID in series folder: '{}' with id '{}' in series folder".format(source, id))
+      source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'youtube' 
+      Log.info("Forced ID in series folder: '{}' with id '{}'".format(source, id))
     else:
       for file in SOURCE_ID_FILES:
         if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
           with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
             source = file.rstrip('.id')
             id     = guid_file.read().strip()
-            Log.info("Forced ID file: '{}' with id '{}' in series folder".format(file, id))
+            Log.info("Forced Series folder ID file: '{}' with id '{}'".format(file, id))
             folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
           break
       else:
@@ -591,9 +591,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       try:                    json_obj = json.loads(urlopen(YOUTUBE_PLAYLIST_ITEMS % (id, YOUTUBE_API_KEY)).read()) #Choosen per id hence one single result
       except Exception as e:  Log.info('exception: {}, url: {}'.format(e, YOUTUBE_PLAYLIST_ITEMS % (id, YOUTUBE_API_KEY)))
       else:
-        for rank, video in enumerate(json_obj['items'], start=1):
-          file = os.path.join(root, path, video['snippet']['title']+'-'+video['snippet']['resourceId']['videoId']+'.mp4')
-          if os.path.isfile(file):  add_episode_into_plex(media, file, root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+        for file in os.listdir(os.path.join(root, path)):
+          if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #files only with video extensions
+          for rank, video in enumerate(json_obj['items'], start=1):
+            if video['snippet']['resourceId']['videoId'] in file:
+              add_episode_into_plex(media, file, root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+              break
         return  
       
     ### Build misc variable to check numbers in titles ###
