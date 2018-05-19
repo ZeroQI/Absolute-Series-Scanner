@@ -132,7 +132,7 @@ def set_logging(foldername='', filename='', backup_count=0, format='%(message)s'
   if foldername: CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
   if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
   
-  filename = os_filename_clean_string(filename) if filename else '_root.scanner.log'
+  filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
   if handler: Log.removeHandler(handler)
   if backup_count:  handler = logging.handlers.RotatingFileHandler(os.path.join(CACHE_PATH, filename), maxBytes=10*1024*1024, backupCount=backup_count)
   else:             handler = logging.FileHandler                 (os.path.join(CACHE_PATH, filename), mode=mode)
@@ -367,7 +367,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='a' if path.count(os.sep) or kwargs else 'w') #add grouping folders filelist
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
-  Log.info("".ljust(157, '='))  #Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
+  Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
+  Log.info("".ljust(157, '='))
   for entry in msg:  Log.info(entry)
   for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
@@ -717,9 +718,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### root level manual call to Grouping folders ###
   if path:  Log.info("")
   else:
-    Log.info("".ljust(157, '-'))
-    folder_count = {}
-    subfolders   = dirs[:]
+    Log.info(''.ljust(157, '-'))
+    folder_count, subfolders = {}, dirs[:]
     while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
       full_path = subfolders.pop(0)
       path      = os.path.relpath(full_path, root)
@@ -730,7 +730,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           Log.info("\"%s\" match %s: \"%s\"" % (path, 'IGNORE_DIRS_RX', rx))
           break
       else:  ### Not skipped
-
+        
         ### Extract season and transparent folder to reduce complexity and use folder as serie name ###
         reverse_path, season_folder_first = list(reversed(Utils.SplitPath(path))), False
         for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
@@ -753,6 +753,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         #if subdir_files and not(len(reverse_path)>1 and not season_folder_first):  ### Calling Scan normal    subfolders only ###
         grouping_dir = full_path.rsplit(os.sep, full_path.count(os.sep)-1-root.count(os.sep))[0]
         root_folder  = os.path.relpath(grouping_dir, root).split(os.sep, 1)[0]
+        #Log.info('grouping_dir: {}, root_folder: {}'.format(grouping_dir, root_folder))
         if subdir_files and len(reverse_path)>1 and not season_folder_first and folder_count[root_folder]>1:  ### Calling Scan for grouping folders only ###
           if grouping_dir in dirs:
             Log.info("[{}] Grouping folder (contain {} dirs)".format(root_folder, folder_count[root_folder]))
@@ -763,7 +764,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
-
+      
 ### Command line scanner call ###
 if __name__ == '__main__':  #command line
   print "Absolute Series Scanner by ZeroQI"
