@@ -252,6 +252,32 @@ https://support.plex.tv/articles/201375253-excluding-new-content-with-plexignore
 - Patterns without the forward-slash (/) character (e.g. *.mkv) match filenames in the same directory as the .plexignore file, or its subfolders
 - Patterns with the forward-slash (/) character (e.g. somedir/*) match directory and file patterns relative to the directory containing the .plexignore file only, not is subfolders
 
+
+## Plex system folder location
+Source: https://support.plex.tv/articles/202915258-where-is-the-plex-media-server-data-directory-located/
+Location:
+- Windows:                                 %LOCALAPPDATA%\Plex Media Server
+- OSX:                                     ~/Library/Application Support/Plex Media Server/
+- Linux and NAS Devices:                   $PLEX_HOME/Library/Application Support/Plex Media Server/
+- Debian, Fedora, CentOS, Ubuntu:          /var/lib/plexmediaserver/Library/Application Support/Plex Media Server/
+- FreeBSD:                                 /usr/local/plexdata/Plex Media Server/
+- FreeNAS:                                 ${JAIL_ROOT}/var/db/plexdata/Plex Media Server/
+- ReadyNAS:                                /apps/plexmediaserver/MediaLibrary/Plex Media Server/
+/data/plex_conf/Library/Application Support/Plex Media Server
+- Synology, Asustor:                        /Volume1/Plex/Library/Application Support/Plex Media Server/
+- TerraMaster:                              /home/plex/Library/Application Support/Plex Media Server
+- Thecus:                                   /raid/data/module/Plex/sys/Plex Media Server/
+- Western Digital                           /mnt/HD/HD_a2/plex_conf/Plex Media Server/
+- Western Digital My Passport Wireless Pro: /shares/Storage/.wdcache/.plexmediaserver/Application Support/Plex Media Server/
+Variable path:
+- QNAP:                                     getcfg -f /etc/config/qpkg.conf PlexMediaServer Install_path  then add '/Library/Plex Media Server'
+- Seagate:                                  sudo rainbow —enter com.plex.plexmediaserver. Once in, you can go to the data directory: 
+
+You can actually move the plex system folder/storage/database here: (i give no warranty it works, you lunatic!)
+- PMS:             PMS settings > Server > General > 'The path where local application data is stored'
+- registry:        HKEY_CURRENT_USER\Software\Plex, Inc.\Plex Media Server key\LocalAppDataPath [type REG_SZ] the full path to the directory
+- Windows simlink: stop PMS,  mklink /D "C:\Users\<yourusername>\Appdata\Local\Plex Media Server" "G:\Plex Media Server" then start PMS
+
 ## Install / Update
 - Download  https://raw.githubusercontent.com/ZeroQI/Absolute-Series-Scanner/master/Scanners/Series/Absolute%20Series%20Scanner.py
 - Save into [...]/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
@@ -281,7 +307,7 @@ chmod 775 -R '/var/lib/plexmediaserver/Library/Application Support/Plex Media Se
 - If library doesn't add new content then most likelly the scanner is crashing (after scanner update) and will revert any changes to the library so nothing changes...
 
 ## Logs
-Absolute series Scanner saves its custom logs in Plex Media Server\Plug-in Support\Data\com.plexapp.agents.hama\DataItems\_Logs\...
+Absolute series Scanner saves its custom logs in this relative path Plex Media Server\Plug-in Support\Data\com.plexapp.agents.hama\DataItems\_Logs\...
 You may create a X-Plex-Token.id file in 'Plex Media Server' folder with your token inside to have logs saved per library.
 See this link to find your token value: https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 
