@@ -378,7 +378,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           Log.info("# File: '{}' match '{}' pattern: '{}'".format(file, 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore', rx))
           files.remove(file)
           break
-      else:  Log.info(os.path.relpath(file, root))
+      else:
+        try:                    Log.info(os.path.relpath(file, root))
+        except Exception as e:  Log.info('exception: {}, file: {}, root: {}'.format(e, file, root))
     else:
       files.remove(file)
       
