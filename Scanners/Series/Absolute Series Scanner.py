@@ -644,9 +644,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         for prefix in array:
           if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
         else:
-          filename = clean_string(filename, True)
+          filename = clean_string(filename, False)
           for item in misc_words:  filename = filename.lower().replace(item, ' ', 1)
-    else:  filename     = clean_string(filename, True)
+    else:  filename     = clean_string(filename, False)
     ep = filename
     if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
     elif len(files)==1 and not folder_season:
