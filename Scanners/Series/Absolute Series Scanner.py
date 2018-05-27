@@ -273,18 +273,18 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
     elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
   ep_final = "s%de%d" % (season, ep)
-  file=os.path.join(root,path,file)
+  filename=os.path.basename(file)
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
       tv_show, tv_show.display_offset = Media.Episode(show, season, epn, title, year), (epn-ep)*100/(ep2-ep+1)
-      if os.path.basename(file).upper()=="VIDEO_TS.IFO":  
+      if filename.upper()=="VIDEO_TS.IFO":  
         for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
           if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item))
       else:  tv_show.parts.append(file)
       media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = str(SERIES_RX.index(rx)) if rx in SERIES_RX else str(ANIDB_RX.index(rx)+len(SERIES_RX)) if rx in ANIDB_RX else ""  # rank of the regex used from 0
-  Log.info('"%s" s%04de%03d%s%s%s%s' % (show, season, ep, "" if ep==ep2 or not ep2 else "-%03d" % ep2, " (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "", " \"%s\"" % index if index else "", ' "%s"' % title if clean_string(title).replace('_', '') else ""))
+  Log.info('"{show}" s{season:>02d}e{episode:>03d}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep if ep==ep2 or not ep2 else ep1+'-'+ep2, before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "", regex=index or'__', title = title if clean_string(title).replace('_', '') else "", file=filename))
 
 ### Get the tvdbId from the AnimeId #######################################################################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -308,7 +308,7 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
   reverse_path = list(reversed(Utils.SplitPath(path)))
-  log_filename = path.split(os.sep, 1)[0] if path else '_root_'
+  log_filename = path.split(os.sep, 1)[0] or '_root_' if path else '_root_'
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
     
   ### .plexignore file ###
@@ -409,16 +409,16 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("")
   
   ### Logging to *.scanner.log ###
-  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if path.count(os.sep) or kwargs else 'w') #if 'log_filename' in kwargs
+  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=(log_filename or  '__root__')+'.scanner.log', mode='a' if path.count(os.sep) or kwargs else 'w') #if 'log_filename' in kwargs
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))
   
   #### Folders, Forced ids, grouping folders ###
   folder_show  = reverse_path[0] if reverse_path else ""
-  misc_words   = []
+  misc_words, misc_count = [], {}
   tvdb_mapping, unknown_series_length, tvdb_mode_search = {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
   mappingList, offset_season, offset_episode                                  = {}, 0, 0
-    
+  
   if path:
     
     #### Grouping folders skip , ###
@@ -618,11 +618,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|') 
       misc = "|".join([s for s in misc.split('|') if s])  #Log.info("misc: '%s'" % misc)
       for item in misc.split('|'):  misc_count[item] = misc_count[item]+1 if item in misc_count else 1
-        #if item in misc_count:  misc_count[item] +=1
-        #else:                   misc_count[item] = 1
       for item in misc_count:
         if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) and max(misc_count.values())>3 ):  misc_words = misc_words + (item,)
         misc = misc.replace("|%s|" % item, '|')  #Log.info("misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
+      Log.info('misc_count: {}'.format(misc_count))
   
   ### File main loop ###
   for file in files:
@@ -648,7 +647,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           for item in misc_words:  filename = filename.lower().replace(item, ' ', 1)
     else:  filename     = clean_string(filename, False)
     ep = filename
-    if not path and " - Complete Movie" in ep:                                                                ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
+    if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
     elif len(files)==1 and not folder_season:
       if   ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
     if folder_show and folder_season >= 1:                                                                                                                                         # 
@@ -658,10 +657,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     
     ### Word search for ep number in scrubbed title ###
     words, loop_completed, rx = filter(None, ep.split()), False, "Word Search"                                                                                                         #
+    #Log.info('test1 file: {}, season: {}'.format(file, season))
     for word in words:                                                                                                                                              #
       ep=word.lower().strip()                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
       for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
-        if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):      ep, season = ep[len(prefix):], 0 if prefix=="s" else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
+        if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):
+          #Log.info('misc_count[word]: {}, filename.count(word)>=2: {}'.format(misc_count[word] if word in misc_count else 0, filename.count(word)))
+          ep, season = ep[len(prefix):], 0 if prefix=="s" and (word not in misc_count or filename.count(word)==1 and misc_count[word]==1 or filename.count(word)>=2 and misc_count[word]==2) else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
       if ep.endswith(("v1", "v2", "v3", "v4", "v5")):                                                          ep=ep[:-2].rstrip('-')                               #
       if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                                       # If separator in string
         if re.match("^(?P<ep>[0-9]{1,3})-(?P<ep2>[0-9]{1,3})$", ep, re.IGNORECASE):                            ep, ep2 = ep.split('-'); break
@@ -720,8 +722,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### root level manual call to Grouping folders ###
   if path:  Log.info("")
   else:
-    Log.info(''.ljust(157, '-'))
-    folder_count, subfolders = {}, dirs[:]
+    folder_count, subfolders, ignored = {}, dirs[:], False
     while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
       full_path = subfolders.pop(0)
       path      = os.path.relpath(full_path, root)
@@ -729,6 +730,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       ### Ignore dirs ###
       for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
         if re.match(rx, os.path.basename(path), re.IGNORECASE):  # if folder match rx
+          if not ignored:  ignored = True;  Log.info(''.ljust(157, '-'))
           Log.info("\"%s\" match %s: \"%s\"" % (path, 'IGNORE_DIRS_RX', rx))
           break
       else:  ### Not skipped
@@ -758,6 +760,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         #Log.info('grouping_dir: {}, root_folder: {}'.format(grouping_dir, root_folder))
         if subdir_files and len(reverse_path)>1 and not season_folder_first and folder_count[root_folder]>1:  ### Calling Scan for grouping folders only ###
           if grouping_dir in dirs:
+            Log.info(''.ljust(157, '-'))
             Log.info("[{}] Grouping folder (contain {} dirs)".format(root_folder, folder_count[root_folder]))
             dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
             log_filename = os.path.join(CACHE_PATH, os_filename_clean_string(os.path.dirname(root_folder)))
@@ -766,7 +769,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
-      
+
+          
 ### Command line scanner call ###
 if __name__ == '__main__':  #command line
   print "Absolute Series Scanner by ZeroQI"
