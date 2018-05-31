@@ -19,8 +19,8 @@ import json                                                          #
 from lxml import etree                                               # fromstring
 try:                 from ssl import PROTOCOL_TLS    as SSL_PROTOCOL # Python >= 2.7.13
 except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python <  2.7.13
-try:                 from urllib.request import urlopen              # Python >= 3.0
-except ImportError:  from urllib2        import urlopen              # Python == 2.x
+try:                 from urllib.request import urlopen, Request     # Python >= 3.0
+except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 SSL_CONTEXT               = ssl.SSLContext(SSL_PROTOCOL)                                                                                                                            #
@@ -101,7 +101,7 @@ WHACK           = [                                                             
                     "mthd", "thora", 'sickrage', 'brrip', "remastered", "yify", "tsr", "reidy", "gerdhanse", 'remux',                                                             #'limited', 
                     'rikou', 'hom?', "it00nz", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a"                                                      # Release group
                   ]
-CHARACTERS_MAP = {                                                                                                                                                                #Specials characters to re-map
+CHARACTERS_MAP =  {                                                                                                                                                                #Specials characters to re-map
                     14844057:"'", 14844051:'-', 14844052:'-', 14844070:'...', 15711386:':', 14846080:'∀', 15711646:'~',                                                           #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
                     50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' ,  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,  #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend' #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
                     50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,                                                               #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
@@ -110,6 +110,7 @@ CHARACTERS_MAP = {                                                              
                     53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' , 50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,               #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3'] #'×' ['\xc3', '\x97'],
                     49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½' , 52352:''  , 52353:''                                          #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #  ['\xcc', '\x81'] 
                   }
+HEADERS        =  {'Content-type': 'application/json'}
                   
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
 PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
@@ -155,6 +156,15 @@ try:
     for path in library.iterchildren('Location'):
       PLEX_LIBRARY[path.get("path")] = library.get("title")
 except:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
+
+def Dict(var, *arg, **kwarg):  #Avoid TypeError: argument of type 'NoneType' is not iterable
+  """ Return the value of an (imbricated) dictionnary, if all fields exist else return "" unless "default=new_value" specified as end argument
+      Ex: Dict(variable_dict, 'field1', 'field2', default = 0)
+  """
+  for key in arg:
+    if isinstance(var, dict) and key and key in var:  var = var[key]
+    else:  return kwarg['default'] if kwarg and 'default' in kwarg else ""   # Allow Dict(var, tvdbid).isdigit() for example
+  return kwarg['default'] if var in (None, '', 'N/A', 'null') and kwarg and 'default' in kwarg else "" if var in (None, '', 'N/A', 'null') else var
 
 ### replace a string by another while retaining original string case ##############################################################################################
 def replace_insensitive (ep, word, sep=" "):
@@ -253,8 +263,9 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   # Mapping List 
-  ep_orig, ep_orig_padded = "s%de%d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%s" % ep2), "s%02de%02d%s" % (season, ep, "" if not ep2 or ep==ep2 else "-%02d" % ep2)
-  ep_orig_single          = "s%de%d"   % (season, ep)
+  ep_orig        = "s{}e{}{}".format(season, ep, "" if not ep2 or ep==ep2 else "-{}".format(ep2))
+  ep_orig_single = "s{}e{}".format  (season, ep)
+  ep_orig_padded = "s{:>02d}e{:>03d}{}".format(int(season), int(ep), "    " if not ep2 or ep==ep2 else "-{:>03d}".format(int(ep2)))
   if ep_orig_single in mappingList:
     multi_ep   = 0 if ep_orig == ep_orig_single else ep2-ep
     season, ep = mappingList[ep_orig_single][1:].split("e")
@@ -284,7 +295,7 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
       else:  tv_show.parts.append(file)
       media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = str(SERIES_RX.index(rx)) if rx in SERIES_RX else str(ANIDB_RX.index(rx)+len(SERIES_RX)) if rx in ANIDB_RX else ""  # rank of the regex used from 0
-  Log.info('"{show}" s{season:>02d}e{episode:>03d}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep if ep==ep2 or not ep2 else ep1+'-'+ep2, before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "", regex=index or'__', title = title if clean_string(title).replace('_', '') else "", file=filename))
+  Log.info('"{show}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or'__', title = title if clean_string(title).replace('_', '') else "", file=filename))
 
 ### Get the tvdbId from the AnimeId #######################################################################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -463,27 +474,35 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
       #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
       if source in ('tvdb2', 'tvdb3'): 
-        tvdb_guid_url, ep_count, abs_manual_placement_info, number_set = TVDB_HTTP_API_URL % id, 0, [], False
-        Log.info("TVDB season mode (%s) enabled, serie url: '%s'" % (source, tvdb_guid_url))
+        Log.info("TVDB season mode (%s) enabled".format(source))
         try:
-          tvdbanime = etree.fromstring( urlopen(tvdb_guid_url, context=SSL_CONTEXT).read() )
-          for episode in tvdbanime.xpath('Episode'):
-            if episode.xpath('SeasonNumber')[0].text != '0':
-              ep_count = ep_count + 1
-              if not episode.xpath('absolute_number')[0].text:
-                episode.xpath('absolute_number')[0].text, number_set = str(ep_count), True
-                abs_manual_placement_info.append("s%se%s = abs %s" % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text, episode.xpath('absolute_number')[0].text))
-              elif not number_set:  ep_count = int(episode.xpath('absolute_number')[0].text)
-              else:  Log.error("different abs number found on ep (s%se%s) after starting to manually place our own abs numbers. all episodes will be added as season 1." % (episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text) );  break
-          else:
-            Log.debug("abs_manual_placement_worked, abs_manual_placement_info: '%s'" % (str(abs_manual_placement_info)))
-            for episode in tvdbanime.xpath('Episode'):
-              SeasonNumber    = episode.xpath('SeasonNumber'   )[0].text if episode.xpath('SeasonNumber'   )[0].text else ''
-              EpisodeNumber   = episode.xpath('EpisodeNumber'  )[0].text if episode.xpath('EpisodeNumber'  )[0].text else ''
-              absolute_number = episode.xpath('absolute_number')[0].text if episode.xpath('absolute_number')[0].text else ''
-              if absolute_number:  tvdb_mapping[int(absolute_number)] = (int(SeasonNumber), int(EpisodeNumber) if source=='tvdb2' else int(absolute_number))
-        except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
-        
+          if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
+          else:                    
+            Log.info('not authorised, HEADERS: {}'.format(HEADERS))
+            page = urlopen(Request("https://api.thetvdb.com/login", headers=HEADERS), data=json.dumps({"apikey": "A27AD9BE0DA63333"})).read()
+            global HEADERS;  HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
+          
+          #Load series episode pages and group them in one dict
+          episodes_json, page = [], 1
+          while page not in (None, '', 'null'):
+            episodes_json_page = json.loads(urlopen(Request('https://api.thetvdb.com/series/{}/episodes?page={}'.format(id, page), headers=HEADERS)).read())
+            episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info('TVDB_EPISODES_URL: {}, links: {}'.format(TVDB_EPISODES_URL % (TVDBid, page), Dict(episodes_json_page, 'links')))
+            page = Dict(episodes_json_page, 'links', 'next')
+          
+          # SORT JSON EPISODES
+          sorted_episodes_json = {}
+          for episode_json in episodes_json: sorted_episodes_json['s{:02d}e{:03d}'.format(Dict(episode_json, 'airedSeason'), Dict(episode_json, 'airedEpisodeNumber'))] = episode_json
+          sorted_episodes_index_list = sorted(sorted_episodes_json, key=natural_sort_key)  #Log.Info('len: {}, sorted_episodes_index_list: {}'.format(len(sorted_episodes_index_list), sorted_episodes_index_list))
+          
+          # Loop trhrough sorted episodes list
+          absolute_number, tvdb_mapping = 0, {}
+          for index in sorted_episodes_index_list:
+            if Dict(sorted_episodes_json[index], 'airedSeason')>0: #continue
+              absolute_number = absolute_number + 1
+              tvdb_mapping[int(absolute_number)] = (Dict(sorted_episodes_json[index], 'airedSeason'), Dict(sorted_episodes_json[index], 'airedEpisodeNumber') if source in ('tvdb2', 'tvdb3') else int(absolute_number))
+
+        except Exception as e:  Log.error("json loading issue, Exception: %s" % e)
+
       #tvdb4 - Absolute numbering in any season arrangements aka saga mode
       elif source=='tvdb4' and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
         try:
