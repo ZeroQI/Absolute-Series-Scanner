@@ -430,12 +430,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   folder_show  = reverse_path[0] if reverse_path else ""
   misc_words, misc_count = [], {}
   tvdb_mapping, unknown_series_length, tvdb_mode_search = {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
-  mappingList, offset_season, offset_episode                                  = {}, 0, 0
+  mappingList, offset_season, offset_episode            = {}, 0, 0
   
   if path:
     
-    #### Grouping folders skip , ###
-    if not kwargs and len(reverse_path)>1 and not season_folder_first:  Log.info("");  return  #Grouping folders Plex call, but mess after one season folder is ok
+    #### Grouping folders skip , unless single series folder ###
+    if not kwargs and len(reverse_path)>1 and not season_folder_first:  
+      parent_dir = os.path.dirname(os.path.join(root, path))
+      parent_dir_nb= len([file for dir in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, dir))])
+      if parent_dir_nb>1:  return  #Grouping folders Plex call, but mess after one season folder is ok
   
     ### Forced guid modes ###
     guid=""
