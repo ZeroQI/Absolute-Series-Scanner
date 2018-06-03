@@ -647,6 +647,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info('misc_count: {}'.format(misc_count))
   
   ### File main loop ###
+  counter = 500
   for file in files:
     show, season, ep2, title, year = folder_show, folder_season if folder_season is not None else 1, None, "", ""
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
@@ -709,7 +710,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       continue
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
-    movie_list, AniDB_op, counter, ep = {}, {}, 500, filename
+    movie_list, AniDB_op, ep = {}, {}, filename
     for rx in SERIES_RX + ANIDB_RX:
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
@@ -737,7 +738,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
     counter = counter+1                                          #                    #
-    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title, year, counter, "")
+    Log.info('counter "{}"'.format(counter))
+    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title, year, "", file)
   if not files:  Log.info("[no files detected]");  Log.info("")
   #if files:  Stack.Scan(path, files, media, dirs)
 
