@@ -386,3 +386,5 @@ On linux (and Mac OS-X), permissions issues could prevent the scanner execution,
 - [ ] Shall i write a Movie scanner using the same code? The Plex default movie scanner does an good job i believe ?
 
 Reference for editing Read-Me: [Link to Markdown](https://guides.github.com/features/mastering-markdown/) or https://help.github.com/articles/basic-writing-and-formatting-syntax/
+
+Donation link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=S8CUKCX4CWBBG&lc=IE&item_name=ZeroQI&item_number=Absolute%20Series%20Scanner%20%2b%20Http%20AniDB%20Metadata%20Agent&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted
