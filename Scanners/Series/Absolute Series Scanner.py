@@ -613,13 +613,31 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     
     ### Youtube Playlist ###
     if source=='youtube':
-      YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'.format(id)
-      try:                    json_obj = json.loads(urlopen(Request(YOUTUBE_PLAYLIST_ITEMS), context=SSL_CONTEXT).read()) #Choosen per id hence one single result
-      except Exception as e:  Log.info('exception: {}, url: {}'.format(e, YOUTUBE_PLAYLIST_ITEMS))
+      items = []
+      youtubeNextPageToken = ''
+      YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass&pageToken='.format(id)
+      # limit the number of requests that can be made to avoid infinite loop
+      youtubeRequestLimit = 1000 / 50 # DESIRED VIDEO MAX / 50 per request = max requests to make
+      youtubeCurrentRequest = 0
+      while youtubeCurrentRequest < youtubeRequestLimit:
+        youtubeCurrentRequest += 1
+        try:                    
+          #Choosen per id hence one single result
+          json_obj = json.loads(urlopen(Request(YOUTUBE_PLAYLIST_ITEMS + youtubeNextPageToken), context=SSL_CONTEXT).read()) 
+          items = items + json_obj['items']
+          # if response includes a nextPageToken, there are more videos in playlist to download
+          # save token and append it on the following loop iteration
+          if 'nextPageToken' in json_obj:
+            youtubeNextPageToken = json_obj['nextPageToken']
+          else:
+            break
+        except Exception as e:  
+          Log.info('exception: {}, url: {}'.format(e, YOUTUBE_PLAYLIST_ITEMS))
+          break
       else:
         for file in os.listdir(os.path.join(root, path)):
           if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #files only with video extensions
-          for rank, video in enumerate(json_obj['items'], start=1):
+          for rank, video in enumerate(items, start=1):
             if video['snippet']['resourceId']['videoId'] in file:
               add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
               break
