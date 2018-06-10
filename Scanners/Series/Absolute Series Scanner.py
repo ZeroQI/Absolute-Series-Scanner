@@ -611,20 +611,34 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         else:                                                                offset_episode = 0
       Log.info("".ljust(157, '-'))
     
-    ### Youtube Playlist ###
+    ### Youtube ###
     if source=='youtube':
       YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'.format(id)
-      try:                    json_obj = json.loads(urlopen(Request(YOUTUBE_PLAYLIST_ITEMS), context=SSL_CONTEXT).read()) #Choosen per id hence one single result
-      except Exception as e:  Log.info('exception: {}, url: {}'.format(e, YOUTUBE_PLAYLIST_ITEMS))
-      else:
+      #YOUTUBE_CHANNEL_ITEMS  = 'https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&type=video&channelId={}&maxResults=50&key=key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'.format(id)
+      iteration, json_full = 0, {}
+      while (not json_full or Dict(json_full, 'nextPageToken')) and iteration <= 20:
+        url=YOUTUBE_PLAYLIST_ITEMS if id.startswith('PL') else 'Unknown id: {}'.format(id)  #else YOUTUBE_CHANNEL_ITEMS if id.startswith('UC') 
+        if Dict(json_full, 'nextPageToken'):  url += '&pageToken='+Dict(json_full, 'nextPageToken')
+        try:                    json_page = json.loads(urlopen(url, context=SSL_CONTEXT).read())
+        except Exception as e:  json_page={};  Log.info('exception: {}, url: {}'.format(e, YOUTUBE_PLAYLIST_ITEMS))
+        Log.info('iteration: {}, nextPageToken: "{}", url: {}'.format(iteration, Dict(json_full, 'nextPageToken'), url))
+        json_full.update(json_page)  #Log.Info('TVDB_EPISODES_URL: {}, links: {}'.format(TVDB_EPISODES_URL % (TVDBid, page), Dict(episodes_json_page, 'links')))
+        iteration +=1
+
+      if json_full and id.startswith('PL'):
         for file in os.listdir(os.path.join(root, path)):
           if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #files only with video extensions
-          for rank, video in enumerate(json_obj['items'], start=1):
+          for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
             if video['snippet']['resourceId']['videoId'] in file:
               add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
               break
         return  
       
+      #Need to force season and ep number for channels, tricky unless they are numbered and also have video id
+      #could build a list of eps, sort by date and use year as season
+      if json_full and id.startswith('UC'):
+        pass
+        
     ### Build misc variable to check numbers in titles ###
     misc, misc_words, misc_count = "|", (), {} # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
     array = ()
