@@ -49,9 +49,9 @@ SERIES_RX                 = [                                                   
   '^(?P<show>.*?) - (E|e|Ep|ep|EP)?(?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?(v[0-9]{1})?( - |.)?(?P<title>.*)$',                                                                    #  3 # Serie - xx - title.ext | ep01-ep02 | e01-02
   '^(?P<show>.*?) \[(?P<season>[0-9]{1,2})\] \[(?P<ep>[0-9]{1,3})\] (?P<title>.*)$']                                                                                                #  4 # Serie [Sxx] [Exxx] title.ext                     
 #|Ep #
-#date_regexps              = [ '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10
-#                              '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
-#                            ]  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
+DATE_RX         = [ '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10
+                    '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
+                  ]  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
 ANIDB_OFFSET    = [0, 100, 150, 200, 400, 0, 0];                                                                                                                                    ###### AniDB Specials episode offset value array
 ANIDB_RX        = [                                                                                                                                                                 ###### AniDB Specials episode offset regex array
                     '(^|(?P<show>.*?)[ _\.\-]+)(SP|SPECIAL|OAV|OVA) ?(?P<ep>\d{1,2})(-(?P<ep2>[0-9]{1,3}))?(v0|v1|v2|v3|v4|v5)? ?(?P<title>.*)$',                                   #  5 # 001-099 Specials
@@ -285,6 +285,7 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
     elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
   ep_final = "s%de%d" % (season, ep)
+  if not os.path.exists(file):  file = os.path.join(root, path, file)
   filename=os.path.basename(file)
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
@@ -693,6 +694,22 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if prefix in ep.lower() or prefix in misc_count and misc_count[prefix]>1:  ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
     if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
     
+    ### Date Regex ###
+    #DATE_RX
+    #match = re.search(rx, ep, re.IGNORECASE)
+    for r in DATE_RX:
+      if re.search(r, ep):
+        year  = int(match.group('year' ))
+        month = int(match.group('month'))
+        day   = int(match.group('day'  ))
+        Log.Info('year: {}, mont: {}, day: {}, ep: {}, file: {}'.format(year, month, day, ep, file))
+        continue
+        # Use the year as the season.
+        #tv_show = Media.Episode(show, year, None, None, None)
+        #tv_show.released_at = '%d-%02d-%02d' % (year, month, day)
+        #tv_show.parts.append(i)
+        #mediaList.append(tv_show)
+           
     ### Word search for ep number in scrubbed title ###
     words, loop_completed, rx = filter(None, ep.split()), False, "Word Search"                                                                                                         #
     for word in words:                                                                                                                                              #
