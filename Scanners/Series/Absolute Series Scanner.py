@@ -5,6 +5,7 @@ import sys                                                           # getdefaul
 import os                                                            # path, listdir
 import tempfile                                                      # NamedTemporaryFile
 import time                                                          # strftime
+import datetime                                                      # datetime
 import re                                                            # match, compile, sub
 import fnmatch                                                       # translate
 import logging, logging.handlers                                     # FileHandler, Formatter, getLogger, DEBUG | RotatingFileHandler
@@ -371,11 +372,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         
         #youtube playlist on season folder
-        match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL.*)\]', folder, re.IGNORECASE)
-        if match:
-          id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
-          source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'YouTube'
-        break
+        #match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL.*)\]', folder, re.IGNORECASE)
+        #if match:
+        #  id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
+        #  source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'YouTube'
+        #break
   
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
@@ -443,7 +444,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
     ### Forced guid modes ###
     guid=""
-    match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>.*)\]', folder_show, re.IGNORECASE)
+    match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube|youtube2))-)?(?P<id>.*)\]', folder_show, re.IGNORECASE)
+    if not match and len(reverse_path)>1:  match = re.search('(.* )?\[((?P<source>(|youtube))-)?(?P<id>.*)\]', reverse_path[1], re.IGNORECASE)
     if source or id:
       Log.info("Forced ID in season folder: '{}' with id '{}' in series folder".format(source, id))
     elif match:
@@ -613,33 +615,38 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info("".ljust(157, '-'))
     
     ### Youtube ###
-    if source=='youtube':
-      YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'.format(id)
-      #YOUTUBE_CHANNEL_ITEMS  = 'https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&type=video&channelId={}&maxResults=50&key=key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'.format(id)
-      iteration, json_full = 0, {}
-      while (not json_full or Dict(json_full, 'nextPageToken')) and iteration <= 20:
-        url=YOUTUBE_PLAYLIST_ITEMS if id.startswith('PL') else 'Unknown id: {}'.format(id)  #else YOUTUBE_CHANNEL_ITEMS if id.startswith('UC') 
-        if Dict(json_full, 'nextPageToken'):  url += '&pageToken='+Dict(json_full, 'nextPageToken')
-        try:                    json_page = json.loads(urlopen(url, context=SSL_CONTEXT).read())
-        except Exception as e:  json_page={};  Log.info('exception: {}, url: {}'.format(e, YOUTUBE_PLAYLIST_ITEMS))
-        Log.info('iteration: {}, nextPageToken: "{}", url: {}'.format(iteration, Dict(json_full, 'nextPageToken'), url))
-        json_full.update(json_page)  #Log.Info('TVDB_EPISODES_URL: {}, links: {}'.format(TVDB_EPISODES_URL % (TVDBid, page), Dict(episodes_json_page, 'links')))
-        iteration +=1
-
-      if json_full and id.startswith('PL'):
-        for file in os.listdir(os.path.join(root, path)):
-          if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #files only with video extensions
-          for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
-            if video['snippet']['resourceId']['videoId'] in file:
-              add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
-              break
-        return  
+    def getmtime(name):  return os.path.getmtime(os.path.join(root, path, name))
+    if source.startswith('youtube'):
+      Log.info('id: {}'.format(id))
+      YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'
+      YOUTUBE_CHANNEL_ITEMS  = 'https://www.googleapis.com/youtube/v3/search?order=date&part=snippet&type=video&channelId={}&maxResults=50&key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'
+      json_full={}
+      if  id.startswith('PL'):
+        iteration, json_full = 0, {}
+        while (not json_full or Dict(json_full, 'nextPageToken')) and iteration <= 20:
+          url=YOUTUBE_PLAYLIST_ITEMS.format(id) if id.startswith('PL') else YOUTUBE_CHANNEL_ITEMS.format(id) if id.startswith('UC') else 'Unknown id: {}'.format(id)  #else YOUTUBE_CHANNEL_ITEMS if id.startswith('UC') 
+          Log.info('url: {}'.format(url))
+          if Dict(json_full, 'nextPageToken'):  url += '&pageToken='+Dict(json_full, 'nextPageToken')
+          try:                    json_page = json.loads(urlopen(url, context=SSL_CONTEXT).read())
+          except Exception as e:  json_page={};  Log.info('exception: {}, url: {}'.format(e, url))
+          Log.info('iteration: {}, nextPageToken: "{}", url: {}'.format(iteration, Dict(json_full, 'nextPageToken'), url))
+          json_full.update(json_page)  #Log.Info('TVDB_EPISODES_URL: {}, links: {}'.format(TVDB_EPISODES_URL % (TVDBid, page), Dict(episodes_json_page, 'links')))
+          iteration +=1
       
-      #Need to force season and ep number for channels, tricky unless they are numbered and also have video id
-      #could build a list of eps, sort by date and use year as season
-      if json_full and id.startswith('UC'):
-        pass
-        
+        #rank=0  #def getmtime(entry):  return entry.stat().st_mtime
+        for file in os.listdir(os.path.join(root, path)) if  id.startswith('PL') else sorted(os.listdir(os.path.join(root, path)), key=getmtime, reverse=True) if id.startswith('UC') else []:
+          if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #files only with video extensions
+          if json_full and id.startswith('PL'):
+            for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
+              if video['snippet']['resourceId']['videoId'] in file:
+                #Log.info('found json: {}'.format(video))
+                add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+                break
+        return  
+    
+    files_per_date = []
+    if id.startswith('UC'):  files_per_date = sorted(os.listdir(os.path.join(root, path)), key=getmtime, reverse=True)
+    
     ### Build misc variable to check numbers in titles ###
     misc, misc_words, misc_count = "|", (), {} # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
     array = ()
@@ -694,6 +701,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if prefix in ep.lower() or prefix in misc_count and misc_count[prefix]>1:  ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
     if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
     
+    
+    ###
+    if source.startswith('youtube') and id.startswith('UC'):
+      folder_season = time.gmtime(os.path.getmtime(os.path.join(root, path, file)) )[0]
+      ep            = files_per_date.index(file)+1 if file in files_per_date else 0
+      Log.info('folder_season: {}, ep number: {} title: {}'.format(folder_season, ep, file))
+      add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show+' ['+id+']', int(folder_season if folder_season is not None else 1), ep, file, folder_season, ep, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+      continue
+      
     ### Date Regex ###
     #DATE_RX
     #match = re.search(rx, ep, re.IGNORECASE)
