@@ -616,36 +616,34 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     
     ### Youtube ###
     def getmtime(name):  return os.path.getmtime(os.path.join(root, path, name))
-    if source.startswith('youtube'):
-      Log.info('id: {}'.format(id))
+    if source.startswith('youtube') and id.startswith('PL'):
       YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'
-      json_full={}
-      if  id.startswith('PL'):
-        iteration, json_full = 0, {}
-        while (not json_full or Dict(json_full, 'nextPageToken')) and iteration <= 20:
-          url=YOUTUBE_PLAYLIST_ITEMS.format(id)
-          Log.info('url: {}'.format(url))
-          if Dict(json_full, 'nextPageToken'):  url += '&pageToken='+Dict(json_full, 'nextPageToken')
-          try:                    json_page = json.loads(urlopen(url, context=SSL_CONTEXT).read())
-          except Exception as e:  json_page={};  Log.info('exception: {}, url: {}'.format(e, url))
-          Log.info('iteration: {}, nextPageToken: "{}", url: {}'.format(iteration, Dict(json_full, 'nextPageToken'), url))
-          json_full.update(json_page)  #Log.Info('TVDB_EPISODES_URL: {}, links: {}'.format(TVDB_EPISODES_URL % (TVDBid, page), Dict(episodes_json_page, 'links')))
-          iteration +=1
+      iteration, json_full, json_page = 0, {}, {'nextPageToken': None}
+      while 'nextPageToken' in json_page and iteration <= 20:
+        url=YOUTUBE_PLAYLIST_ITEMS.format(id)+( '&pageToken='+Dict(json_full, 'nextPageToken') if Dict(json_page, 'nextPageToken') else '')
+        Log.info('[{:>2}] {}'.format(iteration, url))
+        try:                                  json_page = json.loads(urlopen(url, context=SSL_CONTEXT).read())
+        except Exception as e:                json_page={};  Log.info('exception: {}, url: {}'.format(e, url))
+        else:
+          if json_full:  json_full['items'].extend(json_page['items'])
+          else:          json_full = json_page
+        iteration +=1
+      Log.info('---- count: {}'.format(len(json_full['items'])))
       
-        #rank=0  #def getmtime(entry):  return entry.stat().st_mtime
-        Log.info('before json_full test')
-        if json_full:
-          for file in os.listdir(os.path.join(root, path)):
-            Log.info('file before: {}, file after: {}'.format(file, file.decode('utf-8')))
-            if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #files only with video extensions
-            else:
-              for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
-                if video['snippet']['resourceId']['videoId'] in file.decode('utf-8'):
-                  Log.info('found video: {}'.format(file))
-                  add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
-                  break
-          return  
-        else:  Log.info('json_full is empty')
+      #rank=0  #def getmtime(entry):  return entry.stat().st_mtime
+      if json_full:
+        for file in os.listdir(os.path.join(root, path)):
+          if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):
+            continue  #files only with video extensions
+          for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
+            VideoID = video['snippet']['resourceId']['videoId']
+            if VideoID and VideoID in file.decode('utf-8'):
+              #Log.info('[{}] rank: {:>3} in file: {}'.format(VideoID, rank, file))
+              add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+              break
+          else:  Log.info('None of video IDs found in filename: {}'.format(file))
+        return  
+      else:  Log.info('json_full is empty')
     files_per_date = []
     if id.startswith('UC'):
       files_per_date = sorted(os.listdir(os.path.join(root, path)), key=getmtime, reverse=True)
