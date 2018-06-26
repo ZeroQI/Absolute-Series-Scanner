@@ -645,8 +645,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         return  
     
     files_per_date = []
-    if id.startswith('UC'):  files_per_date = sorted(os.listdir(os.path.join(root, path)), key=getmtime, reverse=True)
-    
+    if id.startswith('UC'):
+      files_per_date = sorted(os.listdir(os.path.join(root, path)), key=getmtime, reverse=True)
+      Log.info('files_per_date: {}'.format(files_per_date))
+      
     ### Build misc variable to check numbers in titles ###
     misc, misc_words, misc_count = "|", (), {} # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
     array = ()
@@ -702,12 +704,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
     
     
-    ###
+    ### YouTube Channel numbering ###
     if source.startswith('youtube') and id.startswith('UC'):
-      folder_season = time.gmtime(os.path.getmtime(os.path.join(root, path, file)) )[0]
-      ep            = files_per_date.index(file)+1 if file in files_per_date else 0
-      Log.info('folder_season: {}, ep number: {} title: {}'.format(folder_season, ep, file))
-      add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show+' ['+id+']', int(folder_season if folder_season is not None else 1), ep, file, folder_season, ep, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+      filename = os.path.basename(file)
+      folder_season = time.gmtime(os.path.getmtime(os.path.join(root, path, filename)) )[0]
+      ep            = files_per_date.index(filename)+1 if filename in files_per_date else 0
+      add_episode_into_plex(media, os.path.join(root, path, filename), root, path, folder_show if id in folder_show else folder_show+'['+id+']', int(folder_season if folder_season is not None else 1), ep, filename, folder_season, ep, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
       continue
       
     ### Date Regex ###
