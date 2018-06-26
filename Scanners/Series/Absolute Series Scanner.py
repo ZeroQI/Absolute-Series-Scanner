@@ -638,7 +638,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #files only with video extensions
           if json_full and id.startswith('PL'):
             for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
-              if video['snippet']['resourceId']['videoId'] in file:
+              if video['snippet']['resourceId']['videoId'] in file.decode('utf-8'):
                 #Log.info('found json: {}'.format(video))
                 add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
                 break
