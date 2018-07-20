@@ -370,13 +370,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
         reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
-        
-        #youtube playlist on season folder
+        ### YouTube playlist on season folder
         #match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL.*)\]', folder, re.IGNORECASE)
         #if match:
         #  id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
         #  source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'YouTube'
-        #break
+        break
   
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
@@ -423,8 +422,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("")
   
   ### Logging to *.scanner.log ###
-  #set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
-  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='w' if path.count(os.sep) or kwargs else 'w') #if 'log_filename' in kwargs
+  recent = os.stat(log_filename+'.scanner.log').st_mtime + 3600 > time.time()
+  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if recent or kwargs else 'w') #if 'log_filename' in kwargs
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))
   
@@ -630,7 +629,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         iteration +=1
       Log.info('---- count: {}'.format(len(json_full['items'])))
       
-      #rank=0  #def getmtime(entry):  return entry.stat().st_mtime
       if json_full:
         for file in os.listdir(os.path.join(root, path)):
           if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):
@@ -824,7 +822,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         for file in os.listdir(full_path):
           path_item = os.path.join(full_path, file) 
           if os.path.isdir(path_item):                 subdir_dirs.append(path_item);  subfolders.append(path_item);  folder_count[path] +=1  #Fullpath
-          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(file)                                  #filename only
+          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(file)                                                              #filename only
           
         ### Call Grouping folders series ###
         #if subdir_files:                                                           ### Calling Scan for every folder with files ###
@@ -835,7 +833,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if grouping_dir in dirs:
             Log.info(''.ljust(157, '-'))
             Log.info("[{}] Grouping folder (contain {} dirs)".format(root_folder, folder_count[root_folder]))
-            dirs.remove(grouping_dir)                                                             #Prevent grouping folders from being called by Plex normal call to Scan() 
+            dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
