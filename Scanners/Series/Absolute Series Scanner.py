@@ -16,7 +16,7 @@ import Stack                                                         # Scan
 import inspect                                                       # getfile, currentframe
 import ssl                                                           # SSLContext
 import zipfile                                                       # ZipFile, namelist
-import json                                                          #
+import json                                                          # loads
 from lxml import etree                                               # fromstring
 try:                 from ssl import PROTOCOL_TLS    as SSL_PROTOCOL # Python >= 2.7.13 #ssl.PROTOCOL_TLSv1
 except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python <  2.7.13
@@ -64,7 +64,7 @@ ANIDB_RX        = [                                                             
                     '(^|(?P<show>.*?)[ _\.\-]+)SP? ?(?P<ep>\d{1,2}) ?(?P<title>.*)$']                                                                                               # 11 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
 IGNORE_DIRS_RX  = [ '@Recycle', '.@__thumb', 'lost\+found', '.AppleDouble','$Recycle.Bin', '$RECYCLE.BIN', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir',        ###### Ignored folders
                     'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]                                   #      source: Filters.py  removed '\..*',        
-IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.xml$', '\.smi$']#, '\.plexignore', '.*\.id']            #, '.*\.log$'                   # Skipped files (samples, trailers)                                                          
+IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.xml$', '\.smi$', '^\._']#, '\.plexignore', '.*\.id']            #, '.*\.log$'                   # Skipped files (samples, trailers)                                                          
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',                #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm',             #
                     'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo', 'disc']                                                                             # DVD: 'ifo', 'bup', 'vob'
