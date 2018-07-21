@@ -616,7 +616,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     ### Youtube ###
     def getmtime(name):  return os.path.getmtime(os.path.join(root, path, name))
     if source.startswith('youtube') and id.startswith('PL'):
-      YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key=AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'
+      try:
+        with open(os.path.join(PLEX_ROOT, 'Plug-in Support', 'Preferences', 'com.plexapp.agents.youtube.xml'), 'r') as file:
+          xml = etree.fromstring( file.read() )
+          API_KEY = xml.xpath("/PluginPreferences/yt_apikey")[0].text.strip()
+        Log.info("API_KEY: '{}'".format(API_KEY))
+      except Exception as e:  Log.info('exception: {}'.format(e)); API_KEY='AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'
+      
+      YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key='+API_KEY
       iteration, json_full, json_page = 0, {}, {'nextPageToken': None}
       while 'nextPageToken' in json_page and iteration <= 20:
         url=YOUTUBE_PLAYLIST_ITEMS.format(id)+( '&pageToken='+Dict(json_full, 'nextPageToken') if Dict(json_page, 'nextPageToken') else '')
