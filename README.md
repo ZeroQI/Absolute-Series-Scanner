@@ -1,4 +1,4 @@
-## Plex scanner responsabilities
+## Plex scanner responsibilities
 A Plex Series Scanner makes the video files showing in Plex and populate the following for the video files:
 - Series name
 - Series year
