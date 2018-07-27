@@ -8,7 +8,7 @@ A Plex Series Scanner makes the video files showing in Plex and populate the fol
 
 If a file is not showing in plex or showing at the wrong season and/or episode number, or is not passing through the forced id, then it is a scanner issue. Anything else is metadata related and agent specific.
 
-If you post anything on the scanner github or thread for any issue like poster missing/wrong, episode thumbnail/screenshot/title/summary missing/wrong, then you clearly haven't read this and need to pay the RTFM tax by donating (or you just find this the best anime scanner and/or agent, much apreciated average is 5 euros with the highest to date 25 euros)
+If you post anything on the scanner github or thread for any issue like poster missing/wrong, episode thumbnail/screenshot/title/summary missing/wrong, then you clearly haven't read this and need to pay the RTFM tax by donating (or you just find this the best anime scanner and/or agent, much apreciated average is 5 euros). Also applies if you want assistance but didn't follow troubleshooting steps or include logs...
 
 ## Plex Agent responsabilities
 A Plex metadata agent will:
