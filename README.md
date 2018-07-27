@@ -305,6 +305,7 @@ chmod 775 -R '/var/lib/plexmediaserver/Library/Application Support/Plex Media Se
 - if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
 - If Episodes are missing, wrong seasons or episode numbers, or series missing, check all "(custom ASS)" logs
 - If library doesn't add new content then most likelly the scanner is crashing (after scanner update) and will revert any changes to the library so nothing changes...
+- For scanner or agent issues where the agent doesn't crash, please include impacted series filelist and scanner logs, location below
 
 ## Logs
 Absolute series Scanner saves its custom logs in this relative path Plex Media Server\Plug-in Support\Data\com.plexapp.agents.hama\DataItems\_Logs\...
