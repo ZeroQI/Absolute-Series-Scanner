@@ -48,8 +48,8 @@ SERIES_RX                 = [                                                   
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})(([_\-Xx]|[_\-][0-9]{1,2}[Xx])(?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                            #  0 # 1x01
   '(^|(?P<show>.*?)[ _\.\-]+)s(?P<season>[0-9]{1,2})([ _\.\-])?(e| e|ep| ep|)(?P<ep>[0-9]{1,3})(([ _\.\-]|(e|ep)|[ _\.\-](e|ep))(?P<ep2>[0-9]{1,3}))?($|( | - |)(?P<title>.*?)$)',  #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   '^(?P<show>.*?) - (E|e|Ep|ep|EP)?(?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?(v[0-9]{1})?( - |.)?(?P<title>.*)$',                                                                    #  3 # Serie - xx - title.ext | ep01-ep02 | e01-02
-  '^(?P<show>.*?) \[(?P<season>[0-9]{1,2})\] \[(?P<ep>[0-9]{1,3})\] (?P<title>.*)$']                                                                                                #  4 # Serie [xx] [xxx] title.ext                     
-#  '^(?P<show>.*?) (\[(?P<season>[0-9]{1,2})\])? ?\[(?P<ep>[0-9]{1,3})\] (?P<title>.*)$']            #support [01] ep without season ?                                                                                    #  4 # Serie [xx] [xxx] title.ext                     
+  '^(?P<show>.*?) \[(?P<season>[0-9]{1,2})\] \[(?P<ep>[0-9]{1,3})\] (?P<title>.*)$']                                                                                                #  4 # Serie [Sxx] [Exxx] title.ext                     
+#|Ep #
 DATE_RX         = [ '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10
                     '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
                   ]  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
@@ -85,7 +85,7 @@ WHACK_PRE_CLEAN = [ "x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV",
                     "(Exiled_Destiny)", "1080p", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en",
                     "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5",
                     "%28", "%29", " (1)", "(Clean)", "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits", 
-                    "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP"
+                    "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement"
                   ]                                                                                                                                                               #include spaces, hyphens, dots, underscore, case insensitive
 WHACK           = [                                                                                                                                                               ### Tags to remove (lowercase) ###
                     'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi", '8bit', '8-bit', 'hi10', 'hi10p', '10bit', '10-bit', 'crf24', 'crf 24', 'hevc',               # Video Codecs (color depth and encoding)
@@ -239,7 +239,7 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
   return original_string if asian_language else ''.join(string)
 
 ### Allow to display ints even if equal to None at times ################################################
-def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
+def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no_underscore=False):
   if not string: return ""                                                                                                                                    # if empty return empty string
   if no_parenthesis:                                                                                                                                          # delete parts between parenthesis if needed
     while re.match(".*\([^\(\)]*?\).*", string):                 string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                               #   support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
@@ -256,6 +256,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False):
   if string.endswith(", A"  ):                                   string = "A "   + ''.join( string.split(", A"  , 1) )                                        # ", A"   is rellocated in front
   if not no_whack:                                               string = " ".join([word for word in filter(None, string.split()) if word.lower() not in WHACK]).strip()  # remove double spaces + words present in "WHACK" list #filter(None, string.split())
   if no_dash:                                                    string = re.sub("-", " ", string)                                                            # replace the dash '-'
+  if no_underscore:                                              string = re.sub("_", " ", string)                                                            # replace the dash '-'
   string = re.sub(r'\([-Xx]?\)', '', re.sub(r'\( *(?P<internal>[^\(\)]*?) *\)', '(\g<internal>)', string))                                                    # Remove internal spaces in parenthesis then remove empty parenthesis
   string = " ".join([word for word in filter(None, string.split())]).strip()                                                                                  # remove multiple spaces
   for rx in ("-"):                                               string = string[len(rx):   ].strip() if string.startswith(rx)       else string              # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
@@ -701,13 +702,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     else:  filename     = clean_string(filename, False)
     ep = filename
     if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
-    elif len(files)==1 and not re.search("\d+(\.\d+)?", clean_string(filename, True)):
-      ep, title = "01", folder_show  #if  ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
+    elif len(files)==1 and not folder_season:
+      if   ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
     if folder_show and folder_season >= 1:                                                                                                                                         # 
       for prefix in ("s%d" % folder_season, "s%02d" % folder_season):                                                         #"%s %d " % (folder_show, folder_season), 
         if prefix in ep.lower() or prefix in misc_count and misc_count[prefix]>1:  ep = replace_insensitive(ep, prefix , "").lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
     if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
-    
     
     ### YouTube Channel numbering ###
     if source.startswith('youtube') and id.startswith('UC'):
@@ -792,15 +792,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
     counter = counter+1                                          #                    #
-    Log.info('counter "{}"'.format(counter))
-    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title, year, "", file)
+    #Log.info('counter "{}"'.format(counter))
+    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title or clean_string(filename, False, no_underscore=True), year, "", file)
   if not files:  Log.info("[no files detected]");  Log.info("")
-  #if files:  Stack.Scan(path, files, media, dirs)
+  if files:  Stack.Scan(path, files, media, dirs)
 
   ### root level manual call to Grouping folders ###
-  Log.info("root level manual call to Grouping folders")
-  if path:  Log.info("")
-  else:
+  if not path:
+    Log.info("root level manual call to Grouping folders")
     folder_count, subfolders, ignored = {}, dirs[:], False
     while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
       full_path = subfolders.pop(0)
