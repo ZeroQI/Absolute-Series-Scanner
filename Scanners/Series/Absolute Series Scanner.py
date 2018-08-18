@@ -258,7 +258,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   if string.endswith(", A"  ):                                   string = "A "   + ''.join( string.split(", A"  , 1) )                                        # ", A"   is rellocated in front
   if not no_whack:                                               string = " ".join([word for word in filter(None, string.split()) if word.lower() not in WHACK]).strip()  # remove double spaces + words present in "WHACK" list #filter(None, string.split())
   if no_dash:                                                    string = re.sub("-", " ", string)                                                            # replace the dash '-'
-  if no_underscore:                                              string = re.sub("_", " ", string)                                                            # replace the dash '-'
+  if no_underscore:                                              string = re.sub("_", " ", string)                                                            # replace the underscore '-'
   string = re.sub(r'\([-Xx]?\)', '', re.sub(r'\( *(?P<internal>[^\(\)]*?) *\)', '(\g<internal>)', string))                                                    # Remove internal spaces in parenthesis then remove empty parenthesis
   string = " ".join([word for word in filter(None, string.split())]).strip()                                                                                  # remove multiple spaces
   for rx in ("-"):                                               string = string[len(rx):   ].strip() if string.startswith(rx)       else string              # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
@@ -374,7 +374,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
         reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         ### YouTube playlist on season folder
-        #match = re.search('(.* )?\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL.*)\]', folder, re.IGNORECASE)
+        #match = re.search('\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL[^\[\]]*)\]', folder, re.IGNORECASE)
         #if match:
         #  id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
         #  source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'YouTube'
@@ -382,6 +382,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
+  Log.info("".ljust(157, '='))
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
   Log.info("".ljust(157, '='))
@@ -428,6 +429,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   global LOG_FILE
   recent = os.stat(LOG_FILE[:-len('.filelist.log')]+'.scanner.log').st_mtime + 3600 > time.time() if os.path.exists(LOG_FILE[:-len('.filelist.log')]+'.scanner.log') else False
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if recent else 'w') #if recent or kwargs else 'w'
+  Log.info("".ljust(157, '='))
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))
   
