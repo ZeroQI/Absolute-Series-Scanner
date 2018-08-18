@@ -380,12 +380,22 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         break
     if not kwargs and len(reverse_path)>1 and path.count(os.sep):  return       #if not grouping folder scan, skip grouping folder
   
-  ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) and create *.filelist.log file ###
+  ### Create *.filelist.log file ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
   Log.info("".ljust(157, '='))
+
+  ### Remove directories un-needed (mathing IGNORE_DIRS_RX) ###
+  for subdir in dirs:
+    for rx in IGNORE_DIRS_RX:
+      if re.match(rx, os.path.basename(subdir), re.IGNORECASE):
+        dirs.remove(subdir)
+        break  #skip dirs to be ignored
+    else:  Log.info(os.path.relpath(subdir, root))
+  
+  ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) ###
   for entry in msg:  Log.info(entry)
   for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
