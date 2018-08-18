@@ -698,6 +698,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
   ### File main loop ###
   counter = 500
+  movie_list, AniDB_op = {}, {}
   for file in files:
     show, season, ep2, title, year = folder_show, folder_season if folder_season is not None else 1, None, "", ""
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
@@ -787,7 +788,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       continue
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
-    movie_list, AniDB_op, ep = {}, {}, filename
+    ep = filename
     for rx in ANIDB_RX if is_special else (SERIES_RX + ANIDB_RX):
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
@@ -801,10 +802,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           movie_list[season] = movie_list[season]+1 if season in movie_list else 1                                                                              # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
           ep                 = str(movie_list[season])
         if rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                                                                                           ### AniDB Specials ################################################################
+          if AniDB_op and ANIDB_OFFSET [ ANIDB_RX.index(rx) ] > max(AniDB_op.keys()):  AniDB_op = {}  #reset from op to ed to etc...
           offset, season = ANIDB_OFFSET [ ANIDB_RX.index(rx) ], 0                                                                                               # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
           if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                                              ### OP/ED with letter version Example: op2a
             AniDB_op [ offset + int(ep[:-1]) ] = ord( ep[-1:].lower() ) - ord('a')                                                                              # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
             ep, offset                         = int( ep[:-1] ), offset + sum( AniDB_op.values() )                                                       # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+          else:
+            offset += sum( AniDB_op.values() )
           if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
           if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
           ep = offset + int(ep) 
