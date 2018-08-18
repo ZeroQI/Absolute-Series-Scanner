@@ -392,8 +392,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     for rx in IGNORE_DIRS_RX:
       if re.match(rx, os.path.basename(subdir), re.IGNORECASE):
         dirs.remove(subdir)
+        Log.info("# Folder: '{}' match '{}' pattern: '{}'".format(os.path.relpath(subdir, root), 'IGNORE_DIRS_RX', rx))
         break  #skip dirs to be ignored
-    else:  Log.info(os.path.relpath(subdir, root))
+    else:  Log.info("[folder] " + os.path.relpath(subdir, root))
   
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) ###
   for entry in msg:  Log.info(entry)
@@ -406,10 +407,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           files.remove(file)
           break
       else:
-        try:                    Log.info(os.path.relpath(file, root) if root in file else file)
+        try:                    Log.info("[file] %s" % (os.path.relpath(file, root) if root in file else file))
         except Exception as e:  Log.info('exception: {}, file: {}, root: {}'.format(e, file, root))
     else:
       files.remove(file)
+      Log.info("# File: '{}' not in '{}'".format(os.path.relpath(file, root), 'VIDEO_EXTS'))
       
       ### ZIP ###
       if ext == 'zip':
@@ -824,7 +826,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       ### Ignore dirs ###
       for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
         if re.match(rx, os.path.basename(path), re.IGNORECASE):  # if folder match rx
-          Log.info("\"%s\" match %s: \"%s\"" % (path, 'IGNORE_DIRS_RX', rx))
+          Log.info("# Folder: '{}' match '{}' pattern: '{}'".format(path, 'IGNORE_DIRS_RX', rx))
           break
       else:  ### Not skipped
         
