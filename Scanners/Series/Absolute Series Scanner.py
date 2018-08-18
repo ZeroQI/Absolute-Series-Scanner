@@ -40,7 +40,6 @@ SEASON_RX                 = [                                                   
                               'Specials',                                                                                                                                           # Specials (season 0)
                               '(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                 # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
                               '(?P<show>.*?)[\._\- ]+[sS](?P<season>[0-9]{2})',                                                                                                     # (title) S01
-                              '(?P<season>[0-9]{1,2})a? Stagione.*',                                                                                                                # ##a Stagione
                               '(?P<season>[0-9]{1,2}).*',	                                                                                                                          # ##
                               '^.*([Ss]aga]|([Ss]tory )?[Aa][Rr][KkCc]).*$'                                                                                                         # Last entry in array, folder name droped but files kept: Story, Arc, Ark, Video
                             ]                                                                                                                                                       #
