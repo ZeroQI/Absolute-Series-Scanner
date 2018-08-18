@@ -752,9 +752,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         #mediaList.append(tv_show)
            
     ### Word search for ep number in scrubbed title ###
-    words, loop_completed, rx = filter(None, ep.split()), False, "Word Search"                                                                                                         #
+    words, loop_completed, rx = filter(None, clean_string(ep, False, no_underscore=True).split()), False, "Word Search"                                                                                                         #
     for word in words:                                                                                                                                              #
-      ep=word.lower().strip()                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
+      ep=word.lower().strip('-.')                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
       for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
         if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):
           #Log.info('misc_count[word]: {}, filename.count(word)>=2: {}'.format(misc_count[word] if word in misc_count else 0, filename.count(word)))
