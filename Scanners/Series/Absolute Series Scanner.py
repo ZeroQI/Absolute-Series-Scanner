@@ -300,8 +300,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
           if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item))
       else:  tv_show.parts.append(file)
       media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
-  index = str(SERIES_RX.index(rx)) if rx in SERIES_RX else str(ANIDB_RX.index(rx)+len(SERIES_RX)) if rx in ANIDB_RX else ""  # rank of the regex used from 0
-  Log.info('"{show}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or'__', title = title if clean_string(title).replace('_', '') else "", file=filename))
+  index = "SERIES_RX-"+str(SERIES_RX.index(rx)) if rx in SERIES_RX else "ANIDB_RX-"+str(ANIDB_RX.index(rx)) if rx in ANIDB_RX else rx  # rank of the regex used from 0
+  Log.info('"{show}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or '__', title=title if clean_string(title).replace('_', '') else "", file=filename))
 
 ### Get the tvdbId from the AnimeId #######################################################################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -797,7 +797,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
     counter = counter+1                                          #                    #
     #Log.info('counter "{}"'.format(counter))
-    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title or clean_string(filename, False, no_underscore=True), year, "", file)
+    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title or clean_string(filename, False, no_underscore=True), year, "", "")
   if not files:  Log.info("[no files detected]");  Log.info("")
   if files:  Stack.Scan(path, files, media, dirs)
 
