@@ -37,11 +37,11 @@ TVDB_MODE_IDS             = ".*?\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,
 TVDB_MODE_ID_OFFSET       = ".*? ?\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"                                 #
 ANIDB2_MODE               = ".*? ?\[anidb2-(?P<guid>[0-9]{1,7})\]"                                                                                                                  #
 SEASON_RX                 = [                                                                                                                                                       ### Seasons Folders 
-                              'Specials',                                                                                                                                           # Specials (season 0)
-                              '(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                 # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
-                              '(?P<show>.*?)[\._\- ]+[sS](?P<season>[0-9]{2})$',                                                                                                    # (title) S01
-                              '(?P<season>[0-9]{1,2}).*',	                                                                                                                          # ##
-                              '^.*([Ss]aga]|([Ss]tory )?[Aa][Rr][KkCc]).*$'                                                                                                         # Last entry in array, folder name droped but files kept: Story, Arc, Ark, Video
+                              '^Specials',                                                                                                                                          # Specials (season 0)
+                              '^(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2})',                                                                                  # Season / Series / Book / Saison / Livre / S
+                              '^(?P<show>.*?)[\._\- ]+[sS](?P<season>[0-9]{2})$',                                                                                                   # (title) S01
+                              '^(?P<season>[0-9]{1,2})',                                                                                                                            # ##
+                              '^([Ss]aga]|([Ss]tory )?[Aa][Rr][KkCc])'                                                                                                              # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
                             ]                                                                                                                                                       #
 SERIES_RX                 = [                                                                                                                                                       ######### Series regex - "serie - xxx - title" ###
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<season>[0-9]{1,2})[Xx](?P<ep>[0-9]{1,3})(([_\-Xx]|[_\-][0-9]{1,2}[Xx])(?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                            #  0 # 1x01
@@ -61,8 +61,10 @@ ANIDB_RX        = [                                                             
                     '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2})[ _\.]?(v0|v1|v2|v3|v4|v5)?[ _\.\-]+(?P<title>.*)$',                                                                  #  4 # 400-499 Others
                     '(^|(?P<show>.*?)[ _\.\-]+)(e|ep|e[ _\.]|ep[ _\.]|e-|ep-)?(?P<ep>[0-9]{1,3})((e|ep|-e|-ep|-)(?P<ep2>[0-9]{1,3})|)?[ _\.]?(v0|v1|v2|v3|v4|v5)?([ _\.\-]+(?P<title>.*))?$',  #  5 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
                     '(^|(?P<show>.*?)[ _\.\-]+)SP?[ _\.]?(?P<ep>\d{1,2})[ _\.]?(?P<title>.*)$']                                                                                                #  6 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
+# Uses re.match() so forces a '^'
 IGNORE_DIRS_RX  = [ '@Recycle', '.@__thumb', 'lost\+found', '.AppleDouble','$Recycle.Bin', '$RECYCLE.BIN', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir',        ###### Ignored folders
                     'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]                                   #      source: Filters.py  removed '\..*',        
+# Uses re.match() so forces a '^'
 IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.xml$', '\.smi$', '^\._']#, '\.plexignore', '.*\.id']            #, '.*\.log$'                   # Skipped files (samples, trailers)                                                          
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',                #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm',             #
@@ -241,27 +243,27 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
 
 ### Allow to display ints even if equal to None at times ################################################
 def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no_underscore=False):
-  if not string: return ""                                                                                                                                    # if empty return empty string
-  if no_parenthesis:                                                                                                                                          # delete parts between parenthesis if needed
-    while re.match(".*\([^\(\)]*?\).*", string):                 string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                               #   support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
-  if re.search("(\[|\]|\{|\})", string):                         string = re.sub("(\[|\]|\{|\})", "", re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string))  # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
+  if not string: return ""                                                                                                                                # if empty return empty string
+  if no_parenthesis:                                                                                                                                      # delete parts between parenthesis if needed
+    while re.search("\([^\(\)]*?\)", string):                string = re.sub(r'\([^\(\)]*?\)', ' ', string)                                               #   support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
+  if re.search("(\[|\]|\{|\})", string):                     string = re.sub("(\[|\]|\{|\})", "", re.sub(r'[\[\{](?![0-9]{1,3}[\]\}]).*?[\]\}]', ' ', string))  # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
   if not no_whack:
-    for word in WHACK_PRE_CLEAN:                                 string = replace_insensitive(string, word) if word.lower() in string.lower() else string     # Remove words present in pre-clean list
-  string = re.sub(r'(?P<a>[^0-9Ssv])(?P<b>[0-9]{1,3})\.(?P<c>[0-9]{1,2})(?P<d>[^0-9])', '\g<a>\g<b>DoNoTfIlTeR\g<c>\g<d>', string)                            # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
-  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ( "), (")", " ) ")]:                             # remove leftover parenthesis (work with code a bit above)
-    if char in string:                                           string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
-  string = string.replace("DoNoTfIlTeR", '.')                                                                                                                 # Replace 13DoNoTfIlTeR5 into 13.5 back
-  if re.match(".*?[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?.*", string):  string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                               # CRCs removal
-  if re.search("[0-9]{3,4} ?[Xx] ?[0-9]{3,4}", string):          string = re.sub('[0-9]{3,4} ?[Xx] ?[0-9]{3,4}', ' ', string)                                 # Video size ratio removal
-  if string.endswith(", The"):                                   string = "The " + ''.join( string.split(", The", 1) )                                        # ", The" is rellocated in front
-  if string.endswith(", A"  ):                                   string = "A "   + ''.join( string.split(", A"  , 1) )                                        # ", A"   is rellocated in front
-  if not no_whack:                                               string = " ".join([word for word in filter(None, string.split()) if word.lower() not in WHACK]).strip()  # remove double spaces + words present in "WHACK" list #filter(None, string.split())
-  if no_dash:                                                    string = re.sub("-", " ", string)                                                            # replace the dash '-'
-  if no_underscore:                                              string = re.sub("_", " ", string)                                                            # replace the underscore '_'
-  string = re.sub(r'\([-Xx]?\)', '', re.sub(r'\( *(?P<internal>[^\(\)]*?) *\)', '(\g<internal>)', string))                                                    # Remove internal spaces in parenthesis then remove empty parenthesis
-  string = " ".join([word for word in filter(None, string.split())]).strip()                                                                                  # remove multiple spaces
-  for rx in ("-"):                                               string = string[len(rx):   ].strip() if string.startswith(rx)       else string              # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
-  for rx in ("-", "- copy"):                                     string = string[ :-len(rx) ].strip() if string.lower().endswith(rx) else string              # In python 2.2.3: string = string.strip(string, " -_")
+    for word in WHACK_PRE_CLEAN:                             string = replace_insensitive(string, word) if word.lower() in string.lower() else string     # Remove words present in pre-clean list
+  string = re.sub(r'(?P<a>[^0-9Ssv])(?P<b>[0-9]{1,3})\.(?P<c>[0-9]{1,2})(?P<d>[^0-9])', '\g<a>\g<b>DoNoTfIlTeR\g<c>\g<d>', string)                        # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ( "), (")", " ) ")]:                         # remove leftover parenthesis (work with code a bit above)
+    if char in string:                                       string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
+  string = string.replace("DoNoTfIlTeR", '.')                                                                                                             # Replace 13DoNoTfIlTeR5 into 13.5 back
+  if re.search("[\(\[\{]?[0-9a-fA-F]{8}[\[\)\}]?", string):  string = re.sub('[0-9a-fA-F]{8}', ' ', string)                                               # CRCs removal
+  if re.search("[0-9]{3,4} ?[Xx] ?[0-9]{3,4}", string):      string = re.sub('[0-9]{3,4} ?[Xx] ?[0-9]{3,4}', ' ', string)                                 # Video size ratio removal
+  if string.endswith(", The"):                               string = "The " + ''.join( string.split(", The", 1) )                                        # ", The" is rellocated in front
+  if string.endswith(", A"  ):                               string = "A "   + ''.join( string.split(", A"  , 1) )                                        # ", A"   is rellocated in front
+  if not no_whack:                                           string = " ".join([word for word in filter(None, string.split()) if word.lower() not in WHACK]).strip()  # remove double spaces + words present in "WHACK" list #filter(None, string.split())
+  if no_dash:                                                string = re.sub("-", " ", string)                                                            # replace the dash '-'
+  if no_underscore:                                          string = re.sub("_", " ", string)                                                            # replace the underscore '_'
+  string = re.sub(r'\([-Xx]?\)', '', re.sub(r'\( *(?P<internal>[^\(\)]*?) *\)', '(\g<internal>)', string))                                                # Remove internal spaces in parenthesis then remove empty parenthesis
+  string = " ".join([word for word in filter(None, string.split())]).strip()                                                                              # remove multiple spaces
+  for rx in ("-"):                                           string = string[len(rx):   ].strip() if string.startswith(rx)       else string              # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
+  for rx in ("-", "- copy"):                                 string = string[ :-len(rx) ].strip() if string.lower().endswith(rx) else string              # In python 2.2.3: string = string.strip(string, " -_")
   return string
 
 ### Add files into Plex database ########################################################################
@@ -366,7 +368,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   folder_season, season_folder_first =  None, False
   for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
     for rx in SEASON_RX:                                # in anime, more specials folders than season folders, so doing it first
-      match = re.match(rx, folder, re.IGNORECASE)  #
+      match = re.search(rx, folder, re.IGNORECASE)  #
       if match:                                         # get season number but Skip last entry in seasons (skipped folders)
         if rx!=SEASON_RX[-1]: 
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
@@ -756,17 +758,17 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     for word in words:                                                                                                                                              #
       ep=word.lower().strip('-.')                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
       for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
-        if ep.startswith(prefix) and len(ep)>len(prefix) and re.match("^\d+(\.\d+)?$", ep[len(prefix):]):
+        if ep.startswith(prefix) and len(ep)>len(prefix) and re.search("^\d+(\.\d+)?$", ep[len(prefix):]):
           #Log.info('misc_count[word]: {}, filename.count(word)>=2: {}'.format(misc_count[word] if word in misc_count else 0, filename.count(word)))
           ep, season = ep[len(prefix):], 0 if prefix=="s" and (word not in misc_count or filename.count(word)==1 and misc_count[word]==1 or filename.count(word)>=2 and misc_count[word]==2) else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
       if ep.endswith(("v1", "v2", "v3", "v4", "v5")):                                                          ep=ep[:-2].rstrip('-')                               #
       if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                                       # If separator in string
-        if re.match("^(?P<ep>[0-9]{1,3})-(?P<ep2>[0-9]{1,3})$", ep, re.IGNORECASE):                            ep, ep2 = ep.split('-'); break
-        if re.match("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):       ep="Skip"; break                                     # if multi ep: make it non digit and exit so regex takes care of it
+        if re.search("^(?P<ep>[0-9]{1,3})-(?P<ep2>[0-9]{1,3})$", ep, re.IGNORECASE):                            ep, ep2 = ep.split('-'); break
+        if re.search("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):       ep="Skip"; break                                    # if multi ep: make it non digit and exit so regex takes care of it
         elif path and ( (misc.count(ep)==1 and len(files)>=2) or ep not in clean_string(folder_show, True).lower().split() ):
           ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1];                                  # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
         else:                                                                                                  continue
-      if re.match("((t|o)[0-9]{1,3}$|(sp|special|oav|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)($|[0-9]{1,3}$))", ep):  break                         # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
+      if re.search("^((t|o)[0-9]{1,3}$|(sp|special|oav|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)($|[0-9]{1,3}$))", ep):  break                       # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
       if ''.join(letter for letter in ep if letter.isdigit())=="":                                             continue                                             # Continue if there are no numbers in the string
       if path and ep in misc_count.keys() and misc_count[ep]>=2:                                               continue                                             # Continue if not root folder and string found in in any other filename
       if ep in clean_string(folder_show, True).split() and clean_string(filename, True).split().count(ep)!=2:  continue                                             # Continue if string is in the folder name & string is not in the filename only twice
@@ -834,7 +836,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         reverse_path, season_folder_first = list(reversed(Utils.SplitPath(path))), False
         for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
           for rx in SEASON_RX :                          # in anime, more specials folders than season folders, so doing it first
-            if re.match(rx, folder, re.IGNORECASE):      # get season number but Skip last entry in seasons (skipped folders)
+            if re.search(rx, folder, re.IGNORECASE):     # get season number but Skip last entry in seasons (skipped folders)
               reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
               if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
               break
