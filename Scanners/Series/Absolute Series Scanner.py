@@ -804,7 +804,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### root level manual call to Grouping folders ###
   if not path:
     Log.info("root level manual call to Grouping folders")
-    folder_count, subfolders, ignored = {}, dirs[:], False
+    folder_count, subfolders = {}, dirs[:]
     while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
       full_path = subfolders.pop(0)
       path      = os.path.relpath(full_path, root)
@@ -812,7 +812,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       ### Ignore dirs ###
       for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
         if re.match(rx, os.path.basename(path), re.IGNORECASE):  # if folder match rx
-          if not ignored:  ignored = True;  Log.info(''.ljust(157, '-'))
           Log.info("\"%s\" match %s: \"%s\"" % (path, 'IGNORE_DIRS_RX', rx))
           break
       else:  ### Not skipped
