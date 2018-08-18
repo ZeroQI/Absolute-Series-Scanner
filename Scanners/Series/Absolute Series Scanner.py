@@ -403,11 +403,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if ext in VIDEO_EXTS:
       for rx in IGNORE_FILES_RX + plexignore_files:  # Filter trailers and sample files
         if re.match(rx, os.path.basename(file), re.IGNORECASE):
-          Log.info("# File: '{}' match '{}' pattern: '{}'".format(file, 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore', rx))
+          Log.info("# File: '{}' match '{}' pattern: '{}'".format(os.path.relpath(file, root), 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore', rx))
           files.remove(file)
           break
       else:
-        try:                    Log.info("[file] %s" % (os.path.relpath(file, root) if root in file else file))
+        try:                    Log.info("[file] " + os.path.relpath(file, root))
         except Exception as e:  Log.info('exception: {}, file: {}, root: {}'.format(e, file, root))
     else:
       files.remove(file)
@@ -845,7 +845,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         for file in os.listdir(full_path):
           path_item = os.path.join(full_path, file) 
           if os.path.isdir(path_item):                 subdir_dirs.append(path_item);  subfolders.append(path_item);  folder_count[path] +=1  #Fullpath
-          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(file)                                                              #filename only
+          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)                                                         #Fullpath
           
         ### Call Grouping folders series ###
         #if subdir_files:                                                           ### Calling Scan for every folder with files ###
