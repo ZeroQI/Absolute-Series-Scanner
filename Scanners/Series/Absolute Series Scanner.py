@@ -39,7 +39,7 @@ ANIDB2_MODE               = ".*? ?\[anidb2-(?P<guid>[0-9]{1,7})\]"              
 SEASON_RX                 = [                                                                                                                                                       ### Seasons Folders 
                               'Specials',                                                                                                                                           # Specials (season 0)
                               '(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2}).*',                                                                                 # Season ##, Series #Book ## Saison ##, Livre ##, S##, S ##
-                              '(?P<show>.*?)[\._\- ]+[sS](?P<season>[0-9]{2})',                                                                                                     # (title) S01
+                              '(?P<show>.*?)[\._\- ]+[sS](?P<season>[0-9]{2})$',                                                                                                    # (title) S01
                               '(?P<season>[0-9]{1,2}).*',	                                                                                                                          # ##
                               '^.*([Ss]aga]|([Ss]tory )?[Aa][Rr][KkCc]).*$'                                                                                                         # Last entry in array, folder name droped but files kept: Story, Arc, Ark, Video
                             ]                                                                                                                                                       #
