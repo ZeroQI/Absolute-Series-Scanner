@@ -844,8 +844,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         folder_count[path]        = 0
         for file in os.listdir(full_path):
           path_item = os.path.join(full_path, file) 
-          if os.path.isdir(path_item):                 subdir_dirs.append(path_item);  subfolders.append(path_item);  folder_count[path] +=1  #Fullpath
-          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)                                                         #Fullpath
+          if os.path.isdir(path_item):                 subdir_dirs.append(path_item);  folder_count[path] +=1  #Fullpath
+          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)                          #Fullpath
+        if not subdir_files and subdir_dirs:  # Only add in subfolders if no valid video files in the folder
+          Log.info(''.ljust(157, '-'))
+          for x in subdir_dirs:  Log.info("[Added] " + x);  subfolders.append(x)
           
         ### Call Grouping folders series ###
         #if subdir_files:                                                           ### Calling Scan for every folder with files ###
