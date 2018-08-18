@@ -258,7 +258,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   if string.endswith(", A"  ):                                   string = "A "   + ''.join( string.split(", A"  , 1) )                                        # ", A"   is rellocated in front
   if not no_whack:                                               string = " ".join([word for word in filter(None, string.split()) if word.lower() not in WHACK]).strip()  # remove double spaces + words present in "WHACK" list #filter(None, string.split())
   if no_dash:                                                    string = re.sub("-", " ", string)                                                            # replace the dash '-'
-  if no_underscore:                                              string = re.sub("_", " ", string)                                                            # replace the underscore '-'
+  if no_underscore:                                              string = re.sub("_", " ", string)                                                            # replace the underscore '_'
   string = re.sub(r'\([-Xx]?\)', '', re.sub(r'\( *(?P<internal>[^\(\)]*?) *\)', '(\g<internal>)', string))                                                    # Remove internal spaces in parenthesis then remove empty parenthesis
   string = " ".join([word for word in filter(None, string.split())]).strip()                                                                                  # remove multiple spaces
   for rx in ("-"):                                               string = string[len(rx):   ].strip() if string.startswith(rx)       else string              # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
@@ -325,7 +325,7 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
   reverse_path = list(reversed(Utils.SplitPath(path)))
-  log_filename = path.split(os.sep)[0] if path else '_root_'
+  log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
     
   ### .plexignore file ###
@@ -847,7 +847,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
-          set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_.scanner.log', mode='a')
+          set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
 
 ### Command line scanner call ###
 if __name__ == '__main__':  #command line
