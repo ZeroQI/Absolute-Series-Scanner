@@ -130,15 +130,16 @@ def os_filename_clean_string(string):
 
 ### Set Logging to proper logging file
 def set_logging(foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
-  global Log, handler, CACHE_PATH
+  global Log, handler, CACHE_PATH, LOG_FILE
   CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
   if foldername: CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
   if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
   
   filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
+  LOG_FILE = os.path.join(CACHE_PATH, filename)
   if handler: Log.removeHandler(handler)
-  if backup_count:  handler = logging.handlers.RotatingFileHandler(os.path.join(CACHE_PATH, filename), maxBytes=10*1024*1024, backupCount=backup_count)
-  else:             handler = logging.FileHandler                 (os.path.join(CACHE_PATH, filename), mode=mode)
+  if backup_count:  handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=10*1024*1024, backupCount=backup_count)
+  else:             handler = logging.FileHandler                 (LOG_FILE, mode=mode)
   handler.setFormatter(logging.Formatter(format))
   handler.setLevel(logging.DEBUG)
   Log.addHandler(handler)
@@ -147,6 +148,7 @@ def set_logging(foldername='', filename='', backup_count=0, format='%(message)s'
 handler          = None
 Log              = logging.getLogger('main');  Log.setLevel(logging.DEBUG);  set_logging()
 CACHE_PATH       = ""
+LOG_FILE         = ""
 PLEX_LIBRARY     = {}
 PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
@@ -423,7 +425,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("")
   
   ### Logging to *.scanner.log ###
-  recent = os.stat(log_filename+'.scanner.log').st_mtime + 3600 > time.time() if os.path.exists(log_filename+'.scanner.log') else False
+  global LOG_FILE
+  recent = os.stat(LOG_FILE[:-len('.filelist.log')]+'.scanner.log').st_mtime + 3600 > time.time() if os.path.exists(LOG_FILE[:-len('.filelist.log')]+'.scanner.log') else False
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if recent else 'w') #if recent or kwargs else 'w'
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
   Log.info("".ljust(157, '='))
