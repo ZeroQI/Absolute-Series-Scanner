@@ -754,9 +754,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         #mediaList.append(tv_show)
            
     ### Word search for ep number in scrubbed title ###
-    words, loop_completed, rx = filter(None, clean_string(ep, False, no_underscore=True).split()), False, "Word Search"                                                                                                         #
+    words, loop_completed, rx, is_special = filter(None, clean_string(ep, False, no_underscore=True).split()), False, "Word Search", False                          #
     for word in words:                                                                                                                                              #
-      ep=word.lower().strip('-.')                                                                                                                                       # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
+      ep=word.lower().strip('-.')                                                                                                                                   # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
       for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
         if ep.startswith(prefix) and len(ep)>len(prefix) and re.search("^\d+(\.\d+)?$", ep[len(prefix):]):
           #Log.info('misc_count[word]: {}, filename.count(word)>=2: {}'.format(misc_count[word] if word in misc_count else 0, filename.count(word)))
@@ -768,7 +768,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         elif path and ( (misc.count(ep)==1 and len(files)>=2) or ep not in clean_string(folder_show, True).lower().split() ):
           ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1];                                  # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
         else:                                                                                                  continue
-      if re.search("^((t|o)[0-9]{1,3}$|(sp|special|oav|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)($|[0-9]{1,3}$))", ep):  break                       # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
+      if re.search("^((t|o)[0-9]{1,3}$|(sp|special|oav|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)($|[0-9]{1,3}$))", ep):  is_special = True; break    # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
       if ''.join(letter for letter in ep if letter.isdigit())=="":                                             continue                                             # Continue if there are no numbers in the string
       if path and ep in misc_count.keys() and misc_count[ep]>=2:                                               continue                                             # Continue if not root folder and string found in in any other filename
       if ep in clean_string(folder_show, True).split() and clean_string(filename, True).split().count(ep)!=2:  continue                                             # Continue if string is in the folder name & string is not in the filename only twice
@@ -785,7 +785,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
     movie_list, AniDB_op, ep = {}, {}, filename
-    for rx in SERIES_RX + ANIDB_RX:
+    for rx in ANIDB_RX if is_special else (SERIES_RX + ANIDB_RX):
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
         if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show' ))  # Mainly if file at root or _ folder
