@@ -487,11 +487,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if source in ('tvdb2', 'tvdb3'): 
         Log.info("TVDB season mode ({}) enabled".format(source))
         try:
+          global HEADERS
           if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
           else:                    
             Log.info('not authorised, HEADERS: {}'.format(HEADERS))
             page = urlopen(Request("https://api.thetvdb.com/login", headers=HEADERS), data=json.dumps({"apikey": "A27AD9BE0DA63333"}), context=SSL_CONTEXT).read()
-            global HEADERS;  HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
+            HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
           
           #Load series episode pages and group them in one dict
           episodes_json, page = [], 1
