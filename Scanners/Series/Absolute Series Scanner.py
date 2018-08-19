@@ -52,7 +52,7 @@ SERIES_RX                 = [                                                   
 DATE_RX         = [ '(?P<year>[0-9]{4})\W+(?P<month>[0-9]{2})\W+(?P<day>[0-9]{2})([^0-9]|$)',   # 2009-02-10
                     '(?P<month>[0-9]{2})\W+(?P<day>[0-9]{2})\W+(?P<year>[0-9]{4})(\W|$)',       # 02-10-2009
                   ]  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
-ANIDB_OFFSET    = [0, 100, 150, 200, 400, 0, 0];                                                                                                                                               ###### AniDB Specials episode offset value array
+ANIDB_OFFSET    = [0, 100, 150, 200, 400, 0, 0];                                                                                                                                    ###### AniDB Specials episode offset value array
 ANIDB_RX        = [                                                                                                                                                                 ###### AniDB Specials episode offset regex array
                     '(^|(?P<show>.*?)[ _\.\-]+)(SP|SPECIAL)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>[0-9]{1,3}))?(V[0-9])?[ _\.]?(?P<title>.*)$',                                            #  0 # 001-099 Specials
                     '(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V[0-9])?([ _\.\-]+(?P<title>.*))?$',                                           #  1 # 100-149 Openings
