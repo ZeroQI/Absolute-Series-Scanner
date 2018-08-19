@@ -49,8 +49,8 @@ SERIES_RX                 = [                                                   
   '^(?P<show>.*?) - (E|e|Ep|ep|EP)?(?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?(v[0-9]{1})?( - |.)?(?P<title>.*)$',                                                                    #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   '^(?P<show>.*?) \[(?P<season>[0-9]{1,2})\] \[(?P<ep>[0-9]{1,3})\] (?P<title>.*)$']                                                                                                #  3 # Serie [Sxx] [Exxx] title.ext                     
 #|Ep #
-DATE_RX         = [ '(?P<year>[0-9]{4})[^0-9a-zA-Z]+(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})([^0-9]|$)',           # 2009-02-10
-                    '(?P<month>[0-9]{2})[^0-9a-zA-Z]+(?P<day>[0-9]{2})[^0-9a-zA-Z(]+(?P<year>[0-9]{4})([^0-9a-zA-Z]|$)',    # 02-10-2009
+DATE_RX         = [ '(?P<year>[0-9]{4})\W+(?P<month>[0-9]{2})\W+(?P<day>[0-9]{2})([^0-9]|$)',   # 2009-02-10
+                    '(?P<month>[0-9]{2})\W+(?P<day>[0-9]{2})\W+(?P<year>[0-9]{4})(\W|$)',       # 02-10-2009
                   ]  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
 ANIDB_OFFSET    = [0, 100, 150, 200, 400, 0, 0];                                                                                                                                               ###### AniDB Specials episode offset value array
 ANIDB_RX        = [                                                                                                                                                                            ###### AniDB Specials episode offset regex array
