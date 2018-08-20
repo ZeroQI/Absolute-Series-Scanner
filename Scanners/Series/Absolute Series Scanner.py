@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 ###### library  ########################################################### Functions, Constants #####
 import sys                                                           # getdefaultencoding, getfilesystemencoding, platform, argv
 import os                                                            # path, listdir
@@ -52,7 +53,6 @@ SERIES_RX                 = [                                                   
 DATE_RX         = [ '(?P<year>[0-9]{4})\W+(?P<month>[0-9]{2})\W+(?P<day>[0-9]{2})([^0-9]|$)',   # 2009-02-10
                     '(?P<month>[0-9]{2})\W+(?P<day>[0-9]{2})\W+(?P<year>[0-9]{4})(\W|$)',       # 02-10-2009
                   ]  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
-ANIDB_OFFSET    = [0, 100, 150, 200, 400, 0, 0];                                                                                                                                    ###### AniDB Specials episode offset value array
 ANIDB_RX        = [                                                                                                                                                                 ###### AniDB Specials episode offset regex array
                     '(^|(?P<show>.*?)[ _\.\-]+)(SP|SPECIAL)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>[0-9]{1,3}))?(V[0-9])?[ _\.]?(?P<title>.*)$',                                            #  0 # 001-099 Specials
                     '(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V[0-9])?([ _\.\-]+(?P<title>.*))?$',                                           #  1 # 100-149 Openings
@@ -61,11 +61,13 @@ ANIDB_RX        = [                                                             
                     '(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2})[ _\.]?(V[0-9])?[ _\.\-]+(?P<title>.*)$',                                                                  #  4 # 400-499 Others
                     '(^|(?P<show>.*?)[ _\.\-]+)(EP?[ _\.\-]?)?(?P<ep>[0-9]{1,3})((-|-?EP?)(?P<ep2>[0-9]{1,3})|)?[ _\.]?(V[0-9])?([ _\.\-]+(?P<title>.*))?$',                        #  5 # E01 | E01-02| E01-E02 | E01E02                                                                                                                       # __ # look behind: (?<=S) < position < look forward: (?!S)
                     '(^|(?P<show>.*?)[ _\.\-]+)SP?[ _\.]?(?P<ep>\d{1,2})[ _\.]?(?P<title>.*)$']                                                                                     #  6 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
+ANIDB_OFFSET    = [        0,       100,      150,       200,     400,         0,         0]                                                                                        ###### AniDB Specials episode offset value array
+ANIDB_TYPE      = ['Special', 'Opening', 'Ending', 'Trailer', 'Other', 'Episode', 'Episode']                                                                                        ###### AniDB titles
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX  = [ '@Recycle', '.@__thumb', 'lost\+found', '.AppleDouble','\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder', '@eaDir',       ###### Ignored folders
                     'Extras', 'Samples?', 'bonus', '.*bonus disc.*', 'trailers?', '.*_UNPACK_.*', '.*_FAILED_.*', 'misc', '_Misc'] #, "VIDEO_TS"]                                   #      source: Filters.py  removed '\..*',        
 # Uses re.match() so forces a '^'
-IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.xml$', '\.smi$', '^\._']#, '\.plexignore', '.*\.id']            #, '.*\.log$'                   # Skipped files (samples, trailers)                                                          
+IGNORE_FILES_RX = ['[ _\.\-]sample', 'sample[ _\.\-]', '-Recap\.', 'OST', 'soundtrack', 'Thumbs.db', '\.xml$', '\.smi$', '^\._']#, '\.plexignore', '.*\.id']  #, '.*\.log$'         # Skipped files (samples, trailers)                                                          
 VIDEO_EXTS      = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',                #
                     'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm',             #
                     'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo', 'disc']                                                                     # DVD: 'ifo', 'bup', 'vob'
@@ -788,29 +790,27 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       continue
 
     ### Check for Regex: SERIES_RX + ANIDB_RX ###
-    ep = filename
+    ep = filename.lower()
     for rx in ANIDB_RX if is_special else (SERIES_RX + ANIDB_RX):
       match = re.search(rx, ep, re.IGNORECASE)
       if match:
-        if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show' ))  # Mainly if file at root or _ folder
-        if match.groupdict().has_key('title' ) and match.group('title' ):               title  = clean_string( match.group('title'))
-        if match.groupdict().has_key('season') and match.group('season'):               season = int(match.group('season'))
-        if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):               ep2    = match.group('ep2') 
         if match.groupdict().has_key('ep'    ) and match.group('ep'    ):               ep     = match.group('ep')
-        elif rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                 ep     = "01"
-        else:                                                                                                                                                   #No ep number, anidb usefull ?????
-          movie_list[season] = movie_list[season]+1 if season in movie_list else 1                                                                              # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
-          ep                 = str(movie_list[season])
-        if rx in ANIDB_RX[:-2] or rx == ANIDB_RX[-1]:                                                                                                           ### AniDB Specials ################################################################
-          offset, season = ANIDB_OFFSET [ ANIDB_RX.index(rx) ], 0                                                                                               # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
-          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                                              ### OP/ED with letter version Example: op2a
-            AniDB_op [ ANIDB_RX.index(rx) ] = { offset + int(ep[:-1]): ord( ep[-1:].lower() ) - ord('a') }                                                                             # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
-            ep, offset                      = int( ep[:-1] ), offset + sum( AniDB_op[ANIDB_RX.index(rx)].values() )                                                       # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
-          else:
-            offset += sum( AniDB_op[ANIDB_RX.index(rx)].values() )
-          if offset == 100 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Opening " + str(int(ep))                           # Dingmatt fix for opening with just the ep number
-          if offset == 150 and not(match.groupdict().has_key('title' ) and match.group('title' )):  title = "Ending "  + str(int(ep))                           # Dingmatt fix for ending  with just the ep number
-          ep = offset + int(ep) 
+        elif rx in ANIDB_RX[:-1]:                                                       ep     = "01"
+        else:
+          movie_list[season] = movie_list[season]+1 if season in movie_list else 1
+          ep     = str(movie_list[season])                              # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
+        if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):               ep2    =               match.group('ep2'   )                  #
+        if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show'  ))                 # Mainly if file at root or _ folder
+        if match.groupdict().has_key('season') and match.group('season'):               season =          int( match.group('season'))                 #
+        if match.groupdict().has_key('title' ) and match.group('title' ):               title  = clean_string( match.group('title' ))                 #
+        elif rx in ANIDB_RX:                                                            title  = ANIDB_TYPE[ANIDB_RX.index(rx)] + ' ' + ep            # Dingmatt fix for opening with just the ep number
+        if rx in ANIDB_RX[:-2]:                                                                                                                       ### AniDB Specials ################################################################
+          season = 0                                                                                                                                  # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
+          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                                    ### OP/ED with letter version Example: op2a
+            ep, offset = int(ep[:-1]), ord(ep[-1:])-ord('a')
+            if ANIDB_RX.index(rx) in AniDB_op:  AniDB_op [ ANIDB_RX.index(rx) ]   [ ep ] = offset # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
+            else:                               AniDB_op [ ANIDB_RX.index(rx) ] = { ep:    offset }
+          ep = int(ep) + ANIDB_OFFSET [ ANIDB_RX.index(rx) ] + sum( Dict(AniDB_op, ANIDB_RX.index(rx), default={0:0}).values() )     # Sum of all prior offsets
         add_episode_into_plex(media, file, root, path, show, int(season), int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else int(ep), rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
         break
     if match: continue  # next file iteration
