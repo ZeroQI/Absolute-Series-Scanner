@@ -26,25 +26,31 @@ except ImportError:  from urllib2        import urlopen, Request     # Python ==
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 #ssl._create_default_https_context = ssl._create_unverified_context
-SSL_CONTEXT               = ssl.SSLContext(SSL_PROTOCOL)                                                                                                                            #
-TVDB_HTTP_API_URL         = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'                                                                                          #
-ASS_MAPPING_URL           = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'                                                                            #
-ANIDB_TVDB_MAPPING        = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
-ANIDB_TVDB_MAPPING_MOD    = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
-ANIDB_TVDB_MAPPING_CUSTOM = 'anime-list-custom.xml'                                                                                                                                 # custom local correction for ScudLee mapping file url
-SOURCE_IDS                = '\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube|youtube2))-)?(?P<id>[^\[\]]*)\]'                                       #
-SOURCE_ID_FILES           = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id"]                     #
-TVDB_MODE_IDS             = "\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"                                                                    #
-TVDB_MODE_ID_OFFSET       = "\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"                                      #
-ANIDB2_MODE               = "\[anidb2-(?P<guid>[0-9]{1,7})\]"                                                                                                                       #
-SEASON_RX                 = [                                                                                                                                                       ### Seasons Folders 
-                              '^Specials',                                                                                                                                          # Specials (season 0)
-                              '^(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2})',                                                                                  # Season / Series / Book / Saison / Livre / S
-                              '^(?P<show>.*?)[\._\- ]+S(?P<season>[0-9]{2})$',                                                                                                      # (title) S01
-                              '^(?P<season>[0-9]{1,2})',                                                                                                                            # ##
-                              '^(Saga|(Story )?Ar[kc])'                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
-                            ]                                                                                                                                                       #
-SERIES_RX                 = [                                                                                                                                                       ######### Series regex - "serie - xxx - title" ###
+SOURCE_IDS             = '\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube|youtube2))-)?(?P<id>[^\[\]]*)\]'                                       #
+SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id"]                     #
+TVDB_MODE_IDS          = "\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"                                                                    #
+TVDB_MODE_ID_OFFSET    = "\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"                                      #
+ANIDB2_MODE            = "\[anidb2-(?P<guid>[0-9]{1,7})\]"                                                                                                                       #
+YOUTUBE_REGEX_VIDEO    = '(\\[(youtube-)?|-)(?P<id>[a-z0-9\-_]{11})\\]?'
+YOUTUBE_REGEX_PLAYLIST = '\\[(youtube-)?(?P<id>(PL[a-z0-9]{16}|PL[a-z0-9\-_]{32}|UC[a-z0-9\-_]{22}))\\]'  #.*\[([Yy]ou[Tt]ube-)?PL[a-z0-9\-_]{11}
+YOUTUBE_REGEX_CHANNEL  = '\\[(youtube-)?(?P<id>UC[a-zA-Z0-9\-]{22})\\]'                                   #.*\[([Yy]ou[Tt]ube-)?PL[a-z0-9\-_]{11}
+
+ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
+ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
+ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'                                                                                                                                 # custom local correction for ScudLee mapping file url
+TVDB_HTTP_API_URL      = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'                                                                                          #
+ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'                                                                            #
+SSL_CONTEXT            = ssl.SSLContext(SSL_PROTOCOL)                                                                                                                            #
+HEADERS                =  {'Content-type': 'application/json'}
+   
+SEASON_RX       = [                                                                                                                                                       ### Seasons Folders 
+                    '^Specials',                                                                                                                                          # Specials (season 0)
+                    '^(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>[0-9]{1,2})',                                                                                  # Season / Series / Book / Saison / Livre / S
+                    '^(?P<show>.*?)[\._\- ]+S(?P<season>[0-9]{2})$',                                                                                                      # (title) S01
+                    '^(?P<season>[0-9]{1,2})',                                                                                                                            # ##
+                    '^(Saga|(Story )?Ar[kc])'                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
+                  ]                                                                                                                                                       #
+SERIES_RX       = [                                                                                                                                                       ######### Series regex - "serie - xxx - title" ###
   '(^|(?P<show>.*?)[ _\.\-]+)(?P<season>[0-9]{1,2})X(?P<ep>[0-9]{1,3})(([_\-X]|[_\-][0-9]{1,2}X)(?P<ep2>[0-9]{1,3}))?([ _\.\-]+(?P<title>.*))?$',                                   #  0 # 1x01
   '(^|(?P<show>.*?)[ _\.\-]+)S(?P<season>[0-9]{1,2})[ _\.\-]?EP?(?P<ep>[0-9]{1,3})(([ _\.\-]|EP?|[ _\.\-]EP?)(?P<ep2>[0-9]{1,3}))?[ _\.]*(?P<title>.*?)$',                          #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>[0-9]{1,3})[ _\.\-]?of[ _\.\-]?[0-9]{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   '^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>[0-9]{1,3})(-(?P<ep2>[0-9]{1,3}))?(V[0-9])?[ _\.]*?(?P<title>.*)$',                                                                      #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
@@ -115,8 +121,7 @@ CHARACTERS_MAP =  {                                                             
                     53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' , 50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,               #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3'] #'×' ['\xc3', '\x97'],
                     49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½' , 52352:''  , 52353:''                                          #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #  ['\xcc', '\x81'] 
                   }
-HEADERS        =  {'Content-type': 'application/json'}
-                  
+               
 ### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
 PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
 if not os.path.isdir(PLEX_ROOT):
@@ -367,20 +372,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   else: disc = False
   
   ### Extract season folder to reduce complexity and use folder as serie name ###
-  folder_season, season_folder_first =  None, False
-  for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-    for rx in SEASON_RX:                                # in anime, more specials folders than season folders, so doing it first
+  folder_season, season_folder_first = None, False
+  for folder in reverse_path[:-1]:                  # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
+    for rx in SEASON_RX:                            # in anime, more specials folders than season folders, so doing it first
       match = re.search(rx, folder, re.IGNORECASE)  #
-      if match:                                         # get season number but Skip last entry in seasons (skipped folders)
+      if match:                                     # get season number but Skip last entry in seasons (skipped folders)
         if rx!=SEASON_RX[-1]: 
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
-        reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
-        ### YouTube playlist on season folder
-        #match = re.search('\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube))-)?(?P<id>PL[^\[\]]*)\]', folder, re.IGNORECASE)
-        #if match:
-        #  id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
-        #  source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'YouTube'
+        reverse_path.remove(folder)                 # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         break
     if not kwargs and len(reverse_path)>1 and path.count(os.sep):  return       #if not grouping folder scan, skip grouping folder
   
@@ -464,29 +464,31 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if parent_dir_nb>1:  return  #Grouping folders Plex call, but mess after one season folder is ok
   
     ### Forced guid modes ###
-    guid=""
+    guid  = ""
     match = re.search(SOURCE_IDS, folder_show, re.IGNORECASE)
-    if not match and len(reverse_path)>1:  match = re.search('(.* )?\[((?P<source>(|youtube))-)?(?P<id>.*)\]', reverse_path[1], re.IGNORECASE)
-    if source or id:
-      Log.info("Forced ID in season folder: '{}' with id '{}' in series folder".format(source, id))
-    elif match:
-      id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
-      source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'youtube' 
+    if match and (match.group('source') or re.search(YOUTUBE_REGEX_PLAYLIST, folder_show, re.IGNORECASE) or re.search(YOUTUBE_REGEX_CHANNEL, folder_show, re.IGNORECASE)):
+      source, id = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'youtube', match.group('id')
       Log.info("Forced ID in series folder: '{}' with id '{}'".format(source, id))
     else:
-      for file in SOURCE_ID_FILES:
-        if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
-          with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
-            source = file.rstrip('.id')
-            id     = guid_file.read().strip()
-            Log.info("Forced Series folder ID file: '{}' with id '{}'".format(file, id))
-            folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
-          break
+      if len(reverse_path)>1 and 'PL' in reverse_path[1] or 'UC' in reverse_path[1]:
+        match = re.search(YOUTUBE_REGEX_PLAYLIST, reverse_path[1], re.IGNORECASE) or re.search(YOUTUBE_REGEX_CHANNEL, reverse_path[1], re.IGNORECASE)
+      if match:
+        source, id = 'youtube', match.group('id')
+        Log.info("Forced ID in series folder inside grouping folder: '{}' with id '{}'".format(source, id))
       else:
-        Log.info('No forced guid found in folder name nor id file')
-        source, id = "", ""
-        folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
-    
+        for file in SOURCE_ID_FILES:
+          if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
+            with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
+              source = file.rstrip('.id')
+              id     = guid_file.read().strip()
+              Log.info("Forced Series folder ID file: '{}' with id '{}'".format(file, id))
+              folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
+            break
+        else:
+          Log.info('No forced guid found in folder name nor id file')
+          source, id = "", ""
+          folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+      
     if source.startswith('tvdb'):
       
       ### Calculate offset for season or episode ###
@@ -575,7 +577,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       # Local custom mapping file
       anidb_id, dir = anidb2_match.group('guid').lower(), os.path.join(root, path)
       while dir and os.path.splitdrive(dir)[1] != os.sep:
-        scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_CUSTOM)
+        scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_LOC)
         if os.path.exists( scudlee_filename_custom ):
           with open(scudlee_filename_custom, 'r') as scudlee_file:
             try:     scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
