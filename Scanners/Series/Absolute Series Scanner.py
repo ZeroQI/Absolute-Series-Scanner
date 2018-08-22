@@ -26,22 +26,18 @@ except ImportError:  from urllib2        import urlopen, Request     # Python ==
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 #ssl._create_default_https_context = ssl._create_unverified_context
-SOURCE_IDS             = '\[((?P<source>(anidb(|2)|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|UC[^\[\]]{22})))\]'                          #
+SOURCE_IDS             = '\[((?P<source>(anidb(|2)|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|UC[^\[\]]{22})))\]'
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id"]                     #
 TVDB_MODE_IDS          = "\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"                                                                    #
 TVDB_MODE_ID_OFFSET    = "\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"                                      #
 ANIDB2_MODE            = "\[anidb2-(?P<guid>[0-9]{1,7})\]"                                                                                                                       #
-YOUTUBE_REGEX_VIDEO    = '(\\[(youtube-)?|-)(?P<id>[a-z0-9\-_]{11})\\]?'
-YOUTUBE_REGEX_PLAYLIST = '\\[(youtube-)?(?P<id>(PL[a-z0-9]{16}|PL[a-z0-9\-_]{32}|UC[a-z0-9\-_]{22}))\\]'  #.*\[([Yy]ou[Tt]ube-)?PL[a-z0-9\-_]{11}
-YOUTUBE_REGEX_CHANNEL  = '\\[(youtube-)?(?P<id>UC[a-zA-Z0-9\-]{22})\\]'                                   #.*\[([Yy]ou[Tt]ube-)?PL[a-z0-9\-_]{11}
-
 ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
 ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'                                                                                                                                 # custom local correction for ScudLee mapping file url
 TVDB_HTTP_API_URL      = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'                                                                                          #
 ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'                                                                            #
 SSL_CONTEXT            = ssl.SSLContext(SSL_PROTOCOL)                                                                                                                            #
-HEADERS                =  {'Content-type': 'application/json'}
+HEADERS                = {'Content-type': 'application/json'}
    
 SEASON_RX       = [                                                                                                                                                       ### Seasons Folders 
                     '^Specials',                                                                                                                                          # Specials (season 0)
@@ -345,7 +341,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     for entry in plexignore_dirs[:] if index>0 else []:                                      #
       plexignore_dirs.remove(entry)                                                          #  
       if entry.startswith(dir+'/'):                                                          #
-        pattern = entry.replace(dir+'/', '')                                                 #   msg.append("bazinga, pattern.count('/'): '{}', index+1: '{}', len(path_split): '{}', entry: '{}', dir: '{}', pattern: '{}'".format(pattern.count('/'), index+1, len(path_split), entry, dir, pattern))
+        pattern = entry.replace(dir+'/', '')                                                 # msg.append("bazinga, pattern.count('/'): '{}', index+1: '{}', len(path_split): '{}', entry: '{}', dir: '{}', pattern: '{}'".format(pattern.count('/'), index+1, len(path_split), entry, dir, pattern))
         if pattern.count('/')>0:        plexignore_dirs.append(pattern)                      # subfolder match so remove subfolder name and carry on
         elif index+1==len(path_split):  plexignore_files.append(fnmatch.translate(pattern));  msg.append("# - pattern: '{}'".format(pattern)) #Only keep pattern for named folder, not subfolders
     
@@ -464,32 +460,24 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if parent_dir_nb>1:  return  #Grouping folders Plex call, but mess after one season folder is ok
   
     ### Forced guid modes ###
-    guid  = ""
-    match = re.search(SOURCE_IDS, folder_show, re.IGNORECASE)
-    if not match and len(reverse_path)>1:
-      match = re.search(SOURCE_IDS, reverse_path[1], re.IGNORECASE)
-      if match:  Log.info("Forced ID sourced from series folder")
+    match = re.search(SOURCE_IDS, folder_show, re.IGNORECASE) or (re.search(SOURCE_IDS, folder_show, re.IGNORECASE) if len(reverse_path)>1 else False)
     if match:
-      if match.groupdict().has_key('yt') and match.group('yt'):
-        source, id = 'youtube', match.group('yt')
-      else:
-        id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
-        source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else ''
-      Log.info("Forced ID: '{}' with id '{}'".format(source, id))
+      if match.groupdict().has_key('yt') and match.group('yt'):  source, id = 'youtube',             match.group('yt')
+      else:                                                      source, id = match.group('source'), match.group('id') 
+      Log.info('Forced ID (series folder) - source: "{}", id: "{}"'.format(source, id))
     else:
       for file in SOURCE_ID_FILES:
         if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
           with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
-            source = file.rstrip('.id')
-            id     = guid_file.read().strip()
-            Log.info("Forced Series folder ID file: '{}' with id '{}'".format(file, id))
+            source, id = file.rstrip('.id'), guid_file.read().strip()
+            Log.info('Forced ID (source file) - source: "{}", id: "{}"'.format(source, id))
             folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
           break
       else:
-        Log.info('No forced guid found in folder name nor id file')
+        Log.info('No forced id found in series folder name nor id file')
         source, id = "", ""
         folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
-      
+    
     if source.startswith('tvdb'):
       
       ### Calculate offset for season or episode ###
