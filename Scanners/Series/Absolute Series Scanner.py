@@ -26,7 +26,7 @@ except ImportError:  from urllib2        import urlopen, Request     # Python ==
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 #ssl._create_default_https_context = ssl._create_unverified_context
-SOURCE_IDS             = '\[((?P<source>(anidb|anidb2|tvdb|tvdb2|tvdb3|tvdb4|tvdb5|tmdb|tsdb|imdb|youtube|youtube2))-)?(?P<id>[^\[\]]*)\]'                                       #
+SOURCE_IDS             = '\[((?P<source>(anidb(|2)|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|UC[^\[\]]{22})))\]'                          #
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id"]                     #
 TVDB_MODE_IDS          = "\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"                                                                    #
 TVDB_MODE_ID_OFFSET    = "\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"                                      #
@@ -466,28 +466,29 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     ### Forced guid modes ###
     guid  = ""
     match = re.search(SOURCE_IDS, folder_show, re.IGNORECASE)
-    if match and (match.group('source') or re.search(YOUTUBE_REGEX_PLAYLIST, folder_show, re.IGNORECASE) or re.search(YOUTUBE_REGEX_CHANNEL, folder_show, re.IGNORECASE)):
-      source, id = match.group('source') if match.groupdict().has_key('source') and match.group('source') else 'youtube', match.group('id')
-      Log.info("Forced ID in series folder: '{}' with id '{}'".format(source, id))
-    else:
-      if len(reverse_path)>1 and 'PL' in reverse_path[1] or 'UC' in reverse_path[1]:
-        match = re.search(YOUTUBE_REGEX_PLAYLIST, reverse_path[1], re.IGNORECASE) or re.search(YOUTUBE_REGEX_CHANNEL, reverse_path[1], re.IGNORECASE)
-      if match:
-        source, id = 'youtube', match.group('id')
-        Log.info("Forced ID in series folder inside grouping folder: '{}' with id '{}'".format(source, id))
+    if not match and len(reverse_path)>1:
+      match = re.search(SOURCE_IDS, reverse_path[1], re.IGNORECASE)
+      if match:  Log.info("Forced ID sourced from series folder")
+    if match:
+      if match.groupdict().has_key('yt') and match.group('yt'):
+        source, id = 'youtube', match.group('yt')
       else:
-        for file in SOURCE_ID_FILES:
-          if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
-            with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
-              source = file.rstrip('.id')
-              id     = guid_file.read().strip()
-              Log.info("Forced Series folder ID file: '{}' with id '{}'".format(file, id))
-              folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
-            break
-        else:
-          Log.info('No forced guid found in folder name nor id file')
-          source, id = "", ""
-          folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+        id     = match.group('id'    ) if match.groupdict().has_key('id'    ) and match.group('id'    ) else '' 
+        source = match.group('source') if match.groupdict().has_key('source') and match.group('source') else ''
+      Log.info("Forced ID: '{}' with id '{}'".format(source, id))
+    else:
+      for file in SOURCE_ID_FILES:
+        if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
+          with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
+            source = file.rstrip('.id')
+            id     = guid_file.read().strip()
+            Log.info("Forced Series folder ID file: '{}' with id '{}'".format(file, id))
+            folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
+          break
+      else:
+        Log.info('No forced guid found in folder name nor id file')
+        source, id = "", ""
+        folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
       
     if source.startswith('tvdb'):
       
