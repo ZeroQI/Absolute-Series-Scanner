@@ -31,6 +31,7 @@ SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3
 TVDB_MODE_IDS          = "\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"                                                                    #
 TVDB_MODE_ID_OFFSET    = "\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"                                      #
 ANIDB2_MODE            = "\[anidb2-(?P<guid>[0-9]{1,7})\]"                                                                                                                       #
+ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
 ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
 ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'                                                                                                                                 # custom local correction for ScudLee mapping file url
@@ -330,6 +331,7 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
   reverse_path = list(reversed(Utils.SplitPath(path)))
   log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
+  anidb_xml    = None
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
     
   ### .plexignore file ###
@@ -546,7 +548,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       #tvdb5 - 'Star wars: Clone attack' chronological order, might benefit other series
       elif source=='tvdb5': ##S
         Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (source, TVDB_HTTP_API_URL % id))
-        id_url= TVDB_HTTP_API_URL % id
+        tvdb_guid_url= TVDB_HTTP_API_URL % id
         try:
           tvdbanime = etree.fromstring( urlopen(tvdb_guid_url, context=SSL_CONTEXT).read() )
           for episode in tvdbanime.xpath('Episode'):
@@ -790,19 +792,53 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         else:
           movie_list[season] = movie_list[season]+1 if season in movie_list else 1
           ep     = str(movie_list[season])                              # if no ep in regex and anidb special#add movies using year as season, starting at 1  # Year alone is season Year and ep incremented, good for series, bad for movies but cool for movies in series folder...
+          Log.info('movie - '+ep)
         if match.groupdict().has_key('ep2'   ) and match.group('ep2'   ):               ep2    =               match.group('ep2'   )                  #
         if match.groupdict().has_key('show'  ) and match.group('show'  ) and not path:  show   = clean_string( match.group('show'  ))                 # Mainly if file at root or _ folder
         if match.groupdict().has_key('season') and match.group('season'):               season =          int( match.group('season'))                 #
         if match.groupdict().has_key('title' ) and match.group('title' ):               title  = clean_string( match.group('title' ))                 #
         elif rx in ANIDB_RX:                                                            title  = ANIDB_TYPE[ANIDB_RX.index(rx)] + ' ' + ep            # Dingmatt fix for opening with just the ep number
+        
         if rx in ANIDB_RX[:-2]:                                                                                                                       ### AniDB Specials ################################################################
           season = 0                                                                                                                                  # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
-          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():                                                                                    ### OP/ED with letter version Example: op2a
-            ep, offset = int(ep[:-1]), ord(ep[-1:])-ord('a')
+          # AniDB xml load (ALWAYS GZIPPED)
+          if source.startswith('anidb') and id and not anidb_xml and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
+            import StringIO, gzip
+            anidb_str_gzip = urlopen(ANIDB_HTTP_API_URL+id, context=SSL_CONTEXT).read()
+            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO( anidb_str_gzip )).read()
+            if len(anidb_str)<512:  Log.info(anidb_str) 
+            anidb_xml = etree.fromstring( anidb_str )
+            
+            #Build AniDB_op
+            AniDB_op = {}
+            for episode in anidb_xml.xpath('/anime/episodes/episode'):
+              for epno in episode.iterchildren('epno'):  
+                type  = epno.get('type')
+                epno  = epno.text
+              for title_tag in episode.iterchildren('title'):
+                title_ = title_tag.text
+              if type=='3':
+                index=0
+                if title_.startswith('Opening '):  epno, index = title_.lstrip('Opening '), 1
+                if title_.startswith('Ending ' ):  epno, index = title_.lstrip('Ending  '), 2
+                #Log.info('type: {}, epno: {}, title: {}, ANIDB_RX.index(rx): {}'.format(type, epno, title_, ANIDB_RX.index(rx)))
+                if epno and not epno.isdigit() and len(epno)>1 and epno[:-1].isdigit():                                                                                    ### OP/ED with letter version Example: op2a
+                  epno, offsetno = int(epno[:-1]), ord(epno[-1:])-ord('a')
+                  if   not index in AniDB_op:                                          AniDB_op [ index ]          = { epno:    offsetno }
+                  elif not epno in AniDB_op[index] or offsetno>AniDB_op[index][epno]:  AniDB_op [ index ] [ epno ] = offsetno
+            Log.info("AniDB URL: {}, length: {}, AniDB_op: {}".format(ANIDB_HTTP_API_URL+id, len(anidb_str), AniDB_op))
+            time.sleep(6)
+            
+          ### OP/ED with letter version Example: op2a
+          if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():  ep, offset = int(ep[:-1]), ord(ep[-1:])-ord('a')
+          else:                                                     offset = 0
+          if not anidb_xml:
             if ANIDB_RX.index(rx) in AniDB_op:  AniDB_op [ ANIDB_RX.index(rx) ]   [ ep ] = offset # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
             else:                               AniDB_op [ ANIDB_RX.index(rx) ] = { ep:    offset }
-          ep = int(ep) + ANIDB_OFFSET [ ANIDB_RX.index(rx) ] + sum( Dict(AniDB_op, ANIDB_RX.index(rx), default={0:0}).values() )     # Sum of all prior offsets
-        add_episode_into_plex(media, file, root, path, show, int(season), int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else int(ep), rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+          cumulative_offset = sum( [ AniDB_op [ ANIDB_RX.index(rx) ][x] for x in Dict(AniDB_op, ANIDB_RX.index(rx), default={0:0}) if x<ep ] )
+          ep_ = ANIDB_OFFSET [ ANIDB_RX.index(rx) ] + int(ep) + offset + cumulative_offset    # Sum of all prior offsets
+          #Log.info('ep type offset: {}, ep: {}, offset: {}, cumulative_offset: {}, final ep number: {}'.format(ANIDB_OFFSET [ ANIDB_RX.index(rx) ], ep, offset, cumulative_offset, ep_))
+        add_episode_into_plex(media, file, root, path, show, int(season), int(ep_), title, year, int(ep2) if ep2 and ep2.isdigit() else int(ep_), rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
         break
     if match: continue  # next file iteration
     
