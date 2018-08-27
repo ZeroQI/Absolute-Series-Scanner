@@ -832,7 +832,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           ### OP/ED with letter version Example: op2a
           if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():  ep, offset = int(ep[:-1]), ord(ep[-1:])-ord('a')
           else:                                                     offset = 0
-          if anidb_xml is not None:
+          if anidb_xml is None:
             if ANIDB_RX.index(rx) in AniDB_op:  AniDB_op [ ANIDB_RX.index(rx) ]   [ ep ] = offset # {101: 0 for op1a / 152: for ed2b} and the distance between a and the version we have hereep, offset                         = str( int( ep[:-1] ) ), offset + sum( AniDB_op.values() )                             # "if xxx isdigit() else 1" implied since OP1a for example... # get the offset (100, 150, 200, 300, 400) + the sum of all the mini offset caused by letter version (1b, 2b, 3c = 4 mini offset)
             else:                               AniDB_op [ ANIDB_RX.index(rx) ] = { ep:    offset }
           cumulative_offset = sum( [ AniDB_op [ ANIDB_RX.index(rx) ][x] for x in Dict(AniDB_op, ANIDB_RX.index(rx), default={0:0}) if x<ep ] )
