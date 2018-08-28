@@ -24,6 +24,9 @@ except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python < 
 try:                 from urllib.request import urlopen, Request     # Python >= 3.0
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
 
+def com(string):  return re.compile(string)                 #RE Compile
+def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore Case
+
 ### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 #ssl._create_default_https_context = ssl._create_unverified_context
 SOURCE_IDS             = '\[((?P<source>(anidb(|2)|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|UC[^\[\]]{22})))\]'
