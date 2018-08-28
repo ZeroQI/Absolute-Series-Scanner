@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 ###### library  ########################################################### Functions, Constants #####
 import sys                                                           # getdefaultencoding, getfilesystemencoding, platform, argv
 import os                                                            # path, listdir
@@ -450,7 +449,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         zip_archive = zipfile.ZipFile(file)
         for zip_archive_filename in zip_archive.namelist():
           zext = os.path.splitext(zip_archive_filename)[1][1:]  #zname, zext = ...  #zext = zext[1:]
-          zext        = zext[1:]
           if zext in VIDEO_EXTS:
             files.append( zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
             Log.info('- '+zip_archive_filename) 
