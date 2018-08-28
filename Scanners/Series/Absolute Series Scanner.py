@@ -30,12 +30,12 @@ def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore C
 #ssl._create_default_https_context = ssl._create_unverified_context
 SOURCE_IDS             = '\[((?P<source>(anidb(|2)|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|UC[^\[\]]{22})))\]'
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id"]                     #
-TVDB_MODE_ID_OFFSET    = r"\d{1,7}-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?"                                                                                                #
+ANIDB_TVDB_ID_OFFSET   = r"\d{1,7}-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?"
 ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
 ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
 ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'                                                                                                                                 # custom local correction for ScudLee mapping file url
-TVDB_HTTP_API_URL      = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'                                                                                          #
+TVDB_API1_URL          = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'                                                                                          #
 TVDB_API2_LOGIN        = "https://api.thetvdb.com/login"
 TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
@@ -506,10 +506,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         source, id = "", ""
         folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
     
-    if source.startswith('tvdb'):
-      
+    if source.startswith('tvdb') or source.startswith('anidb'):
+
       ### Calculate offset for season or episode ###
-      offset_match = re.search(TVDB_MODE_ID_OFFSET, id, re.IGNORECASE)
+      offset_match = re.search(ANIDB_TVDB_ID_OFFSET, id, re.IGNORECASE)
       if offset_match:
         match_season, match_episode = "", ""
         if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
@@ -520,6 +520,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
         if offset_season!=0 or offset_episode!=0:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
 
+    if source.startswith('tvdb'):
+      
       #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
       if source in ('tvdb2', 'tvdb3'): 
         Log.info("TVDB season mode ({}) enabled".format(source))
@@ -572,8 +574,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         
       #tvdb5 - 'Star wars: Clone attack' chronological order, might benefit other series
       elif source=='tvdb5': ##S
-        Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (source, TVDB_HTTP_API_URL % id))
-        tvdb_guid_url= TVDB_HTTP_API_URL % id
+        tvdb_guid_url = TVDB_API1_URL % id
+        Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (source, tvdb_guid_url))
         try:
           tvdbanime = etree.fromstring( urlopen(tvdb_guid_url, context=SSL_CONTEXT).read() )
           for episode in tvdbanime.xpath('Episode'):
