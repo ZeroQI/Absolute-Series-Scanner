@@ -665,7 +665,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info('files_per_date: {}'.format(files_per_date))
       
     ### Build misc variable to check numbers in titles ###
-    misc, misc_words, misc_count = "|", (), {} # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
+    misc, misc_words, misc_count = "|", [], {} # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
     array = ()
     length=0
     files.sort(key=natural_sort_key)
@@ -681,9 +681,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       misc = "|".join([s for s in misc.split('|') if s])  #Log.info("misc: '%s'" % misc)
       for item in misc.split('|'):  misc_count[item] = misc_count[item]+1 if item in misc_count else 1
       for item in misc_count:
-        if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) and max(misc_count.values())>3 ):  misc_words = misc_words + (item,)
-        misc = misc.replace("|%s|" % item, '|')  #Log.info("misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
+        if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) and max(misc_count.values())>3 ):  misc_words.append(item)
+        #misc = misc.replace("|%s|" % item, '|')  #Log.info("misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
+      misc_words.sort(key=len, reverse=True)  # Sort by string length so largest words are taken out first so smaller words that are in the larger words are not an issue
       Log.info('misc_count: {}'.format(misc_count))
+      Log.info('misc_words: {}'.format(misc_words))
   
   ### File main loop ###
   counter = 500
@@ -708,10 +710,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
         else:
           filename = clean_string(filename, False)
-          for item in misc_words:  filename = filename.lower().replace(item, ' ', 1)
+          for item in misc_words:  filename = filename.lower().replace(item.lower(), ' ', 1)
     else:  filename     = clean_string(filename, False)
     ep = filename
-    if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0];   ### Movies ### If using WebAOM (anidb rename) and movie on root
+    if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0]   ### Movies ### If using WebAOM (anidb rename) and movie on root
     elif len(files)==1 and (not re.search("\d+(\.\d+)?", clean_string(filename, True)) or "-m" in folder_show.split()):
       ep, title = "01", folder_show  #if  ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
     if folder_show and folder_season >= 1:                                                                                                                                         # 
@@ -758,8 +760,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                                     # If separator in string
           if re.search("^(?P<ep>[0-9]{1,3})-(?P<ep2>[0-9]{1,3})$", ep, re.IGNORECASE):                           ep, ep2 = ep.split('-'); break
           if re.search("^(ep?[ -]?)?(?P<ep>[0-9]{1,3})(-|ep?|-ep?)(?P<ep2>[0-9]{1,3})", ep, re.IGNORECASE):      ep="Skip"; break                                   # if multi ep: make it non digit and exit so regex takes care of it
-          elif path and ( (misc.count(ep)==1 and len(files)>=2) or ep not in clean_string(folder_show, True).lower().split() ):
-            ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1];                                # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
+          elif path and ( ( (ep in misc_count.keys() and misc_count[ep]==1) and len(files)>=2) or ep not in clean_string(folder_show, True).lower().split() ):
+            ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1]                                 # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
           else:                                                                                                  continue
         if re.search("^((t|o)[0-9]{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)($|[0-9]{1,3}$))", ep):  is_special = True; break      # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
         if ''.join(letter for letter in ep if letter.isdigit())=="":                                             continue                                           # Continue if there are no numbers in the string
