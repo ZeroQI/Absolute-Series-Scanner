@@ -38,6 +38,9 @@ ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-li
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
 ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'                                                                                                                                 # custom local correction for ScudLee mapping file url
 TVDB_HTTP_API_URL      = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'                                                                                          #
+TVDB_API2_LOGIN        = "https://api.thetvdb.com/login"
+TVDB_API2_KEY          = "A27AD9BE0DA63333"
+TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
 ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'                                                                            #
 SSL_CONTEXT            = ssl.SSLContext(SSL_PROTOCOL)                                                                                                                            #
 HEADERS                = {'Content-type': 'application/json'}
@@ -527,14 +530,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
           else:                    
             Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-            page = urlopen(Request("https://api.thetvdb.com/login", headers=HEADERS), data=json.dumps({"apikey": "A27AD9BE0DA63333"}), context=SSL_CONTEXT).read()
+            page = urlopen(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}), context=SSL_CONTEXT).read()
             HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
           
           #Load series episode pages and group them in one dict
           episodes_json, page = [], 1
           while page not in (None, '', 'null'):
-            episodes_json_page = json.loads(urlopen(Request('https://api.thetvdb.com/series/{}/episodes?page={}'.format(id, page), headers=HEADERS), context=SSL_CONTEXT).read())
-            episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info('TVDB_EPISODES_URL: {}, links: {}'.format(TVDB_EPISODES_URL % (TVDBid, page), Dict(episodes_json_page, 'links')))
+            episodes_json_page = json.loads(urlopen(Request(TVDB_API2_EPISODES.format(id, page), headers=HEADERS), context=SSL_CONTEXT).read())
+            episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info('TVDB_API2_EPISODES: {}, links: {}'.format(TVDB_API2_EPISODES.format(id, page), Dict(episodes_json_page, 'links')))
             page = Dict(episodes_json_page, 'links', 'next')
           
           # SORT JSON EPISODES
