@@ -282,13 +282,13 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   if ep_orig_single in mappingList:
     multi_ep   = 0 if ep_orig == ep_orig_single else ep2-ep
     season, ep = mappingList[ep_orig_single][1:].split("e")
-    if '-' in ep or  '+' in ep:  ep, ep2 = ep.split("+"); ep2 = int(ep2) if ep2 and ep2.isdigit() else None
+    if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep2 = int(ep2) if ep2 and ep2.isdigit() else None
     season, ep, ep2 = int(season), int(ep), int(ep)+multi_ep if multi_ep else ep2
   elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep, season = ep + int (mappingList['s%d' % season][2]), int(mappingList['s%d' % season][3])
   elif season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()  # capitalise if all caps or all lowercase and one space at least
-  if ep==0:                                                               season, ep, ep2 = 0, 1, 1        # s01e00 and S00e00 => s00e01
+  if ep<=0:                                                               season, ep, ep2 = 0, 1, 1        # s01e00 and S00e00 => s00e01
   if not ep2 or ep > ep2:                                                 ep2             = ep             #  make ep2 same as ep for loop and tests
   if tvdb_mapping and season > 0 :
     max_ep_num, season_buffer = max(tvdb_mapping.keys()), 0 if unknown_series_length else 1
@@ -477,7 +477,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   folder_show  = reverse_path[0] if reverse_path else ""
   misc_words, misc_count = [], {}
   tvdb_mapping, unknown_series_length = {}, False
-  mappingList, offset_season, offset_episode            = {}, 0, 0
+  mappingList, offset_season, offset_episode = {}, 0, 0
   
   if path:
     
@@ -513,12 +513,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if offset_match:
         match_season, match_episode = "", ""
         if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
-        if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-1
+        if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
         if tvdb_mapping and match_season!='s0': 
           season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
           offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
         folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
-        if offset_season+offset_episode:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
+        if offset_season!=0 or offset_episode!=0:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
 
       #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
       if source in ('tvdb2', 'tvdb3'): 
