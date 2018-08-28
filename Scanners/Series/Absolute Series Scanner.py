@@ -121,7 +121,7 @@ CHARACTERS_MAP =  {                                                             
                     49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½' , 52352:''  , 52353:''                                          #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #  ['\xcc', '\x81'] 
                   }
                
-### Check config files on boot up then create library variables ###    #platform = xxx if callable(getattr(sys,'platform')) else "" 
+### Check config files on boot up then create library variables #########################################
 PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
 if not os.path.isdir(PLEX_ROOT):
   path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
@@ -129,15 +129,15 @@ if not os.path.isdir(PLEX_ROOT):
                     'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
   PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
 
-### Sanitize string
+### Sanitize string #####################################################################################
 def os_filename_clean_string(string):
   for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:    # remove leftover parenthesis (work with code a bit above)
     if char in string:  string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
   return string
 
-### Set Logging to proper logging file
+### Set Logging to proper logging file ##################################################################
 def set_logging(foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
-  global Log, handler, CACHE_PATH, LOG_FILE
+  global handler, CACHE_PATH, LOG_FILE
   CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
   if foldername: CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
   if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
@@ -151,7 +151,7 @@ def set_logging(foldername='', filename='', backup_count=0, format='%(message)s'
   handler.setLevel(logging.DEBUG)
   Log.addHandler(handler)
 
-### Log + CACHE_PATH calculated once for all calls ###
+### Log + CACHE_PATH calculated once for all calls ######################################################
 handler          = None
 Log              = logging.getLogger('main');  Log.setLevel(logging.DEBUG);  set_logging()
 CACHE_PATH       = ""
@@ -168,7 +168,7 @@ try:
       PLEX_LIBRARY[path.get("path")] = library.get("title")
 except:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
 
-def Dict(var, *arg, **kwarg):  #Avoid TypeError: argument of type 'NoneType' is not iterable
+def Dict(var, *arg, **kwarg):  #Avoid TypeError: argument of type 'NoneType' is not iterable ############
   """ Return the value of an (imbricated) dictionnary, if all fields exist else return "" unless "default=new_value" specified as end argument
       Ex: Dict(variable_dict, 'field1', 'field2', default = 0)
   """
@@ -177,14 +177,14 @@ def Dict(var, *arg, **kwarg):  #Avoid TypeError: argument of type 'NoneType' is 
     else:  return kwarg['default'] if kwarg and 'default' in kwarg else ""   # Allow Dict(var, tvdbid).isdigit() for example
   return kwarg['default'] if var in (None, '', 'N/A', 'null') and kwarg and 'default' in kwarg else "" if var in (None, '', 'N/A', 'null') else var
 
-### replace a string by another while retaining original string case ##############################################################################################
+### replace a string by another while retaining original string case ####################################
 def replace_insensitive (ep, word, sep=" "):
   if ep.lower()==word.lower(): return ""
   position = ep.lower().find(word.lower())
   if position > -1 and len(ep)>len(word):  return ("" if position==0 else ep[:position].lstrip()) + (sep if len(ep) < position+len(word) else ep[position+len(word):].lstrip())
   return ep
 
-### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] ###############################################################################
+### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] #####################
 def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):  return [int(text) if text.isdigit() else text.lower() for text in re.split(_nsre, s)]
 
 ### Return number of bytes of Unicode characters ########################################################
@@ -192,13 +192,13 @@ def unicodeCharLen (char):                                       # count consecu
   for x in range(1,6):                                           # start at 1, 6 times 
     if ord(char) < 256-pow(2, 7-x)+(2 if x==6 else 0): return x  # 256-2pow(x) with x(7->0) = 128 192 224 240 248 252 254 255 = 1 to 8 bits at 1 from the left, 256-2pow(7-x) starts form left
  
-### Return correct String length even with Unicode characters ########################################################
+### Return correct String length even with Unicode characters ###########################################
 def unicodeLen (string): 
   length = 0
   for char in string:  length += unicodeCharLen(char)
   return length
   
-### Decode string back to Unicode ###   #Unicodize in utils?? #fixEncoding in unicodehelper
+### Decode string back to Unicode ###   #Unicodize in utils?? #fixEncoding in unicodehelper #############
 def encodeASCII(string, language=None): #from Unicodize and plex scanner and other sources
   if string=="": return ""
   ranges = [ {"from": u"\u3300" , "to": u"\u33ff" }, #
@@ -301,7 +301,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
-      tv_show, tv_show.display_offset = Media.Episode(show, season, epn, title, year), (epn-ep)*100/(ep2-ep+1)
+      tv_show = Media.Episode(show, season, epn, title, year)
+      tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
       if filename.upper()=="VIDEO_TS.IFO":  
         for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
           if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item))
@@ -310,7 +311,7 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   index = "SERIES_RX-"+str(SERIES_RX.index(rx)) if rx in SERIES_RX else "ANIDB_RX-"+str(ANIDB_RX.index(rx)) if rx in ANIDB_RX else rx  # rank of the regex used from 0
   Log.info('"{show}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or '__', title=title if clean_string(title).replace('_', '') else "", file=filename))
 
-### Get the tvdbId from the AnimeId #######################################################################################################################
+### Get the tvdbId from the AnimeId #####################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   mappingList                  = {}
   for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree else []:
@@ -446,7 +447,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         Log.info(file)
         zip_archive = zipfile.ZipFile(file)
         for zip_archive_filename in zip_archive.namelist():
-          zname, zext = os.path.splitext(zip_archive_filename)
+          zext = os.path.splitext(zip_archive_filename)[1][1:]  #zname, zext = ...  #zext = zext[1:]
           zext        = zext[1:]
           if zext in VIDEO_EXTS:
             files.append( zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
@@ -466,7 +467,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("")
   
   ### Logging to *.scanner.log ###
-  global LOG_FILE
   recent = os.stat(LOG_FILE[:-len('.filelist.log')]+'.scanner.log').st_mtime + 3600 > time.time() if os.path.exists(LOG_FILE[:-len('.filelist.log')]+'.scanner.log') else False
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if recent else 'w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
@@ -524,7 +524,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if source in ('tvdb2', 'tvdb3'): 
         Log.info("TVDB season mode ({}) enabled".format(source))
         try:
-          global HEADERS
           if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
           else:                    
             Log.info('not authorised, HEADERS: {}'.format(HEADERS))
@@ -895,9 +894,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
 ### Command line scanner call ###
 if __name__ == '__main__':  #command line
-  print "Absolute Series Scanner by ZeroQI"
+  print("Absolute Series Scanner by ZeroQI")
   path  = sys.argv[1]
   files = [os.path.join(path, file) for file in os.listdir(path)]
   media = []
   Scan(path[1:], files, media, [])
-  print "Files detected: ", media
+  print("Files detected: ", media)
