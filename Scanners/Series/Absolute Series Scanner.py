@@ -33,7 +33,6 @@ SOURCE_IDS             = '\[((?P<source>(anidb(|2)|tvdb(|[2-5])|tmdb|tsdb|imdb|y
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id"]                     #
 TVDB_MODE_IDS          = "\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"                                                                    #
 TVDB_MODE_ID_OFFSET    = "\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"                                      #
-ANIDB2_MODE            = "\[anidb2-(?P<guid>[0-9]{1,7})\]"                                                                                                                       #
 ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
 ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
@@ -564,12 +563,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info("".ljust(157, '-'))
         
     ### forced guid modes - anidb2 (requires ScudLee's mapping xml file) ###
-    anidb2_match = re.search(ANIDB2_MODE, folder_show, re.IGNORECASE)
     a2_tvdbid, a2_defaulttvdbseason, scudlee_mapping_content = "", "", None
-    if anidb2_match:
+    if source=="anidb2":
       
       # Local custom mapping file
-      anidb_id, dir = anidb2_match.group('guid').lower(), os.path.join(root, path)
+      dir = os.path.join(root, path)
       while dir and os.path.splitdrive(dir)[1] != os.sep:
         scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_LOC)
         if os.path.exists( scudlee_filename_custom ):
@@ -578,7 +576,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             except:  Log.info("Invalid local custom mapping file content")
             else:
               Log.info("Loading local custom mapping from local: %s" % scudlee_filename_custom)
-              a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, anidb_id)
+              a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, id)
               break
         dir = os.path.dirname(dir)
 
