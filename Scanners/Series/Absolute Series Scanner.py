@@ -797,8 +797,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           # AniDB xml load (ALWAYS GZIPPED)
           if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
             import StringIO, gzip
-            anidb_str_gzip = urlopen(ANIDB_HTTP_API_URL+id, context=SSL_CONTEXT).read()
-            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO( anidb_str_gzip )).read()
+            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO( download_and_read_file(ANIDB_HTTP_API_URL+id, id+".xml") )).read()
             if len(anidb_str)<512:  Log.info(anidb_str) 
             anidb_xml = etree.fromstring( anidb_str )
             
