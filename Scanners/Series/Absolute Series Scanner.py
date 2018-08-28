@@ -31,8 +31,7 @@ def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore C
 #ssl._create_default_https_context = ssl._create_unverified_context
 SOURCE_IDS             = '\[((?P<source>(anidb(|2)|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|UC[^\[\]]{22})))\]'
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id"]                     #
-TVDB_MODE_IDS          = "\[tvdb(?P<mode>(2|3|4|5))-(tt)?(?P<guid>[0-9]{1,7})(-s[0-9]{1,3}(e[0-9]{1,3})?)?\]"                                                                    #
-TVDB_MODE_ID_OFFSET    = "\[(?P<source>(tvdb|tvdb2|tvdb3|tvdb4|tvdb5))-(tt)?[0-9]{1,7}-(?P<season>s[0-9]{1,3})?(?P<episode>e[0-9]{1,3})?\]"                                      #
+TVDB_MODE_ID_OFFSET    = r"\d{1,7}-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?"                                                                                                #
 ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
 ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
@@ -479,7 +478,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   #### Folders, Forced ids, grouping folders ###
   folder_show  = reverse_path[0] if reverse_path else ""
   misc_words, misc_count = [], {}
-  tvdb_mapping, unknown_series_length, tvdb_mode_search = {}, False, re.search(TVDB_MODE_IDS, folder_show, re.IGNORECASE)
+  tvdb_mapping, unknown_series_length = {}, False
   mappingList, offset_season, offset_episode            = {}, 0, 0
   
   if path:
@@ -512,9 +511,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if source.startswith('tvdb'):
       
       ### Calculate offset for season or episode ###
-      offset_match = re.search(TVDB_MODE_ID_OFFSET, folder_show, re.IGNORECASE)
+      offset_match = re.search(TVDB_MODE_ID_OFFSET, id, re.IGNORECASE)
       if offset_match:
-        source, match_season, match_episode = offset_match.group('source'), "", ""
+        match_season, match_episode = "", ""
         if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
         if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-1
         if tvdb_mapping and match_season!='s0': 
