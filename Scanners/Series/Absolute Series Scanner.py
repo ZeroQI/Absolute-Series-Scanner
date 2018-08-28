@@ -820,11 +820,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             #Build AniDB_op
             AniDB_op = {}
             for episode in anidb_xml.xpath('/anime/episodes/episode'):
-              for epno in episode.iterchildren('epno'):  
-                type  = epno.get('type')
-                epno  = epno.text
-              for title_tag in episode.iterchildren('title'):
-                title_ = title_tag.text
+              for epno      in episode.iterchildren('epno' ):  type, epno = epno.get('type'), epno.text
+              for title_tag in episode.iterchildren('title'):  title_     = title_tag.text
               if type=='3':
                 index=0
                 if title_.startswith('Opening '):  epno, index = title_.lstrip('Opening '), 1
@@ -837,7 +834,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
                 if   not index in AniDB_op:                                          AniDB_op [ index ]          = { epno:    offsetno }
                 elif not epno in AniDB_op[index] or offsetno>AniDB_op[index][epno]:  AniDB_op [ index ] [ epno ] = offsetno
             Log.info("AniDB URL: {}, length: {}, AniDB_op: {}".format(ANIDB_HTTP_API_URL+id, len(anidb_str), AniDB_op))
-            time.sleep(6)
             
           ### OP/ED with letter version Example: op2a
           if not ep.isdigit() and len(ep)>1 and ep[:-1].isdigit():  ep, offset = int(ep[:-1]), ord(ep[-1:])-ord('a')
