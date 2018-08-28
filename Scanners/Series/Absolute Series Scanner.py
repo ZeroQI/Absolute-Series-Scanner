@@ -329,6 +329,30 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 ### extension, as os.path.splitext ignore leading dots so ".plexignore" file is splitted into ".plexignore" and "" ###
 def extension(file):  return file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()
   
+### Download a url into the environment temp directory ##################################################
+def download_and_read_file(url, filename=None, max_age_sec=24*60*60):
+  if not filename:  filename = os.path.basename(url)
+  tmp_file       = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
+  local_filename = tmp_filename.replace(os.path.basename(tmp_filename), "ASS-tmp-" + filename)
+  try:
+    Log.info("Downloading URL: %s" % url)
+    if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
+      Log.info("Using cached file: '%s'" % local_filename)
+      del tmp_file
+      with open(local_filename, 'r') as scudlee_file:  file_content = scudlee_file.read()
+    else:
+      Log.info("Updating cached file: '%s' from '%s'" % (local_filename, url) if os.path.exists(local_filename) else "Creating: "+ local_filename)
+      with open(tmp_filename, 'w') as scudlee_file:
+        file_content = urlopen(url, context=SSL_CONTEXT).read()
+        scudlee_file.write( file_content )
+      if os.path.exists(local_filename): os.remove(local_filename)
+      os.rename(tmp_filename, local_filename)
+      if "api.anidb.net" in url:  Log.info("Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
+    return file_content
+  except Exception as e:
+    Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
+    raise e
+
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
   reverse_path = list(reversed(Utils.SplitPath(path)))
@@ -580,49 +604,17 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               break
         dir = os.path.dirname(dir)
 
-      # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD 
+      # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
-        tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-        scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'anime-list-corrections.xml')
-        try:
-          if os.path.exists(scudlee_filename) and int(time.time() - os.path.getmtime(scudlee_filename)) <= 86400:
-            Log.info("Use existing: '%s'" % scudlee_filename)
-            del tmp_file
-            with open(scudlee_filename, 'r') as scudlee_file:  scudlee_file_content = scudlee_file.read()
-          else:
-            Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING_MOD) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
-            with open(tmp_filename, 'w') as scudlee_file:
-              scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING_MOD, context=SSL_CONTEXT).read()
-              scudlee_file.write( scudlee_file_content )
-            if os.path.exists(scudlee_filename): os.remove(scudlee_filename)
-            os.rename(tmp_filename, scudlee_filename)
-        except Exception as e:  Log.error("Error downloading ASS's file mod from local/GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING_MOD, e)) 
-        else:
-          try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring( scudlee_file_content ), anidb_id)
-          except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
+        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(download_and_read_file(ANIDB_TVDB_MAPPING_MOD)), id)
+        except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
       
-      #ANIDB_TVDB_MAPPING
+      # Online mapping file = ANIDB_TVDB_MAPPING (anime-list-master.xml)
       if not a2_tvdbid:
-        tmp_file         = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-        scudlee_filename = tmp_filename.replace(os.path.basename(tmp_filename), 'ASS-tmp-anime-list-master.xml')
-        try:
-          if os.path.exists(scudlee_filename) and int(time.time() - os.path.getmtime(scudlee_filename)) <= 86400:
-            Log.info("Use existing: '%s'" % scudlee_filename)
-            del tmp_file
-            with open(scudlee_filename, 'r') as scudlee_file:  scudlee_file_content = scudlee_file.read()
-          else:
-            Log.info("Updating: '%s' from '%s'" % (scudlee_filename, ANIDB_TVDB_MAPPING) if os.path.exists(scudlee_filename) else "Creating: "+ scudlee_filename)
-            with open(tmp_filename, 'w') as scudlee_file:
-              scudlee_file_content = urlopen(ANIDB_TVDB_MAPPING, context=SSL_CONTEXT).read()
-              scudlee_file.write( scudlee_file_content )
-            if os.path.exists(scudlee_filename): os.remove(scudlee_filename)
-            os.rename(tmp_filename, scudlee_filename)
-        except Exception as e:  Log.error("Error downloading ScudLee's file from local/GitHub '%s', Exception: '%s'" % (ANIDB_TVDB_MAPPING, e))
-        else:
-          try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(scudlee_file_content), anidb_id)
-          except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
+        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(download_and_read_file(ANIDB_TVDB_MAPPING)), id)
+        except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
           
-      #Build AniDB2 Offsets
+      # Build AniDB2 Offsets
       if a2_tvdbid:
         folder_show    = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
         offset_season  = int(a2_defaulttvdbseason)-1 if a2_defaulttvdbseason and a2_defaulttvdbseason.isdigit() else 0
