@@ -30,7 +30,7 @@ def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore C
 #ssl._create_default_https_context = ssl._create_unverified_context
 SOURCE_IDS             = cic(r'\[((?P<source>(anidb(|2)|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|UC[^\[\]]{22})))\]')
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]      #
-ANIDB_TVDB_ID_OFFSET   = cic(r"\d{1,7}-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
+ANIDB_TVDB_ID_OFFSET   = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
 ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
 ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
@@ -531,7 +531,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if tvdb_mapping and match_season!='s0': 
           season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
           offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
-        folder_show = folder_show.replace("-"+match_season+match_episode+"]", "]")
+        folder_show, id = folder_show.replace("-"+match_season+match_episode+"]", "]"), offset_match.group('id')
         if offset_season!=0 or offset_episode!=0:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
     
     if source.startswith('tvdb'):
