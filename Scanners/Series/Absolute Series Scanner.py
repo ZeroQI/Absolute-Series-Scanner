@@ -267,7 +267,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   if no_parenthesis:                                                                                                                 # delete parts between parenthesis if needed
     while CS_PARENTHESIS.search(string):            string = CS_PARENTHESIS.sub(' ', string)                                         # support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
   while CS_BRACKETS.search(string):                 string = CS_BRACKETS.sub(' ', string)                                            # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
-  if CS_BRACKETS_CHAR.search(string):               string = CS_BRACKETS_CHAR.sub("", string)                                        # remove any remaining '{}[]' characters
+  string = CS_BRACKETS_CHAR.sub("", string)                                                                                          # remove any remaining '{}[]' characters
   if not no_whack:
     for index, word in enumerate(WHACK_PRE_CLEAN):  string = word.sub(" ", string, 1) if WHACK_PRE_CLEAN_RAW[index].lower() in string.lower() else string  # Remove words present in pre-clean list
   string = CS_SPECIAL_EP_PAT.sub(CS_SPECIAL_EP_REP, string)                                                                          # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
