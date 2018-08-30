@@ -142,6 +142,51 @@ if not os.path.isdir(PLEX_ROOT):
                     'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
   PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
 
+### Read in a local file ################################################################################  
+def read_file(local_file):
+  file_content = ""
+  try:
+    with open(local_file, 'r') as file:  file_content = file.read()
+    return file_content
+  except Exception as e:  Log.error("Error reading file '%s', Exception: '%s'" % (local_file, e)); raise e
+
+### Write a local file ##################################################################################
+def write_file(local_file, file_content):
+  try:
+    with open(local_file, 'w') as file:  file.write(file_content)
+  except Exception as e:  Log.error("Error writing file '%s', Exception: '%s'" % (local_file, e)); raise e
+
+### Read in a url #######################################################################################
+def read_url(url, data=None):
+  url_content = ""
+  try:
+    if data is None:  url_content = urlopen(url, context=SSL_CONTEXT).read()
+    else:             url_content = urlopen(url, context=SSL_CONTEXT, data=data).read()
+    return url_content
+  except Exception as e:  Log.error("Error reading url '%s', Exception: '%s'" % (url, e)); raise e
+
+### Download a url into the environment temp directory ##################################################
+def read_cached_url(url, filename=None, max_age_sec=7*24*60*60):
+  if not filename:  filename = os.path.basename(url)
+  tmp_file       = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
+  local_filename = tmp_filename.replace(os.path.basename(tmp_filename), "ASS-tmp-" + filename)
+  try:
+    if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
+      Log.info("URL: '%s', Using cached file: '%s'" % (url, local_filename))
+      del tmp_file
+      file_content = read_file(local_filename)
+    else:
+      Log.info("URL: '%s', Updating cached file: '%s'" % (url, local_filename) if os.path.exists(local_filename) else "URL: '%s', Creating cached file: '%s'" % (url, local_filename))
+      file_content = read_url(url)
+      write_file(tmp_filename, file_content)
+      if os.path.exists(local_filename): os.remove(local_filename)
+      os.rename(tmp_filename, local_filename)
+      if "api.anidb.net" in url:  Log.info("Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
+    return file_content
+  except Exception as e:
+    Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
+    raise e
+
 ### Sanitize string #####################################################################################
 def os_filename_clean_string(string):
   for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:    # remove leftover parenthesis (work with code a bit above)
@@ -173,9 +218,9 @@ PLEX_LIBRARY     = {}
 PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
   Log.info("'X-Plex-Token.id' file present")
-  with open(os.path.join(PLEX_ROOT, "X-Plex-Token.id"), 'r') as token_file:  PLEX_LIBRARY_URL += "?X-Plex-Token=" + token_file.read().strip()
+  PLEX_LIBRARY_URL += "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
 try:
-  library_xml = etree.fromstring(urlopen(PLEX_LIBRARY_URL, context=SSL_CONTEXT).read())
+  library_xml = etree.fromstring(read_url(PLEX_LIBRARY_URL))
   for library in library_xml.iterchildren('Directory'):
     for path in library.iterchildren('Location'):
       PLEX_LIBRARY[path.get("path")] = library.get("title")
@@ -344,30 +389,6 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 
 ### extension, as os.path.splitext ignore leading dots so ".plexignore" file is splitted into ".plexignore" and "" ###
 def extension(file):  return file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()
-  
-### Download a url into the environment temp directory ##################################################
-def download_and_read_file(url, filename=None, max_age_sec=24*60*60):
-  if not filename:  filename = os.path.basename(url)
-  tmp_file       = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-  local_filename = tmp_filename.replace(os.path.basename(tmp_filename), "ASS-tmp-" + filename)
-  try:
-    Log.info("Downloading URL: %s" % url)
-    if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
-      Log.info("Using cached file: '%s'" % local_filename)
-      del tmp_file
-      with open(local_filename, 'r') as scudlee_file:  file_content = scudlee_file.read()
-    else:
-      Log.info("Updating cached file: '%s' from '%s'" % (local_filename, url) if os.path.exists(local_filename) else "Creating: "+ local_filename)
-      with open(tmp_filename, 'w') as scudlee_file:
-        file_content = urlopen(url, context=SSL_CONTEXT).read()
-        scudlee_file.write( file_content )
-      if os.path.exists(local_filename): os.remove(local_filename)
-      os.rename(tmp_filename, local_filename)
-      if "api.anidb.net" in url:  Log.info("Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
-    return file_content
-  except Exception as e:
-    Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
-    raise e
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
@@ -394,14 +415,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if os.path.isfile(file):                                                                 #
       msg.append("# " + file)
       msg.append("".ljust(len(file)+ 2, '-'))
-      with open(file, 'r') as plexignore:                                                    # open file with auto close
-        for pattern in plexignore:                                                           # loop through each line
-          pattern = pattern.strip()                                                          # remove useless spaces at both ends
-          if pattern == '' or pattern.startswith('#'):  continue                             # skip comment and emopy lines, go to next for iteration
-          msg.append("# - " + pattern)
-          if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))        # patterns for this folder and subfolders gets converted and added to files.
-          elif pattern[0]!='/':   plexignore_dirs.append (pattern)                           # patterns for subfolders added to folders
-        msg.append(''.ljust(157, '-'))
+      for pattern in read_file(file):                                                        # loop through each line
+        pattern = pattern.strip()                                                            # remove useless spaces at both ends
+        if pattern == '' or pattern.startswith('#'):  continue                               # skip comment and emopy lines, go to next for iteration
+        msg.append("# - " + pattern)
+        if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))          # patterns for this folder and subfolders gets converted and added to files.
+        elif pattern[0]!='/':   plexignore_dirs.append (pattern)                             # patterns for subfolders added to folders
+      msg.append(''.ljust(157, '-'))
         
   ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
   if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
@@ -509,11 +529,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info('Forced ID (series folder) - source: "{}", id: "{}"'.format(source, id))
     else:
       for file in SOURCE_ID_FILES:
-        if os.path.isfile(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)):
-          with open(os.path.join(root, os.sep.join(list(reversed(reverse_path))), file), 'r') as guid_file:
-            source, id = file.rstrip('.id'), guid_file.read().strip()
-            Log.info('Forced ID (source file) - source: "{}", id: "{}"'.format(source, id))
-            folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
+        file_fullpath = os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)
+        if os.path.isfile(file_fullpath):
+          source, id = file.rstrip('.id'), read_file(file_fullpath).strip()
+          Log.info('Forced ID (source file) - source: "{}", id: "{}"'.format(source, id))
+          folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
           break
       else:
         Log.info('No forced id found in series folder name nor id file')
@@ -526,8 +546,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       offset_match = ANIDB_TVDB_ID_OFFSET.search(id)
       if offset_match:
         match_season, match_episode, offset_season, offset_episode = "", "", 0, 0
-        if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
-        if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
+        if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
+        if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
         if tvdb_mapping and match_season!='s0': 
           season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
           offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
@@ -543,13 +563,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
           else:                    
             Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-            page = urlopen(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}), context=SSL_CONTEXT).read()
+            page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
             HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
           
           #Load series episode pages and group them in one dict
           episodes_json, page = [], 1
           while page not in (None, '', 'null'):
-            episodes_json_page = json.loads(urlopen(Request(TVDB_API2_EPISODES.format(id, page), headers=HEADERS), context=SSL_CONTEXT).read())
+            episodes_json_page = json.loads(read_url(Request(TVDB_API2_EPISODES.format(id, page), headers=HEADERS)))
             episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info('TVDB_API2_EPISODES: {}, links: {}'.format(TVDB_API2_EPISODES.format(id, page), Dict(episodes_json_page, 'links')))
             page = Dict(episodes_json_page, 'links', 'next')
           
@@ -570,11 +590,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       #tvdb4 - Absolute numbering in any season arrangements aka saga mode
       elif source=='tvdb4' and folder_season==None:  #1-folders nothing to do, 2-local, 3-online
         try:
-          url = os.path.join(root, path, "tvdb4.mapping")
-          if   os.path.isfile(url):  tvdb4_mapping_content = open(url).read().strip();  Log.info("TVDB4 local file missing: '%s'" % url)
+          file_fullpath = os.path.join(root, path, "tvdb4.mapping")
+          if os.path.isfile(file_fullpath):
+            tvdb4_mapping_content = read_file(file_fullpath).strip()
+            Log.info("TVDB4 local file: '%s'" % file_fullpath)
           else:
             url                   = ASS_MAPPING_URL
-            tvdb4_anime           = etree.fromstring( urlopen(url, context=SSL_CONTEXT).read().strip() )
+            tvdb4_anime           = etree.fromstring(read_cached_url(url).strip())
             tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % id)[0].text.strip()
           Log.info("TVDB season mode (%s) enabled, tvdb4 mapping url: '%s'" % (id, url))
           for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
@@ -591,7 +613,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         tvdb_guid_url = TVDB_API1_URL % id
         Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (source, tvdb_guid_url))
         try:
-          tvdbanime = etree.fromstring( urlopen(tvdb_guid_url, context=SSL_CONTEXT).read() )
+          tvdbanime = etree.fromstring(read_url(tvdb_guid_url))
           for episode in tvdbanime.xpath('Episode'):
             if episode.xpath('SeasonNumber')[0].text != '0' and episode.xpath('absolute_number')[0].text:
               mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
@@ -610,23 +632,22 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       while dir and os.path.splitdrive(dir)[1] != os.sep:
         scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_LOC)
         if os.path.exists( scudlee_filename_custom ):
-          with open(scudlee_filename_custom, 'r') as scudlee_file:
-            try:     scudlee_mapping_content = etree.fromstring( scudlee_file.read() )
-            except:  Log.info("Invalid local custom mapping file content")
-            else:
-              Log.info("Loading local custom mapping from local: %s" % scudlee_filename_custom)
-              a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, id)
-              break
+          try:     scudlee_mapping_content = etree.fromstring(read_file(scudlee_filename_custom))
+          except:  Log.info("Invalid local custom mapping file content")
+          else:
+            Log.info("Loading local custom mapping from local: %s" % scudlee_filename_custom)
+            a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, id)
+            break
         dir = os.path.dirname(dir)
 
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(download_and_read_file(ANIDB_TVDB_MAPPING_MOD)), id)
+        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD)), id)
         except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
       
       # Online mapping file = ANIDB_TVDB_MAPPING (anime-list-master.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(download_and_read_file(ANIDB_TVDB_MAPPING)), id)
+        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
           
       # Build AniDB2 Offsets
@@ -641,9 +662,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     def getmtime(name):  return os.path.getmtime(os.path.join(root, path, name))
     if source.startswith('youtube') and id.startswith('PL'):
       try:
-        with open(os.path.join(PLEX_ROOT, 'Plug-in Support', 'Preferences', 'com.plexapp.agents.youtube.xml'), 'r') as file:
-          xml = etree.fromstring( file.read() )
-          API_KEY = xml.xpath("/PluginPreferences/yt_apikey")[0].text.strip()
+        xml = etree.fromstring(read_file(os.path.join(PLEX_ROOT, 'Plug-in Support', 'Preferences', 'com.plexapp.agents.youtube.xml')))
+        API_KEY = xml.xpath("/PluginPreferences/yt_apikey")[0].text.strip()
         Log.info("API_KEY: '{}'".format(API_KEY))
       except Exception as e:  Log.info('exception: {}'.format(e)); API_KEY='AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'
       
@@ -652,7 +672,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       while 'nextPageToken' in json_page and iteration <= 20:
         url=YOUTUBE_PLAYLIST_ITEMS.format(id)+( '&pageToken='+Dict(json_full, 'nextPageToken') if Dict(json_page, 'nextPageToken') else '')
         Log.info('[{:>2}] {}'.format(iteration, url))
-        try:                                  json_page = json.loads(urlopen(url, context=SSL_CONTEXT).read())
+        try:                                  json_page = json.loads(read_url(url))
         except Exception as e:                json_page={};  Log.info('exception: {}, url: {}'.format(e, url))
         else:
           if json_full:  json_full['items'].extend(json_page['items'])
@@ -813,7 +833,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           # AniDB xml load (ALWAYS GZIPPED)
           if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
             import StringIO, gzip
-            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO( download_and_read_file(ANIDB_HTTP_API_URL+id, id+".xml") )).read()
+            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO(read_cached_url(ANIDB_HTTP_API_URL+id, id+".xml"))).read()
             if len(anidb_str)<512:  Log.info(anidb_str) 
             anidb_xml = etree.fromstring( anidb_str )
             
