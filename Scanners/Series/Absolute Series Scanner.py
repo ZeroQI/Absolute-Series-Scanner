@@ -613,7 +613,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         tvdb_guid_url = TVDB_API1_URL % id
         Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (source, tvdb_guid_url))
         try:
-          tvdbanime = etree.fromstring(read_url(tvdb_guid_url))
+          tvdbanime = etree.fromstring(read_cached_url(tvdb_guid_url, "tvdb-%s.xml" % id))
           for episode in tvdbanime.xpath('Episode'):
             if episode.xpath('SeasonNumber')[0].text != '0' and episode.xpath('absolute_number')[0].text:
               mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
@@ -833,7 +833,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           # AniDB xml load (ALWAYS GZIPPED)
           if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
             import StringIO, gzip
-            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO(read_cached_url(ANIDB_HTTP_API_URL+id, id+".xml"))).read()
+            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO(read_cached_url(ANIDB_HTTP_API_URL+id, "anidb-%s.xml" % id))).read()
             if len(anidb_str)<512:  Log.info(anidb_str) 
             anidb_xml = etree.fromstring( anidb_str )
             
