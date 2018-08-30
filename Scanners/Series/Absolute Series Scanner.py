@@ -504,8 +504,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     ### Forced guid modes ###
     match = SOURCE_IDS.search(folder_show) or (SOURCE_IDS.search(folder_show) if len(reverse_path)>1 else False)
     if match:
-      if match.groupdict().has_key('yt') and match.group('yt'):  source, id = 'youtube',             match.group('yt')
-      else:                                                      source, id = match.group('source'), match.group('id') 
+      if match.group('yt'):  source, id = 'youtube',             match.group('yt')
+      else:                  source, id = match.group('source'), match.group('id') 
       Log.info('Forced ID (series folder) - source: "{}", id: "{}"'.format(source, id))
     else:
       for file in SOURCE_ID_FILES:
@@ -525,7 +525,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       ### Calculate offset for season or episode ###
       offset_match = ANIDB_TVDB_ID_OFFSET.search(id)
       if offset_match:
-        match_season, match_episode = "", ""
+        match_season, match_episode, offset_season, offset_episode = "", "", 0, 0
         if offset_match.groupdict().has_key('season' ) and offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
         if offset_match.groupdict().has_key('episode') and offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
         if tvdb_mapping and match_season!='s0': 
@@ -773,12 +773,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if '-' in ep and len(filter(None, ep.split('-',1)))==2:                                                                                                     # If separator in string
           if WS_MULTI_EP_SIMPLE.search(ep):                                                                      ep, ep2 = ep.split('-'); break
           if WS_MULTI_EP_COMPLEX.search(ep):                                                                     ep="Skip"; break                                   # if multi ep: make it non digit and exit so regex takes care of it
-          elif path and ( ( (ep in misc_count.keys() and misc_count[ep]==1) and len(files)>=2) or ep not in clean_string(folder_show, True).lower().split() ):
+          elif path and ( ( (ep in misc_count and misc_count[ep]==1) and len(files)>=2) or ep not in clean_string(folder_show, True).lower().split() ):
             ep = ep.split('-',1)[0] if ''.join(letter for letter in ep.split('-',1)[0] if letter.isdigit()) else ep.split('-',1)[1]                                 # otherwise all after separator becomes word#words.insert(words.index(word)+1, "-".join(ep.split("-",1)[1:])) #.insert(len(a), x) is equivalent to a.append(x). #???
           else:                                                                                                  continue
         if WS_SPECIALS.search(ep):                                                                               is_special = True; break                           # Specials go to regex # 's' is ignored as dealt with later in prefix processing # '(t|o)' require a number to make sure a word is not accidently matched
         if ''.join(letter for letter in ep if letter.isdigit())=="":                                             continue                                           # Continue if there are no numbers in the string
-        if path and ep in misc_count.keys() and misc_count[ep]>=2:                                               continue                                           # Continue if not root folder and string found in in any other filename
+        if path and ep in misc_count and misc_count[ep]>=2:                                                      continue                                           # Continue if not root folder and string found in in any other filename
         if ep in clean_string(folder_show, True).split() and clean_string(filename, True).split().count(ep)!=2:  continue                                           # Continue if string is in the folder name & string is not in the filename only twice
         if   ep.isdigit() and len(ep)==4 and (int(ep)< 1900 or folder_season and int(ep[0:2])==folder_season):   season, ep = int(ep[0:2]), ep[2:4]                 # 1206 could be season 12 episode 06  #Get assigned from left ot right
         elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));   continue                                           # take everything after supposed episode number
