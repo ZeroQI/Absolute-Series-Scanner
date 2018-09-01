@@ -545,7 +545,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       ### Calculate offset for season or episode ###
       offset_match = ANIDB_TVDB_ID_OFFSET.search(id)
       if offset_match:
-        match_season, match_episode, offset_season, offset_episode = "", "", 0, 0
+        match_season, match_episode = "", ""
         if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
         if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
         if tvdb_mapping and match_season!='s0': 
@@ -654,8 +654,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if a2_tvdbid:
         folder_show    = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
         offset_season  = int(a2_defaulttvdbseason)-1 if a2_defaulttvdbseason and a2_defaulttvdbseason.isdigit() else 0
-        if 'episodeoffset' in mappingList and mappingList['episodeoffset']:  offset_episode = 0-int(mappingList['episodeoffset'][1:]) if mappingList['episodeoffset'].startswith('-') else int(mappingList['episodeoffset'])
-        else:                                                                offset_episode = 0
+        if 'episodeoffset' in mappingList and mappingList['episodeoffset']:  offset_episode = offset_episode+int(mappingList['episodeoffset'])
       Log.info("".ljust(157, '-'))
     
     ### Youtube ###
