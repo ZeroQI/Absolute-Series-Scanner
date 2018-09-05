@@ -68,6 +68,7 @@ ANIDB_RX        = [                                                             
                     cic(r'(^|(?P<show>.*?)[ _\.\-]+)SP?[ _\.]?(?P<ep>\d{1,2})[ _\.]?(?P<title>.*)$')]                                                                            #  6 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
 ANIDB_OFFSET    = [        0,       100,      150,       200,     400,         0,         0]                                                                                     ###### AniDB Specials episode offset value array
 ANIDB_TYPE      = ['Special', 'Opening', 'Ending', 'Trailer', 'Other', 'Episode', 'Episode']                                                                                     ###### AniDB titles
+COUNTER         = 500
 
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDouble', r'\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder',   ###### Ignored folders
@@ -726,7 +727,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info('misc_words: {}'.format(misc_words))
   
   ### File main loop ###
-  counter = 500
+  global COUNTER
+  COUNTER = 500
   movie_list, AniDB_op = {}, {}
   for file in files:
     show, season, ep2, title, year = folder_show, folder_season if folder_season is not None else 1, None, "", ""
@@ -871,10 +873,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
-    counter = counter+1                                          #                    #
-    #Log.info('counter "{}"'.format(counter))
-    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title or clean_string(filename, False, no_underscore=True), year, "", "")
-  if not files:  Log.info("[no files detected]");  Log.info("")
+    COUNTER = COUNTER+1
+    #Log.info('COUNTER "{}"'.format(COUNTER))
+    add_episode_into_plex(media, file, root, path, show if path else title, 0, COUNTER, title or clean_string(filename, False, no_underscore=True), year, "", "")
+  if not files:  Log.info("[no files detected]")
   if files:  Stack.Scan(path, files, media, dirs)
 
   ### root level manual call to Grouping folders ###
