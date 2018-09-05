@@ -343,21 +343,27 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
+  global COUNTER
+  # Season/Episode Offset
+  if season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   # Mapping List 
   ep_orig        = "s{}e{}{}".format(season, ep, "" if not ep2 or ep==ep2 else "-{}".format(ep2))
   ep_orig_single = "s{}e{}".format  (season, ep)
   ep_orig_padded = "s{:>02d}e{:>03d}{}".format(int(season), int(ep), "    " if not ep2 or ep==ep2 else "-{:>03d}".format(int(ep2)))
   if ep_orig_single in mappingList:
     multi_ep   = 0 if ep_orig == ep_orig_single else ep2-ep
-    season, ep = mappingList[ep_orig_single][1:].split("e")
-    if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep2 = int(ep2) if ep2 and ep2.isdigit() else None
-    season, ep, ep2 = int(season), int(ep), int(ep)+multi_ep if multi_ep else ep2
+    season, ep = mappingList[ep_orig_single][1:].split("e"); season = int(season)
+    if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep, ep2 = int(ep), int(ep2) if ep2 and ep2.isdigit() else None
+    else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
   elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep, season = ep + int (mappingList['s%d' % season][2]), int(mappingList['s%d' % season][3])
-  elif season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
-  
-  if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()  # capitalise if all caps or all lowercase and one space at least
-  if ep<=0:                                                               season, ep, ep2 = 0, 1, 1        # s01e00 and S00e00 => s00e01
-  if not ep2 or ep > ep2:                                                 ep2             = ep             #  make ep2 same as ep for loop and tests
+  elif season > 0:
+    if 'episodeoffset'     in mappingList and mappingList['episodeoffset'    ].isdigit():  ep, ep2 = ep+int(mappingList['episodeoffset']), ep2+int(mappingList['episodeoffset']) if ep2 else None 
+    if 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'].isdigit():  season  = int(mappingList['defaulttvdbseason'])
+
+  if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
+  if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
+  if ep<=0 and season > 0:                                                season, ep, ep2 = 0, 1, 1              # s[1-0]e00 => s00e01
+  if not ep2 or ep > ep2:                                                 ep2             = ep                   #  make ep2 same as ep for loop and tests
   if tvdb_mapping and season > 0 :
     max_ep_num, season_buffer = max(tvdb_mapping.keys()), 0 if unknown_series_length else 1
     if   ep  in tvdb_mapping:               season, ep  = tvdb_mapping[ep ]
@@ -385,16 +391,16 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   mappingList                  = {}
   for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree else []:
     if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
-      mappingList['episodeoffset'] = anime.get('episodeoffset')
+      mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = anime.get('episodeoffset'), anime.get('defaulttvdbseason')
       try:
         for season in anime.iter('mapping'):
           if season.get("offset"):  mappingList[ 's'+season.get("anidbseason")] = [season.get("start"), season.get("end"), season.get("offset"), season.get("tvdbseason")]
           for string2 in filter(None, season.text.split(';')) if season.text else []:  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] 
       except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
-      else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.xpath("name")[0].text, str(mappingList)) )
-      return anime.get('tvdbid'), anime.get('defaulttvdbseason'), mappingList
+      else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.xpath("name")[0].text, str(mappingList)) )
+      return anime.get('tvdbid'), mappingList
   Log.error("anidbTvdbMapping() - No valid tvbdbid: found for anidbid '%s'" % (anidbid))
-  return "", "", {}
+  return "", {}
 
 ### extension, as os.path.splitext ignore leading dots so ".plexignore" file is splitted into ".plexignore" and "" ###
 def extension(file):  return file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()
@@ -630,7 +636,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info("".ljust(157, '-'))
         
     ### forced guid modes - anidb2 (requires ScudLee's mapping xml file) ###
-    a2_tvdbid, a2_defaulttvdbseason, scudlee_mapping_content = "", "", None
+    a2_tvdbid, scudlee_mapping_content = "", None
     if source=="anidb2":
       
       # Local custom mapping file
@@ -642,25 +648,23 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           except:  Log.info("Invalid local custom mapping file content")
           else:
             Log.info("Loading local custom mapping from local: %s" % scudlee_filename_custom)
-            a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, id)
+            a2_tvdbid, mappingList = anidbTvdbMapping(scudlee_mapping_content, id)
             break
         dir = os.path.dirname(dir)
 
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD)), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD)), id)
         except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
       
       # Online mapping file = ANIDB_TVDB_MAPPING (anime-list-master.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
           
       # Build AniDB2 Offsets
       if a2_tvdbid:
         folder_show    = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
-        offset_season  = int(a2_defaulttvdbseason)-1 if a2_defaulttvdbseason and a2_defaulttvdbseason.isdigit() else 0
-        if 'episodeoffset' in mappingList and mappingList['episodeoffset']:  offset_episode = offset_episode+int(mappingList['episodeoffset'])
       Log.info("".ljust(157, '-'))
     
     ### Youtube ###
