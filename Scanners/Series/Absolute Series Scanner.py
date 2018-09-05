@@ -168,20 +168,28 @@ def read_url(url, data=None):
 ### Download a url into the environment temp directory ##################################################
 def read_cached_url(url, filename=None, max_age_sec=7*24*60*60):
   if not filename:  filename = os.path.basename(url)
-  tmp_file       = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-  local_filename = tmp_filename.replace(os.path.basename(tmp_filename), "ASS-tmp-" + filename)
+  local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + filename)
+  file_content   = ""
   try:
     if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
       Log.info("URL: '%s', Using cached file: '%s'" % (url, local_filename))
-      del tmp_file
       file_content = read_file(local_filename)
     else:
       Log.info("URL: '%s', Updating cached file: '%s'" % (url, local_filename) if os.path.exists(local_filename) else "URL: '%s', Creating cached file: '%s'" % (url, local_filename))
-      file_content = read_url(url)
-      write_file(tmp_filename, file_content)
-      if os.path.exists(local_filename): os.remove(local_filename)
-      os.rename(tmp_filename, local_filename)
-      if "api.anidb.net" in url:  Log.info("Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
+      if "api.anidb.net" in url:
+        import StringIO, gzip
+        file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
+        Log.info("Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
+      elif "api.thetvdb.com" in url:
+          if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
+          else:                    
+            Log.info('not authorised, HEADERS: {}'.format(HEADERS))
+            page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
+            HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
+          file_content = read_url(Request(url, headers=HEADERS))
+      else:
+        file_content = read_url(url)
+      write_file(local_filename, file_content)
     return file_content
   except Exception as e:
     Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
@@ -560,16 +568,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if source in ('tvdb2', 'tvdb3'): 
         Log.info("TVDB season mode ({}) enabled".format(source))
         try:
-          if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
-          else:                    
-            Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-            page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
-            HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-          
           #Load series episode pages and group them in one dict
           episodes_json, page = [], 1
           while page not in (None, '', 'null'):
-            episodes_json_page = json.loads(read_url(Request(TVDB_API2_EPISODES.format(id, page), headers=HEADERS)))
+            episodes_json_page = json.loads(read_cached_url(TVDB_API2_EPISODES.format(id, page), "tvdb-%s-%s.json" % (id, page)))
             episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info('TVDB_API2_EPISODES: {}, links: {}'.format(TVDB_API2_EPISODES.format(id, page), Dict(episodes_json_page, 'links')))
             page = Dict(episodes_json_page, 'links', 'next')
           
@@ -831,8 +833,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           season = 0                                                                                                                                  # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
           # AniDB xml load (ALWAYS GZIPPED)
           if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
-            import StringIO, gzip
-            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO(read_cached_url(ANIDB_HTTP_API_URL+id, "anidb-%s.xml" % id))).read()
+            anidb_str = read_cached_url(ANIDB_HTTP_API_URL+id, "anidb-%s.xml" % id)
             if len(anidb_str)<512:  Log.info(anidb_str) 
             anidb_xml = etree.fromstring( anidb_str )
             
