@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <anime-list>
+  <!-- https://github.com/ScudLee/anime-lists/issues/130 -->
+  <anime anidbid="14008" tvdbid="294002" defaulttvdbseason="3" episodeoffset="" tmdbid="" imdbid="">
+    <name>Overlord III</name>
+    <mapping-list>
+      <mapping anidbseason="0" tvdbseason="0" start="1" end="13" offset="26"/>
+    </mapping-list>
+  </anime>
   <!-- https://github.com/ScudLee/anime-lists/issues/136 -->
   <anime anidbid="4691" tvdbid="80005" defaulttvdbseason="1" episodeoffset="" tmdbid="" imdbid="">
     <name>Nodame Cantabile</name>
