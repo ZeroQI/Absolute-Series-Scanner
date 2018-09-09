@@ -68,6 +68,7 @@ ANIDB_RX        = [                                                             
                     cic(r'(^|(?P<show>.*?)[ _\.\-]+)SP?[ _\.]?(?P<ep>\d{1,2})[ _\.]?(?P<title>.*)$')]                                                                            #  6 # 001-099 Specials #'S' moved to the end to make sure season strings are not caught in prev regex
 ANIDB_OFFSET    = [        0,       100,      150,       200,     400,         0,         0]                                                                                     ###### AniDB Specials episode offset value array
 ANIDB_TYPE      = ['Special', 'Opening', 'Ending', 'Trailer', 'Other', 'Episode', 'Episode']                                                                                     ###### AniDB titles
+COUNTER         = 500
 
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDouble', r'\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder',   ###### Ignored folders
@@ -168,20 +169,28 @@ def read_url(url, data=None):
 ### Download a url into the environment temp directory ##################################################
 def read_cached_url(url, filename=None, max_age_sec=7*24*60*60):
   if not filename:  filename = os.path.basename(url)
-  tmp_file       = tempfile.NamedTemporaryFile(delete=False); tmp_filename = tmp_file.name; tmp_file.close()
-  local_filename = tmp_filename.replace(os.path.basename(tmp_filename), "ASS-tmp-" + filename)
+  local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + filename)
+  file_content   = ""
   try:
     if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
       Log.info("URL: '%s', Using cached file: '%s'" % (url, local_filename))
-      del tmp_file
       file_content = read_file(local_filename)
     else:
       Log.info("URL: '%s', Updating cached file: '%s'" % (url, local_filename) if os.path.exists(local_filename) else "URL: '%s', Creating cached file: '%s'" % (url, local_filename))
-      file_content = read_url(url)
-      write_file(tmp_filename, file_content)
-      if os.path.exists(local_filename): os.remove(local_filename)
-      os.rename(tmp_filename, local_filename)
-      if "api.anidb.net" in url:  Log.info("Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
+      if "api.anidb.net" in url:
+        import StringIO, gzip
+        file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
+        Log.info("Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
+      elif "api.thetvdb.com" in url:
+          if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
+          else:                    
+            Log.info('not authorised, HEADERS: {}'.format(HEADERS))
+            page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
+            HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
+          file_content = read_url(Request(url, headers=HEADERS))
+      else:
+        file_content = read_url(url)
+      write_file(local_filename, file_content)
     return file_content
   except Exception as e:
     Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
@@ -334,21 +343,27 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
+  global COUNTER
+  # Season/Episode Offset
+  if season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
   # Mapping List 
   ep_orig        = "s{}e{}{}".format(season, ep, "" if not ep2 or ep==ep2 else "-{}".format(ep2))
   ep_orig_single = "s{}e{}".format  (season, ep)
   ep_orig_padded = "s{:>02d}e{:>03d}{}".format(int(season), int(ep), "    " if not ep2 or ep==ep2 else "-{:>03d}".format(int(ep2)))
   if ep_orig_single in mappingList:
     multi_ep   = 0 if ep_orig == ep_orig_single else ep2-ep
-    season, ep = mappingList[ep_orig_single][1:].split("e")
-    if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep2 = int(ep2) if ep2 and ep2.isdigit() else None
-    season, ep, ep2 = int(season), int(ep), int(ep)+multi_ep if multi_ep else ep2
+    season, ep = mappingList[ep_orig_single][1:].split("e"); season = int(season)
+    if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep, ep2 = int(ep), int(ep2) if ep2 and ep2.isdigit() else None
+    else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
   elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep, season = ep + int (mappingList['s%d' % season][2]), int(mappingList['s%d' % season][3])
-  elif season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
-  
-  if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()  # capitalise if all caps or all lowercase and one space at least
-  if ep<=0:                                                               season, ep, ep2 = 0, 1, 1        # s01e00 and S00e00 => s00e01
-  if not ep2 or ep > ep2:                                                 ep2             = ep             #  make ep2 same as ep for loop and tests
+  elif season > 0:
+    if 'episodeoffset'     in mappingList and mappingList['episodeoffset'    ].isdigit():  ep, ep2 = ep+int(mappingList['episodeoffset']), ep2+int(mappingList['episodeoffset']) if ep2 else None 
+    if 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'].isdigit():  season  = int(mappingList['defaulttvdbseason'])
+
+  if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
+  if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
+  if ep<=0 and season > 0:                                                season, ep, ep2 = 0, 1, 1              # s[1-0]e00 => s00e01
+  if not ep2 or ep > ep2:                                                 ep2             = ep                   #  make ep2 same as ep for loop and tests
   if tvdb_mapping and season > 0 :
     max_ep_num, season_buffer = max(tvdb_mapping.keys()), 0 if unknown_series_length else 1
     if   ep  in tvdb_mapping:               season, ep  = tvdb_mapping[ep ]
@@ -376,16 +391,16 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   mappingList                  = {}
   for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree else []:
     if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
-      mappingList['episodeoffset'] = anime.get('episodeoffset')
+      mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = anime.get('episodeoffset'), anime.get('defaulttvdbseason')
       try:
         for season in anime.iter('mapping'):
           if season.get("offset"):  mappingList[ 's'+season.get("anidbseason")] = [season.get("start"), season.get("end"), season.get("offset"), season.get("tvdbseason")]
           for string2 in filter(None, season.text.split(';')) if season.text else []:  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] 
       except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
-      else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', defaulttvdbseason: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.get('defaulttvdbseason'), anime.xpath("name")[0].text, str(mappingList)) )
-      return anime.get('tvdbid'), anime.get('defaulttvdbseason'), mappingList
+      else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.xpath("name")[0].text, str(mappingList)) )
+      return anime.get('tvdbid'), mappingList
   Log.error("anidbTvdbMapping() - No valid tvbdbid: found for anidbid '%s'" % (anidbid))
-  return "", "", {}
+  return "", {}
 
 ### extension, as os.path.splitext ignore leading dots so ".plexignore" file is splitted into ".plexignore" and "" ###
 def extension(file):  return file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()
@@ -447,7 +462,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### Create *.filelist.log file ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
+  Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
   Log.info("".ljust(157, '='))
 
@@ -498,13 +514,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   if not files:
     Log.info("[no files detected]")
     if path:  return  #Grouping folders could call subfolders so cannot return if path is empty aka for root call
-  Log.info("")
-  
+  Log.info("".ljust(157, '='))
+  Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
+
   ### Logging to *.scanner.log ###
   recent = os.stat(LOG_FILE[:-len('.filelist.log')]+'.scanner.log').st_mtime + 3600 > time.time() if os.path.exists(LOG_FILE[:-len('.filelist.log')]+'.scanner.log') else False
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if recent else 'w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}', {} scan date: {}".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or []), "Manual" if kwargs else "Plex", time.strftime("%Y-%m-%d %H:%M:%S")))
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
+  Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("".ljust(157, '='))
   
   #### Folders, Forced ids, grouping folders ###
@@ -560,16 +578,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if source in ('tvdb2', 'tvdb3'): 
         Log.info("TVDB season mode ({}) enabled".format(source))
         try:
-          if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
-          else:                    
-            Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-            page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
-            HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-          
           #Load series episode pages and group them in one dict
           episodes_json, page = [], 1
           while page not in (None, '', 'null'):
-            episodes_json_page = json.loads(read_url(Request(TVDB_API2_EPISODES.format(id, page), headers=HEADERS)))
+            episodes_json_page = json.loads(read_cached_url(TVDB_API2_EPISODES.format(id, page), "tvdb-%s-%s.json" % (id, page)))
             episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info('TVDB_API2_EPISODES: {}, links: {}'.format(TVDB_API2_EPISODES.format(id, page), Dict(episodes_json_page, 'links')))
             page = Dict(episodes_json_page, 'links', 'next')
           
@@ -624,7 +636,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info("".ljust(157, '-'))
         
     ### forced guid modes - anidb2 (requires ScudLee's mapping xml file) ###
-    a2_tvdbid, a2_defaulttvdbseason, scudlee_mapping_content = "", "", None
+    a2_tvdbid, scudlee_mapping_content = "", None
     if source=="anidb2":
       
       # Local custom mapping file
@@ -636,25 +648,23 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           except:  Log.info("Invalid local custom mapping file content")
           else:
             Log.info("Loading local custom mapping from local: %s" % scudlee_filename_custom)
-            a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(scudlee_mapping_content, id)
+            a2_tvdbid, mappingList = anidbTvdbMapping(scudlee_mapping_content, id)
             break
         dir = os.path.dirname(dir)
 
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD)), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD)), id)
         except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
       
       # Online mapping file = ANIDB_TVDB_MAPPING (anime-list-master.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, a2_defaulttvdbseason, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
           
       # Build AniDB2 Offsets
       if a2_tvdbid:
         folder_show    = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
-        offset_season  = int(a2_defaulttvdbseason)-1 if a2_defaulttvdbseason and a2_defaulttvdbseason.isdigit() else 0
-        if 'episodeoffset' in mappingList and mappingList['episodeoffset']:  offset_episode = offset_episode+int(mappingList['episodeoffset'])
       Log.info("".ljust(157, '-'))
     
     ### Youtube ###
@@ -721,7 +731,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info('misc_words: {}'.format(misc_words))
   
   ### File main loop ###
-  counter = 500
+  global COUNTER
+  COUNTER = 500
   movie_list, AniDB_op = {}, {}
   for file in files:
     show, season, ep2, title, year = folder_show, folder_season if folder_season is not None else 1, None, "", ""
@@ -831,8 +842,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           season = 0                                                                                                                                  # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
           # AniDB xml load (ALWAYS GZIPPED)
           if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
-            import StringIO, gzip
-            anidb_str = gzip.GzipFile(fileobj=StringIO.StringIO(read_cached_url(ANIDB_HTTP_API_URL+id, "anidb-%s.xml" % id))).read()
+            anidb_str = read_cached_url(ANIDB_HTTP_API_URL+id, "anidb-%s.xml" % id)
             if len(anidb_str)<512:  Log.info(anidb_str) 
             anidb_xml = etree.fromstring( anidb_str )
             
@@ -867,10 +877,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     
     ### Ep not found, adding as season 0 episode 501+ ###
     if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
-    counter = counter+1                                          #                    #
-    #Log.info('counter "{}"'.format(counter))
-    add_episode_into_plex(media, file, root, path, show if path else title, 0, counter, title or clean_string(filename, False, no_underscore=True), year, "", "")
-  if not files:  Log.info("[no files detected]");  Log.info("")
+    COUNTER = COUNTER+1
+    #Log.info('COUNTER "{}"'.format(COUNTER))
+    add_episode_into_plex(media, file, root, path, show if path else title, 0, COUNTER, title or clean_string(filename, False, no_underscore=True), year, "", "")
+  if not files:  Log.info("[no files detected]")
   if files:  Stack.Scan(path, files, media, dirs)
 
   ### root level manual call to Grouping folders ###
@@ -921,6 +931,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
+
+  Log.info("".ljust(157, '='))
+  Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
 ### Command line scanner call ###
 if __name__ == '__main__':  #command line
