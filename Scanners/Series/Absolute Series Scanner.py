@@ -415,7 +415,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if os.path.isfile(file):                                                                 #
       msg.append("# " + file)
       msg.append("".ljust(len(file)+ 2, '-'))
-      for pattern in read_file(file):                                                        # loop through each line
+      file_content = read_file(file).splitlines()
+      for pattern in file_content:                                                        # loop through each line
         pattern = pattern.strip()                                                            # remove useless spaces at both ends
         if pattern == '' or pattern.startswith('#'):  continue                               # skip comment and emopy lines, go to next for iteration
         msg.append("# - " + pattern)
