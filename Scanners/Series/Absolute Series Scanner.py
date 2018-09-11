@@ -634,20 +634,19 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info("".ljust(157, '-'))
         
     ### forced guid modes - anidb2 (requires ScudLee's mapping xml file) ###
-    a2_tvdbid, scudlee_mapping_content = "", None
     if source=="anidb2":
+      a2_tvdbid = ""
       
       # Local custom mapping file
       dir = os.path.join(root, path)
       while dir and os.path.splitdrive(dir)[1] != os.sep:
         scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_LOC)
         if os.path.exists( scudlee_filename_custom ):
-          try:     scudlee_mapping_content = etree.fromstring(read_file(scudlee_filename_custom))
-          except:  Log.info("Invalid local custom mapping file content")
-          else:
+          try:
             Log.info("Loading local custom mapping from local: %s" % scudlee_filename_custom)
-            a2_tvdbid, mappingList = anidbTvdbMapping(scudlee_mapping_content, id)
-            break
+            a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_file(scudlee_filename_custom)), id)
+          except:  Log.info("Invalid local custom mapping file content")
+          else:    break
         dir = os.path.dirname(dir)
 
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
@@ -660,9 +659,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
           
-      # Build AniDB2 Offsets
-      if a2_tvdbid:
-        folder_show    = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
+      # Set folder_show from successful mapping
+      if a2_tvdbid:  folder_show = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
       Log.info("".ljust(157, '-'))
     
     ### Youtube ###
