@@ -430,8 +430,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if os.path.isfile(file):                                                                 #
       msg.append("# " + file)
       msg.append("".ljust(len(file)+ 2, '-'))
-      file_content = read_file(file).splitlines()
-      for pattern in file_content:                                                        # loop through each line
+      for pattern in filter(None, read_file(file).splitlines()):                             # loop through each line
         pattern = pattern.strip()                                                            # remove useless spaces at both ends
         if pattern == '' or pattern.startswith('#'):  continue                               # skip comment and emopy lines, go to next for iteration
         msg.append("# - " + pattern)
@@ -612,7 +611,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             tvdb4_anime           = etree.fromstring(read_cached_url(url).strip())
             tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % id)[0].text.strip()
           Log.info("TVDB season mode (%s) enabled, tvdb4 mapping url: '%s'" % (id, url))
-          for line in filter(None, tvdb4_mapping_content.replace("\r","\n").split("\n")):
+          for line in filter(None, tvdb4_mapping_content.splitlines()):
             season = line.strip().split("|")
             for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
             if "(unknown length)" in season[3].lower(): unknown_series_length = True
