@@ -771,9 +771,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     for rx in DATE_RX:
       match = rx.search(ep)
       if match:
-        year  = int(match.group('year' ))
-        month = int(match.group('month'))
-        day   = int(match.group('day'  ))
+        year, month, day = int(match.group('year')), int(match.group('month')), int(match.group('day'))
         Log.info('year: {}, mont: {}, day: {}, ep: {}, file: {}'.format(year, month, day, ep, file))
         continue
         # Use the year as the season.
