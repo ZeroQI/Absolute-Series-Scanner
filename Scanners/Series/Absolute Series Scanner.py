@@ -388,8 +388,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
 
 ### Get the tvdbId from the AnimeId #####################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
-  mappingList                  = {}
-  for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree else []:
+  mappingList = {}
+  for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree is not None else []:
     if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
       mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = anime.get('episodeoffset'), anime.get('defaulttvdbseason')
       try:
