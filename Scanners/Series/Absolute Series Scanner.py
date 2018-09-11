@@ -527,7 +527,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
   #### Folders, Forced ids, grouping folders ###
   folder_show  = reverse_path[0] if reverse_path else ""
-  misc_words, misc_count = [], {}
+  array, misc_words, misc_count = (), [], {}
   tvdb_mapping, unknown_series_length = {}, False
   mappingList, offset_season, offset_episode = {}, 0, 0
   
@@ -704,9 +704,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info('files_per_date: {}'.format(files_per_date))
       
     ### Build misc variable to check numbers in titles ###
-    misc, misc_words, misc_count = "|", [], {} # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
-    array = ()
-    length=0
+    misc, length = "|", 0  # put all filenames in folder in a string to count if ep number valid or present in multiple files ###clean_string was true ###
     files.sort(key=natural_sort_key)
     if folder_show:
       array = (folder_show, clean_string(folder_show), clean_string(folder_show, True), clean_string(folder_show, no_dash=True), clean_string(folder_show, True, no_dash=True))
