@@ -605,20 +605,18 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           file_fullpath = os.path.join(root, path, "tvdb4.mapping")
           if os.path.isfile(file_fullpath):
             tvdb4_mapping_content = read_file(file_fullpath).strip()
-            Log.info("TVDB4 local file: '%s'" % file_fullpath)
+            Log.info("TVDB season mode (%s) enabled, tvdb4 mapping file: '%s'" % (id, file_fullpath))
           else:
-            url                   = ASS_MAPPING_URL
-            tvdb4_anime           = etree.fromstring(read_cached_url(url).strip())
-            tvdb4_mapping_content = tvdb4_anime.xpath("/tvdb4entries/anime[@tvdbid='%s']" % id)[0].text.strip()
-          Log.info("TVDB season mode (%s) enabled, tvdb4 mapping url: '%s'" % (id, url))
+            tvdb4_mapping_content = etree.fromstring(read_cached_url(ASS_MAPPING_URL).strip()).xpath("/tvdb4entries/anime[@tvdbid='%s']" % id)[0].text.strip()
+            Log.info("TVDB season mode (%s) enabled, tvdb4 mapping url: '%s'" % (id, ASS_MAPPING_URL))
           for line in filter(None, tvdb4_mapping_content.splitlines()):
             season = line.strip().split("|")
             for absolute_episode in range(int(season[1]), int(season[2])+1):  tvdb_mapping[absolute_episode] = (int(season[0]), int(absolute_episode)) 
             if "(unknown length)" in season[3].lower(): unknown_series_length = True
         except Exception as e:
-          tvdb_mapping, tvdb4_mapping_content = {}, "" 
+          tvdb_mapping = {}
           if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % id)
-          else:                                    Log.error("Error opening url '%s', Exception: '%s'" % (url, e))
+          else:                                    Log.error("Error opening tvdb4 mapping, Exception: '%s'" % e)
         
       #tvdb5 - 'Star wars: Clone attack' chronological order, might benefit other series
       elif source=='tvdb5': ##S
