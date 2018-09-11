@@ -420,9 +420,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     # Process Subdirectory pattern from previous folder(s)
     for entry in plexignore_dirs[:] if index>0 else []:                                      #
       plexignore_dirs.remove(entry)                                                          #  
-      if entry.startswith(dir+'/'):                                                          #
-        pattern = entry.replace(dir+'/', '')                                                 # msg.append("bazinga, pattern.count('/'): '{}', index+1: '{}', len(path_split): '{}', entry: '{}', dir: '{}', pattern: '{}'".format(pattern.count('/'), index+1, len(path_split), entry, dir, pattern))
-        if pattern.count('/')>0:        plexignore_dirs.append(pattern)                      # subfolder match so remove subfolder name and carry on
+      if entry.startswith(dir+os.sep):                                                       #
+        pattern = entry.replace(dir+os.sep, '')                                              # msg.append("bazinga, pattern.count('/'): '{}', index+1: '{}', len(path_split): '{}', entry: '{}', dir: '{}', pattern: '{}'".format(pattern.count('/'), index+1, len(path_split), entry, dir, pattern))
+        if pattern.count(os.sep)>0:     plexignore_dirs.append(pattern)                      # subfolder match so remove subfolder name and carry on
         elif index+1==len(path_split):  plexignore_files.append(fnmatch.translate(pattern));  msg.append("# - pattern: '{}'".format(pattern)) #Only keep pattern for named folder, not subfolders
     
     # Process file patterns
@@ -435,8 +435,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         pattern = pattern.strip()                                                            # remove useless spaces at both ends
         if pattern == '' or pattern.startswith('#'):  continue                               # skip comment and emopy lines, go to next for iteration
         msg.append("# - " + pattern)
-        if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))          # patterns for this folder and subfolders gets converted and added to files.
-        elif pattern[0]!='/':   plexignore_dirs.append (pattern)                             # patterns for subfolders added to folders
+        if os.sep not in pattern:  plexignore_files.append(fnmatch.translate(pattern))       # patterns for this folder and subfolders gets converted and added to files.
+        elif pattern[0]!=os.sep:   plexignore_dirs.append (pattern)                          # patterns for subfolders added to folders
       msg.append(''.ljust(157, '-'))
         
   ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
