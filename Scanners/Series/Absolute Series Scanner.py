@@ -179,7 +179,7 @@ def read_cached_url(url, filename=None, max_age_sec=6*24*60*60):
       if "api.anidb.net" in url:
         import StringIO, gzip
         file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
-        Log.info("Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
+        Log.info("-- Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
       elif "api.thetvdb.com" in url:
           if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
           else:                    
@@ -395,10 +395,10 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
         for season in anime.iter('mapping'):
           if season.get("offset"):  mappingList[ 's'+season.get("anidbseason")] = [season.get("start"), season.get("end"), season.get("offset"), season.get("tvdbseason")]
           for string2 in filter(None, season.text.split(';')) if season.text else []:  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] 
-      except: Log.error("anidbTvdbMapping() - mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
-      else:   Log.info("anidbTvdbMapping() - anidb: '%s', tvbdid: '%s', name: '%s', mappingList: '%s'" % (anidbid, anime.get('tvdbid'), anime.xpath("name")[0].text, str(mappingList)) )
+      except: Log.error("mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
+      else:   Log.info("anidb: '%s', tvbdid: '%s', name: '%s', mappingList: %s" % (anidbid, anime.get('tvdbid'), anime.xpath("name")[0].text, str(mappingList)) )
       return anime.get('tvdbid'), mappingList
-  Log.error("anidbTvdbMapping() - No valid tvbdbid: found for anidbid '%s'" % (anidbid))
+  Log.error("-- No valid tvbdbid found for anidbid '%s'" % (anidbid))
   return "", {}
 
 ### extension, as os.path.splitext ignore leading dots so ".plexignore" file is splitted into ".plexignore" and "" ###
@@ -531,7 +531,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   mappingList, offset_season, offset_episode = {}, 0, 0
   
   if path:
-    
     #### Grouping folders skip , unless single series folder ###
     if not kwargs and len(reverse_path)>1 and not season_folder_first:  
       parent_dir = os.path.dirname(os.path.join(root, path))
@@ -556,9 +555,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         Log.info('No forced id found in series folder name nor id file')
         source, id = "", ""
         folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+    Log.info("".ljust(157, '-'))
     
     if source.startswith('tvdb') or source.startswith('anidb'):
-
       ### Calculate offset for season or episode ###
       offset_match = ANIDB_TVDB_ID_OFFSET.search(id)
       if offset_match:
@@ -569,10 +568,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
           offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
         folder_show, id = folder_show.replace("-"+match_season+match_episode+"]", "]"), offset_match.group('id')
-        if offset_season!=0 or offset_episode!=0:  Log.info("offset_season = %s, offset_episode = %s" % (offset_season, offset_episode))
+        if offset_season!=0 or offset_episode!=0:
+          Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
+          Log.info("".ljust(157, '-'))
     
     if source.startswith('tvdb'):
-      
       #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
       if source in ('tvdb2', 'tvdb3'): 
         Log.info("TVDB season mode ({}) enabled".format(source))
@@ -595,7 +595,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             if Dict(sorted_episodes_json[index], 'airedSeason')>0: #continue
               absolute_number = absolute_number + 1
               tvdb_mapping[int(absolute_number)] = (Dict(sorted_episodes_json[index], 'airedSeason'), Dict(sorted_episodes_json[index], 'airedEpisodeNumber') if source =='tvdb2' else int(absolute_number))
-
         except Exception as e:  Log.error("json loading issue, Exception: %s" % e)
 
       #tvdb4 - Absolute numbering in any season arrangements aka saga mode
@@ -626,7 +625,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           for episode in tvdbanime.xpath('Episode'):
             if episode.xpath('SeasonNumber')[0].text != '0' and episode.xpath('absolute_number')[0].text:
               mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
-          Log.info("mappingList: '%s'" % str(mappingList))
+          Log.info("mappingList: %s" % str(mappingList))
         except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
       
       if tvdb_mapping:  Log.info("unknown_series_length: %s, tvdb_mapping: %s (showing changing seasons/episodes only)" % (unknown_series_length, str({x:tvdb_mapping[x] for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)})))  #[for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)]
@@ -722,6 +721,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       misc_words.sort(key=len, reverse=True)  # Sort by string length so largest words are taken out first so smaller words that are in the larger words are not an issue
       Log.info('misc_count: {}'.format(misc_count))
       Log.info('misc_words: {}'.format(misc_words))
+      Log.info("".ljust(157, '-'))
   
   ### File main loop ###
   global COUNTER
