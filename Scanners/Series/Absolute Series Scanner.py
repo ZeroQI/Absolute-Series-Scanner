@@ -167,10 +167,9 @@ def read_url(url, data=None):
   except Exception as e:  Log.error("Error reading url '%s', Exception: '%s'" % (url, e)); raise e
 
 ### Download a url into the environment temp directory ##################################################
-def read_cached_url(url, filename=None, max_age_sec=7*24*60*60):
+def read_cached_url(url, filename=None, max_age_sec=6*24*60*60):
   if not filename:  filename = os.path.basename(url)
-  local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + filename)
-  file_content   = ""
+  local_filename, file_content = os.path.join(tempfile.gettempdir(), "ASS-" + filename), ""
   try:
     if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
       Log.info("URL: '%s', Using cached file: '%s'" % (url, local_filename))
