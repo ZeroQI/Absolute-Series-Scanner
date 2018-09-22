@@ -28,8 +28,8 @@ def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore C
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 #ssl._create_default_https_context = ssl._create_unverified_context
-SOURCE_IDS             = cic(r'\[((?P<source>(anidb(|2|3)|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|UC[^\[\]]{22})))\]')
-SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]      #
+SOURCE_IDS             = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|UC[^\[\]]{22})))\]')
+SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]      #
 ANIDB_TVDB_ID_OFFSET   = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
 ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
 ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
@@ -631,8 +631,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if tvdb_mapping:  Log.info("unknown_series_length: %s, tvdb_mapping: %s (showing changing seasons/episodes only)" % (unknown_series_length, str({x:tvdb_mapping[x] for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)})))  #[for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)]
       Log.info("".ljust(157, '-'))
         
-    ### forced guid modes - anidb2/anidb3 (requires ScudLee's mapping xml file) ###
-    if source in ["anidb2", "anidb3"]:
+    ### forced guid modes - anidb2/3/4 (requires ScudLee's mapping xml file) ###
+    if source in ["anidb2", "anidb3", "anidb4"]:
       a2_tvdbid = ""
       Log.info("AniDB mode (%s) enabled, loading mapping xml file (Local->ASS mod->ScudLee master)" % source)
       
@@ -647,7 +647,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           except:  Log.info("Invalid local custom mapping file content")
           else:    break
         dir = os.path.dirname(dir)
-
+      
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
         try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD)), id)
@@ -657,21 +657,21 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if not a2_tvdbid:
         try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
-          
+      
       # Set folder_show from successful mapping
       if a2_tvdbid:  folder_show = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
       Log.info("".ljust(157, '-'))
     
-    if source=="anidb3":
-      a3_tvdbid, season_max_map, relations_map, max_season, new_season, new_episode = "", {}, {}, '0', '', ''
+    if source in ["anidb3", "anidb4"]:
+      a3_tvdbid, season_map, relations_map, max_season, new_season, new_episode = "", {}, {}, 0, '', ''
       Log.info("AniDB mode (%s) enabled, loading season and relation mapping for all associated tvdbid entries" % source)
-      if 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'] != '0':
+      if source=="anidb3" and 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'] != '0':
         Log.info("defaulttvdbseason: '%s', is not season 0 so using unmodified mapping" % mappingList['defaulttvdbseason'])
       else:
         try:
           AniDB_TVDB_mapping_tree     = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING))      # Load ScudLee mapping
           AniDB_TVDB_mapping_tree_mod = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD))  # Load ASS mod mapping
-
+          
           # Override/Add ASS mod entries into ScudLee mapping
           mod_anidbids, mod_anidbid_elem = [], []
           for anime in AniDB_TVDB_mapping_tree_mod.iter('anime'):                              # Store the anidbid & element entries
@@ -686,45 +686,54 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           # Find each entry that has the same tvdbid listing and store its max season#
           for anime1 in AniDB_TVDB_mapping_tree.iter('anime'):
             if anime1.get("anidbid") == id and anime1.get('tvdbid').isdigit():
-              a3_tvdbid = anime1.get('tvdbid')                                             # Set the tvdbid found from the anidbid
-              for anime2 in AniDB_TVDB_mapping_tree.iter('anime'):                         # Load all anidbid's using the same tvdbid with their max tvdb season#
+              a3_tvdbid = anime1.get('tvdbid')                                                 # Set the tvdbid found from the anidbid
+              for anime2 in AniDB_TVDB_mapping_tree.iter('anime'):                             # Load all anidbid's using the same tvdbid with their max tvdb season#
                 if anime2.get('tvdbid') == a3_tvdbid:
-                  season_max_map[anime2.get("anidbid")] = anime2.get('defaulttvdbseason')  # Set the max season to the 'defaulttvdbseason'
+                  season_map[anime2.get("anidbid")] = {'min': anime2.get('defaulttvdbseason'), 'max': anime2.get('defaulttvdbseason')}  # Set the min/max season to the 'defaulttvdbseason'
                   for season in anime2.iter('mapping'):
-                    if season_max_map[anime2.get("anidbid")].isdigit() and int(season_max_map[anime2.get("anidbid")]) < int(season.get("tvdbseason")): 
-                      season_max_map[anime2.get("anidbid")] = season.get("tvdbseason")     # Update the max season to the largest 'tvdbseason' season seen in 'mapping-list'
+                    if season_map[anime2.get("anidbid")]['max'].isdigit() and int(season_map[anime2.get("anidbid")]['max']) < int(season.get("tvdbseason")): 
+                      season_map[anime2.get("anidbid")]['max'] = season.get("tvdbseason")      # Update the max season to the largest 'tvdbseason' season seen in 'mapping-list'
           
           # Process if entries are found for the anidbid with a valid tvdbid
-          if len(season_max_map) > 0:
+          if len(season_map) > 0:
             for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, "tvdb-%s.xml" % a3_tvdbid)).xpath('Episode'):  # Get the max season number from TVDB API
-              if int(episode.xpath('SeasonNumber')[0].text) > int(max_season):  max_season = episode.xpath('SeasonNumber')[0].text
-            for entry in season_max_map:                                                   # Set the max season for a series with 'defaulttvdbseason' == 'a'
-              if season_max_map[entry] == 'a':  season_max_map[entry] = max_season
-            for entry in season_max_map:                                                   # Generate a relations map using all anidbid's using the same tvdbid stored earlier
+              if int(episode.xpath('SeasonNumber')[0].text) > max_season:  max_season = int(episode.xpath('SeasonNumber')[0].text)
+            for entry in season_map:                                                           # Set the min/max season for a series with 'defaulttvdbseason' == 'a' or convert to ints
+              season_map[entry] = {'min': 1, 'max': max_season} if season_map[entry]['min'] == 'a' else {'min': int(season_map[entry]['min']), 'max': int(season_map[entry]['max'])}
+            for entry in season_map:                                                           # Generate a relations map using all anidbid's using the same tvdbid stored earlier
               relations_map[entry] = {}
               for anime in etree.fromstring(read_cached_url(ANIDB_HTTP_API_URL+entry, "anidb-%s.xml" % entry)).xpath('/anime/relatedanime/anime'):
                 if anime.get('type') in relations_map[entry]: relations_map[entry][anime.get('type')].append(anime.get('id'))  # Additional anidbid with an existing relation type
                 else:                                         relations_map[entry][anime.get('type')] = [anime.get('id')]      # First anidbid with a new relation type
             def get_prequel_info(prequel_id):
               #Log.info("get_prequel_info(prequel_id) = %s" % prequel_id)
-              if season_max_map[prequel_id] == '0' and 'Prequel' in relations_map[prequel_id] and relations_map[prequel_id]['Prequel'][0] in season_max_map:
-                a, b = get_prequel_info(relations_map[prequel_id]['Prequel'][0])             # Recurively go down the tree following prequels
-                return (a, b + 100) if int(a) < int(max_season) else ("%d" % (int(a)+1), 0)  # If the prequel is < max season, add 100 to the episode number offset: Else, add it into the next new season at episode 0
-              if season_max_map[prequel_id] == '0':                    return ('', '')                          # Root prequel is a special so leave as special
-              elif int(season_max_map[prequel_id]) < int(max_season):  return (season_max_map[prequel_id], 100) # Root prequel season is < max season so add to the end of the Prequel season
-              else:                                                    return ("%d" % (int(max_season)+1), 0)   # Root prequel season is >= max season so add to the season after max
-            if season_max_map[id] == '0' and 'Prequel' in relations_map[id] and relations_map[id]['Prequel'][0] in season_max_map:
-              new_season, new_episode = get_prequel_info(relations_map[id]['Prequel'][0])    # Recurively go down the tree following prequels
+              if source=="anidb3":
+                if season_map[prequel_id]['min'] == 0 and 'Prequel' in relations_map[prequel_id] and relations_map[prequel_id]['Prequel'][0] in season_map:
+                  a, b = get_prequel_info(relations_map[prequel_id]['Prequel'][0])             # Recurively go down the tree following prequels
+                  return (a, b+100) if a < max_season else (a+1, 0)  # If the prequel is < max season, add 100 to the episode number offset: Else, add it into the next new season at episode 0
+                if season_map[prequel_id]['min'] == 0:            return ('', '')                              # Root prequel is a special so leave mapping alone as special
+                elif season_map[prequel_id]['max'] < max_season:  return (season_map[prequel_id]['max'], 100)  # Root prequel season is < max season so add to the end of the Prequel season
+                else:                                             return (max_season+1, 0)                     # Root prequel season is >= max season so add to the season after max
+              if source=="anidb4":
+                if season_map[prequel_id]['min'] != 1 and 'Prequel' in relations_map[prequel_id] and relations_map[prequel_id]['Prequel'][0] in season_map:
+                  a, b = get_prequel_info(relations_map[prequel_id]['Prequel'][0])             # Recurively go down the tree following prequels
+                  return (a+1+season_map[prequel_id]['max']-season_map[prequel_id]['min'], 0)  # Add 1 to the season number and start at episode 0
+                return (2, 0) if season_map[prequel_id]['min'] == 1 else ('', '')              # Root prequel is season 1 so start counting up. Else was a sequel of specials only so leave mapping alone
+            if source=="anidb3":
+              if season_map[id]['min'] == 0 and 'Prequel' in relations_map[id] and relations_map[id]['Prequel'][0] in season_map:
+                new_season, new_episode = get_prequel_info(relations_map[id]['Prequel'][0])    # Recurively go down the tree following prequels to a TVDB season non-0 AniDB prequel 
+            if source=="anidb4":
+              if 'Prequel' in relations_map[id] and relations_map[id]['Prequel'][0] in season_map:
+                new_season, new_episode = get_prequel_info(relations_map[id]['Prequel'][0])    # Recurively go down the tree following prequels to the TVDB season 1 AniDB prequel 
           
-          #Log.info("season_max_map: %s" % str(season_max_map))
-          #Log.info("relations_map: %s"  % str(relations_map))
-          if new_season != '':  # A new season & eppisode offset has been assigned 
-            mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = "%d" % new_episode, new_season
-            for key in mappingList.keys():  #Clear out possible mapping list entries for season 1 to leave the default season and episode offset to be applied while keeping season 0 mapping
+          #Log.info("season_map: %s" % str(season_map)) #Log.info("relations_map: %s" % str(relations_map))
+          if str(new_season).isdigit():  # A new season & eppisode offset has been assigned 
+            mappingList['defaulttvdbseason'], mappingList['episodeoffset'] = "%d" % new_season, "%d" % new_episode
+            for key in mappingList.keys():  # Clear out possible mapping list entries for season 1 to leave the default season and episode offset to be applied while keeping season 0 mapping
               if key.startswith("s1"): del mappingList[key]
             Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', mappingList: %s" % (id, a3_tvdbid, max_season, str(mappingList)))
-          else: Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', no season 1+ prequel found so using unmodified mapping" % (id, a3_tvdbid, max_season))
-          folder_show = clean_string(folder_show)+" [tvdb-%s]" % a3_tvdbid
+          else: Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', no override set so using unmodified mapping" % (id, a3_tvdbid, max_season))
+          folder_show = clean_string(folder_show) + " [tvdb%s-%s]" % ('' if source=="anidb3" else "6", a3_tvdbid)
         except Exception as e:  Log.error("Error parsing content, Exception: '%s'" % e)
       Log.info("".ljust(157, '-'))
 
