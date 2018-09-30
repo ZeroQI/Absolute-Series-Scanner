@@ -663,7 +663,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     
     ### Youtube ###
     def getmtime(name):  return os.path.getmtime(os.path.join(root, path, name))
-    if source.startswith('youtube') and id.startswith('PL'):
+    if source.startswith('youtube') and len(id)>2 and id[0:2] in ('PL', 'UU', 'FL', 'LP', 'RD'):
       try:
         xml = etree.fromstring(read_file(os.path.join(PLEX_ROOT, 'Plug-in Support', 'Preferences', 'com.plexapp.agents.youtube.xml')))
         API_KEY = xml.xpath("/PluginPreferences/yt_apikey")[0].text.strip()
@@ -690,14 +690,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
             VideoID = video['snippet']['resourceId']['videoId']
             if VideoID and VideoID in file.decode('utf-8'):
-              #Log.info('[{}] rank: {:>3} in file: {}'.format(VideoID, rank, file))
+              Log.info('[{}] rank: {:>3} in file: {}'.format(VideoID, rank, file))
               add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
               break
           else:  Log.info('None of video IDs found in filename: {}'.format(file))
         return  
       else:  Log.info('json_full is empty')
     files_per_date = []
-    if id.startswith('UC'):
+    if id.startswith('UC') or id.startswith('HC'):
       files_per_date = sorted(os.listdir(os.path.join(root, path)), key=getmtime, reverse=True)
       Log.info('files_per_date: {}'.format(files_per_date))
       
