@@ -672,7 +672,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       
       YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key='+API_KEY
       iteration, json_full, json_page = 0, {}, {'nextPageToken': None}
-      while 'nextPageToken' in json_page and iteration <= 20:
+      while 'nextPageToken' in json_page and iteration <= 50:
         url=YOUTUBE_PLAYLIST_ITEMS.format(id)+( '&pageToken='+Dict(json_page, 'nextPageToken') if Dict(json_page, 'nextPageToken') else '')
         Log.info('[{:>2}] {}'.format(iteration, url))
         try:                                  json_page = json.loads(read_url(url))
