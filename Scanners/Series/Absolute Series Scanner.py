@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 ###### library  ########################################################### Functions, Constants #####
 import sys                                                           # getdefaultencoding, getfilesystemencoding, platform, argv
@@ -28,7 +28,7 @@ def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore C
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 #ssl._create_default_https_context = ssl._create_unverified_context
-SOURCE_IDS             = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|UC[^\[\]]{22})))\]')
+SOURCE_IDS             = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]      #
 ANIDB_TVDB_ID_OFFSET   = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
 ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
@@ -739,7 +739,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
     ### Youtube ###
     def getmtime(name):  return os.path.getmtime(os.path.join(root, path, name))
-    if source.startswith('youtube') and id.startswith('PL'):
+    if source.startswith('youtube') and len(id)>2 and id[0:2] in ('PL', 'UU', 'FL', 'LP', 'RD'):
       try:
         xml = etree.fromstring(read_file(os.path.join(PLEX_ROOT, 'Plug-in Support', 'Preferences', 'com.plexapp.agents.youtube.xml')))
         API_KEY = xml.xpath("/PluginPreferences/yt_apikey")[0].text.strip()
@@ -749,7 +749,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key='+API_KEY
       iteration, json_full, json_page = 0, {}, {'nextPageToken': None}
       while 'nextPageToken' in json_page and iteration <= 20:
-        url=YOUTUBE_PLAYLIST_ITEMS.format(id)+( '&pageToken='+Dict(json_full, 'nextPageToken') if Dict(json_page, 'nextPageToken') else '')
+        url=YOUTUBE_PLAYLIST_ITEMS.format(id)+( '&pageToken='+Dict(json_page, 'nextPageToken') if Dict(json_page, 'nextPageToken') else '')
         Log.info('[{:>2}] {}'.format(iteration, url))
         try:                                  json_page = json.loads(read_url(url))
         except Exception as e:                json_page={};  Log.info('exception: {}, url: {}'.format(e, url))
@@ -766,14 +766,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
             VideoID = video['snippet']['resourceId']['videoId']
             if VideoID and VideoID in file.decode('utf-8'):
-              #Log.info('[{}] rank: {:>3} in file: {}'.format(VideoID, rank, file))
+              Log.info('[{}] rank: {:>3} in file: {}'.format(VideoID, rank, file))
               add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
               break
           else:  Log.info('None of video IDs found in filename: {}'.format(file))
         return  
       else:  Log.info('json_full is empty')
     files_per_date = []
-    if id.startswith('UC'):
+    if id.startswith('UC') or id.startswith('HC'):
       files_per_date = sorted(os.listdir(os.path.join(root, path)), key=getmtime, reverse=True)
       Log.info('files_per_date: {}'.format(files_per_date))
       
