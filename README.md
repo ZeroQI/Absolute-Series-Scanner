@@ -164,6 +164,20 @@ You can specify the guid to use the following way:
             <LI>Sword Art Online Extra Edition             [anidb2-10022]</LI>
             <LI>Gekijouban Sword Art Online: Ordinal Scale [anidb2-11681]</LI>
         </UL></TD> </TR>
+        <TR> <TD> anidb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Uses ScudLee mapping to map the AniDB series to TVDB entries BUT overrides the mapping for TVDB season 0 entries and puts them in AniDB relational order by appending to existing seasons or adding new seasons at after the last TVDB season</TD>
+        <UL><LI>Date a Live                          [anidb3-8808]  => TVDB s1   </LI>
+            <LI>Date a Live: Date to Date            [anidb3-9734]  => TVDB s0e1 -> s1e101</LI>
+            <LI>Date a Live II                       [anidb3-9935]  => TVDB s2   </LI>
+            <LI>Date a Live II: Kurumi Star Festival [anidb3-10568] => TVDB s0e2 -> s2e101</LI>
+            <LI>TBD (prep entry in TVDB)                            => TVDB s3   </LI>
+        </UL></TD> </TR>
+        <TR> <TD> anidb4     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Uses ScudLee mapping to map the AniDB series to TVDB entries BUT overrides the mapping for TVDB seasons entries and puts them in AniDB relational order by inserting new seasons and pushing later TVDB seasons back</TD>
+        <UL><LI>Date a Live                          [anidb3-8808]  => TVDB s1   -> s1</LI>
+            <LI>Date a Live: Date to Date            [anidb3-9734]  => TVDB s0e1 -> s2</LI>
+            <LI>Date a Live II                       [anidb3-9935]  => TVDB s2   -> s3</LI>
+            <LI>Date a Live II: Kurumi Star Festival [anidb3-10568] => TVDB s0e2 -> s4</LI>
+            <LI>TBD (prep entry in TVDB)                            => TVDB s3   -> s5</LI>
+        </UL></TD> </TR>
         <TR> <TD> tvdb     </TD> <TD> Season                   </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Force the tvdbid, series will follow tvdb episode numbering convention including specials
         <UL>
           <LI>Sword Art Online [tvdb-259640]</LI>
@@ -191,7 +205,9 @@ You can specify the guid to use the following way:
 
 ##### Advanced modes
 For when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
-- " [anidb2-xxxxx]" will find the season & eposide offset defiend in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
+- " [anidb2-xxxxx]" will find the season & eposide offset defined in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
+- " [anidb3-xxxxx]" will find the season & eposide offset defined in the ScudLee file and add into Plex ?????
+- " [anidb4-xxxxx]" will find the season & eposide offset defined in the ScudLee file and add into Plex ????
 - " [tvdb/2/3/4-xxxxx-sY]" episode numbers found in the files are left alone and added to season Y
 - " [tvdb/2/3/4-xxxxx-eZ]" episode numbers found in the files are adjusted (epNum+Z-1)
 - " [tvdb/2/3/4-xxxxx-sYeZ]" episode numbers found in the files are adjusted (epNum+Z-1) and added to season Y, Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
