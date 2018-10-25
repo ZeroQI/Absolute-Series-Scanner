@@ -214,9 +214,10 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
 - **!!IMPORTANT NOTES!!**
   - When defining your modes on your folders:
     - If you don't use the same mode or compatible modes for all separate folders for a series, you will run into issues.
-      - "anidb2", "tvdb" & "tvdb2" will work together
+      - "anidb2", "anidb3", "tvdb" & "tvdb2" will work together
     - You might have to manually merge Plex series together if "anidb2"/"tvdb2" or "tvdb"/"tvdb2" are both used.
-    - "anidb2"/"tvdb" should automatically merge (but Plex is not perfect so you still might have to manually merge)
+    - "anidb2"/"anidb3"/"tvdb" should automatically merge (but Plex is not perfect so you still might have to manually merge)
+    - "anidb4" will not work correctly with any other modes so all folders of a series will have to have this mode
     - "tvdb3" will not work correctly with any other modes so all folders of a series will have to have this mode
     - "tvdb4" will not work correctly with any other modes so all folders of a series will have to have this mode
 
