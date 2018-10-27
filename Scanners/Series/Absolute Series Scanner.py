@@ -533,9 +533,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   if path:
     #### Grouping folders skip , unless single series folder ###
     if not kwargs and len(reverse_path)>1 and not season_folder_first:  
-      parent_dir = os.path.dirname(os.path.join(root, path))
-      parent_dir_nb= len([file for dir in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, dir))])
-      if parent_dir_nb>1:  return  #Grouping folders Plex call, but mess after one season folder is ok
+      parent_dir    = os.path.dirname(os.path.join(root, path))
+      parent_dir_nb = len([file for dir in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, dir))])
+      if parent_dir_nb>1 and "Plex Versions" not in parent_dir and "Optimized for " not in parent_dir:  return  #Grouping folders Plex call, but mess after one season folder is ok
   
     ### Forced guid modes ###
     match = SOURCE_IDS.search(folder_show) or (SOURCE_IDS.search(folder_show) if len(reverse_path)>1 else False)
