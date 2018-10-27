@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 ###### library  ########################################################### Functions, Constants #####
 import sys                                                           # getdefaultencoding, getfilesystemencoding, platform, argv
@@ -195,6 +195,12 @@ def read_cached_url(url, filename=None, max_age_sec=6*24*60*60):
     Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
     raise e
 
+def winapi_path(dos_path, encoding=None): # https://stackoverflow.com/questions/36219317/pathname-too-long-to-open/36219497
+    if (not isinstance(dos_path, unicode) and encoding is not None):  dos_path = dos_path.decode(encoding)
+    path = os.path.abspath(dos_path)
+    if path.startswith(u"\\\\"):  return u"\\\\?\\UNC\\" + path[2:]
+    return u"\\\\?\\" + path
+                                
 ### Sanitize string #####################################################################################
 def os_filename_clean_string(string):
   for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:    # remove leftover parenthesis (work with code a bit above)
@@ -207,9 +213,13 @@ def set_logging(foldername='', filename='', backup_count=0, format='%(message)s'
   CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
   if foldername: CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
   if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
-  
+
   filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
   LOG_FILE = os.path.join(CACHE_PATH, filename)
+  if os.sep=="\\":  LOG_FILE = winapi_path(LOG_FILE) # Bypass DOS path MAX_PATH limitation
+
+  mode = 'a' if os.path.exists(LOG_FILE) and os.stat(LOG_FILE).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
+
   if handler: Log.removeHandler(handler)
   if backup_count:  handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=10*1024*1024, backupCount=backup_count)
   else:             handler = logging.FileHandler                 (LOG_FILE, mode=mode)
@@ -517,8 +527,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
   ### Logging to *.scanner.log ###
-  recent = os.stat(LOG_FILE[:-len('.filelist.log')]+'.scanner.log').st_mtime + 3600 > time.time() if os.path.exists(LOG_FILE[:-len('.filelist.log')]+'.scanner.log') else False
-  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='a' if recent else 'w') #if recent or kwargs else 'w'
+  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
