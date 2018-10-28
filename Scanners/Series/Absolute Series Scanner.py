@@ -216,7 +216,7 @@ def set_logging(foldername='', filename='', backup_count=0, format='%(message)s'
 
   filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
   LOG_FILE = os.path.join(CACHE_PATH, filename)
-  if os.sep=="\\":  LOG_FILE = winapi_path(LOG_FILE) # Bypass DOS path MAX_PATH limitation
+  if os.sep=="\\":  LOG_FILE = winapi_path(LOG_FILE, 'utf-8') # Bypass DOS path MAX_PATH limitation
 
   mode = 'a' if os.path.exists(LOG_FILE) and os.stat(LOG_FILE).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
 
