@@ -823,7 +823,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if disc:  filename = ep
       else:
         filename = os.path.splitext(os.path.basename(file))[0]
-        encodeASCII(filename)
+        filename = encodeASCII(filename)
       
       ### remove cleansed folder name from cleansed filename or keywords otherwise ###
       if path and run_count == 1:
