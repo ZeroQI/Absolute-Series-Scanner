@@ -699,6 +699,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               for anime2 in AniDB_TVDB_mapping_tree.iter('anime'):                             # Load all anidbid's using the same tvdbid with their max tvdb season#
                 if anime2.get('tvdbid') == a3_tvdbid:
                   season_map[anime2.get("anidbid")] = {'min': anime2.get('defaulttvdbseason'), 'max': anime2.get('defaulttvdbseason')}  # Set the min/max season to the 'defaulttvdbseason'
+                  if source=="anidb4" and anime2.get('episodeoffset').isdigit() and int(anime2.get('episodeoffset'))>0:  season_map[anime2.get("anidbid")] = {'min': '0', 'max': '0'}  # Force series as special if not starting the TVDB season
                   for season in anime2.iter('mapping'):
                     if season_map[anime2.get("anidbid")]['max'].isdigit() and int(season_map[anime2.get("anidbid")]['max']) < int(season.get("tvdbseason")): 
                       season_map[anime2.get("anidbid")]['max'] = season.get("tvdbseason")      # Update the max season to the largest 'tvdbseason' season seen in 'mapping-list'
@@ -738,7 +739,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           
           #Log.info("season_map: %s" % str(season_map)) #Log.info("relations_map: %s" % str(relations_map))
           if str(new_season).isdigit():  # A new season & eppisode offset has been assigned 
-            mappingList['defaulttvdbseason'], mappingList['episodeoffset'] = "%d" % new_season, "%d" % new_episode
+            mappingList['defaulttvdbseason'], mappingList['episodeoffset'] = str(new_season), str(new_episode)
             for key in mappingList.keys():  # Clear out possible mapping list entries for season 1 to leave the default season and episode offset to be applied while keeping season 0 mapping
               if key.startswith("s1"): del mappingList[key]
             Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', mappingList: %s" % (id, a3_tvdbid, max_season, str(mappingList)))
