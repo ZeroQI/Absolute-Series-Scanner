@@ -456,7 +456,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
         reverse_path.remove(folder)                 # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         break
-    if not kwargs and len(reverse_path)>1 and path.count(os.sep):  return       #if not grouping folder scan, skip grouping folder
+    if not kwargs and len(reverse_path)>1 and path.count(os.sep) and "Plex Versions" not in path and "Optimized for " not in path:  return       #if not grouping folder scan, skip grouping folder
   
   ### Create *.filelist.log file ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
