@@ -180,6 +180,12 @@ def read_cached_url(url, filename=None, max_age_sec=6*24*60*60):
         import StringIO, gzip
         file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
         Log.info("-- Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
+        if len(file_content)<512:
+          Log.info("-- Bad response received: %s" % file_content)
+          if os.path.exists(local_filename):
+            file_content = read_file(local_filename)
+            Log.info("-- Loading previously cached file")
+          return file_content  # return the bad response or old loaded file and don't save
       elif "api.thetvdb.com" in url:
           if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
           else:                    
@@ -921,7 +927,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             # AniDB xml load (ALWAYS GZIPPED)
             if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
               anidb_str = read_cached_url(ANIDB_HTTP_API_URL+id, "anidb-%s.xml" % id)
-              if len(anidb_str)<512:  Log.info(anidb_str) 
               anidb_xml = etree.fromstring( anidb_str )
               
               #Build AniDB_op
