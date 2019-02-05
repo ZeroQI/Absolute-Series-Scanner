@@ -472,7 +472,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
         reverse_path.remove(folder)                 # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         break
-    if not kwargs and len(reverse_path)>1 and path.count(os.sep) and "Plex Versions" not in path and "Optimized for " not in path:  return       #if not grouping folder scan, skip grouping folder
+    if not kwargs and len(reverse_path)>1 and path.count(os.sep) and "Plex Versions" not in path and "Optimized for " not in path and len(dirs)>1:
+      Log.info("grouping folder? dirs: {}, reverse_path: {} [return]".format(dirs, reverse_path))
+      return       #if not grouping folder scan, skip grouping folder
   
   ### Create *.filelist.log file ###
   set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
@@ -527,8 +529,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
       
   if not files:
-    Log.info("[no files detected]")
-    if path:  return  #Grouping folders could call subfolders so cannot return if path is empty aka for root call
+    if path and len(dirs)!=1:
+      Log.info("[no files detected] Grouping folder skip as >1 folder [return]")
+      return  #Grouping folders could call subfolders so cannot return if path is empty aka for root call
+    else: Log.info("[no files detected] continuing, single folder")
   Log.info("".ljust(157, '='))
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
@@ -546,11 +550,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   mappingList, offset_season, offset_episode = {}, 0, 0
   
   if path:
-    #### Grouping folders skip , unless single series folder ###
+    ### Grouping folders skip , unless single series folder ###
     if not kwargs and len(reverse_path)>1 and not season_folder_first:  
       parent_dir    = os.path.dirname(os.path.join(root, path))
       parent_dir_nb = len([file for dir in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, dir))])
-      if parent_dir_nb>1 and "Plex Versions" not in parent_dir and "Optimized for " not in parent_dir:  return  #Grouping folders Plex call, but mess after one season folder is ok
+      if parent_dir_nb>1 and "Plex Versions" not in parent_dir and "Optimized for " not in parent_dir and len(dirs)!=1:  
+        Log.info("### Grouping folders skip , unless single series folder ### [return]")
+        return  #Grouping folders Plex call, but mess after one season folder is ok
   
     ### Forced guid modes ###
     match = SOURCE_IDS.search(folder_show) or (SOURCE_IDS.search(folder_show) if len(reverse_path)>1 else False)
@@ -787,6 +793,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
               break
           else:  Log.info('None of video IDs found in filename: {}'.format(file))
+        Log.info('[return]')
         return  
       else:  Log.info('json_full is empty')
     files_per_date = []
@@ -968,7 +975,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       run_count, standard_holding, unknown_holding = run_count + 1, [], []
     else:  break  #Break out and don't try a second run as not all files are unknown or there are no files
   for entry in standard_holding + unknown_holding:  add_episode_into_plex(media, *entry)
-  if not files:  Log.info("[no files detected]")
+  if not files:  Log.info("[no files detected] #1")
   if files:  Stack.Scan(path, files, media, dirs)
 
   ### root level manual call to Grouping folders ###
