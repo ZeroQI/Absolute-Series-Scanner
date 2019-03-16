@@ -465,7 +465,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   folder_season, season_folder_first = None, False
   for folder in reverse_path[:-1]:                  # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
     for rx in SEASON_RX:                            # in anime, more specials folders than season folders, so doing it first
-      match = rx.search(folder)                     #
+      match = rx.search(clean_string(folder))       #
       if match:                                     # get season number but Skip last entry in seasons (skipped folders)
         if rx!=SEASON_RX[-1]: 
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
@@ -996,8 +996,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         ### Extract season and transparent folder to reduce complexity and use folder as serie name ###
         reverse_path, season_folder_first = list(reversed(Utils.SplitPath(path))), False
         for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-          for rx in SEASON_RX :                          # in anime, more specials folders than season folders, so doing it first
-            if rx.search(folder):                        # get season number but Skip last entry in seasons (skipped folders)
+          for rx in SEASON_RX:                           # in anime, more specials folders than season folders, so doing it first
+            if rx.search(clean_string(folder)):          # get season number but Skip last entry in seasons (skipped folders)
               reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
               if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
               break
