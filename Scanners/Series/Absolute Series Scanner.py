@@ -727,6 +727,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               for anime in etree.fromstring(read_cached_url(ANIDB_HTTP_API_URL+entry, "anidb-%s.xml" % entry)).xpath('/anime/relatedanime/anime'):
                 if anime.get('type') in relations_map[entry]: relations_map[entry][anime.get('type')].append(anime.get('id'))  # Additional anidbid with an existing relation type
                 else:                                         relations_map[entry][anime.get('type')] = [anime.get('id')]      # First anidbid with a new relation type
+            #### Note: Below must match hama (variable names are different but logic matches) ####
             def get_prequel_info(prequel_id):
               #Log.info("get_prequel_info(prequel_id) = %s" % prequel_id)
               if source=="anidb3":
