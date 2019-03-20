@@ -399,6 +399,25 @@ On linux (and Mac OS-X), permissions issues could prevent the scanner execution,
 - Mac OS-X" the logs don't go in default logs folder but a user folder: '/Users/renaldobryan/Library/Application Support/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log'. 
 - "Feral Hosting Seedbox" error "IOError: (2, 'No such file or directory', '/media/sdt1/jusjtk91/Library/Application Support/Plex Media Server/Logs/Plex Media Scanner (custom ASS).log')".
 
+Using the latest binhex plexpass docker returns: https://github.com/binhex/arch-plex
+<PRE><CODE>
+Error in Python: Looking up module:
+Traceback (most recent call last):
+File "/config/Plex Media Server/Scanners/Series/Absolute Series Scanner.py", line 20, in 
+from lxml import etree # fromstring
+ImportError: libexslt.so.0: cannot open shared object file: No such file or directory
+</CODE></PRE>
+
+Using the latest binhex plexstandard docker returns: https://github.com/binhex/arch-plex
+<PRE><CODE>
+Error in Python: Looking up module:
+Traceback (most recent call last):
+File "/config/Plex Media Server/Scanners/Series/Absolute Series Scanner.py", line 20, in 
+from lxml import etree # fromstring
+ImportError: libexslt.so.0: cannot open shared object file: No such file or directory
+</CODE></PRE>
+Solution: Opening the dockers terminal and running "pacman -S libxslt --noconfirm" then rebooting the docker fixes the issue.
+
 ### Task list
 - [ ] Support Media stubs .Disc files ? http://kodi.wiki/view/Media_stubs
 - [ ] Shall i write a Movie scanner using the same code? The Plex default movie scanner does an good job i believe ?
