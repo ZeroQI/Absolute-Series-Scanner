@@ -40,6 +40,9 @@ Any information missing or wrong inthere in Plex is an Agent issue, refer to the
 - Versatile file format support. if a logical numbering format isn't supported let me know (no episode number in brackets or parenthesis though, that's moronic)
 - put per-series logs ('xxx.filelist.log' and 'xxx.scanner.log' in /Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs).
 
+## Requirements
+-  Library libxslt (XML stylesheet transformation library) installed
+
 ## File Naming Conventions / Numbering
 This scanner supports absolute and season numbering, but here are two references for guidelines
 - Naming convention for Plex: https://support.plex.tv/hc/en-us/sections/200059498-Naming-and-Organizing-TV-Shows
