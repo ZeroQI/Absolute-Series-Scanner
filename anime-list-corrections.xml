@@ -1,17 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <anime-list>
-  <!-- https://github.com/ScudLee/anime-lists/issues/130 -->
-  <anime anidbid="14008" tvdbid="294002" defaulttvdbseason="3" episodeoffset="" tmdbid="" imdbid="">
-    <name>Overlord III</name>
-    <mapping-list>
-      <mapping anidbseason="0" tvdbseason="0" start="1" end="13" offset="26"/>
-    </mapping-list>
-  </anime>
-  <!-- https://github.com/ScudLee/anime-lists/issues/146 -->
-  <anime anidbid="11681" tvdbid="259640" defaulttvdbseason="0" episodeoffset="21" tmdbid="" imdbid="tt5544384">
-    <name>Gekijouban Sword Art Online: Ordinal Scale</name>
-  </anime>
-  <anime anidbid="13493" tvdbid="259640" defaulttvdbseason="3" episodeoffset="" tmdbid="" imdbid="">
-    <name>Sword Art Online: Alicization</name>
-  </anime>
 </anime-list>
