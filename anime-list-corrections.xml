@@ -1,3 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <anime-list>
+<!-- https://github.com/ScudLee/anime-lists/issues/264 -->
+  <anime anidbid="14627" tvdbid="359645" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
+    <name>Fairy Gone</name>
+  </anime>
+  <anime anidbid="13893" tvdbid="354154" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
+    <name>Carole & Tuesday</name>
+  </anime>
+  <anime anidbid="13869" tvdbid="357047" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
+    <name>Sarazanmai</name>
+  </anime>
+  <anime anidbid="14107" tvdbid="348545" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
+    <name>Kimetsu no Yaiba</name>
+  </anime>
+  <anime anidbid="14234" tvdbid="358181" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
+    <name>Kono Oto Tomare!</name>
+  </anime>
+  <anime anidbid="14234" tvdbid="358181" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
+    <name>Kono Oto Tomare!</name>
+  </anime>
+  <anime anidbid="14245" tvdbid="360761" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
+    <name>Mix Meisei Story</name>
+  </anime>
 </anime-list>
