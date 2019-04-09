@@ -208,9 +208,9 @@ You can specify the guid to use the following way:
 
 ##### Advanced modes
 For when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
-- " [anidb2-xxxxx]" will find the season & eposide offset defined in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
-- " [anidb3-xxxxx]" will find the season & eposide offset defined in the ScudLee file and add into Plex ?????
-- " [anidb4-xxxxx]" will find the season & eposide offset defined in the ScudLee file and add into Plex ????
+- " [anidb2-xxxxx]" will find the season & episode offset defined in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
+- " [anidb3-xxxxx]" will find the season & episode offset defined in the ScudLee file and add into Plex ?????
+- " [anidb4-xxxxx]" will find the season & episode offset defined in the ScudLee file and add into Plex ????
 - " [tvdb/2/3/4-xxxxx-sY]" episode numbers found in the files are left alone and added to season Y
 - " [tvdb/2/3/4-xxxxx-eZ]" episode numbers found in the files are adjusted (epNum+Z-1)
 - " [tvdb/2/3/4-xxxxx-sYeZ]" episode numbers found in the files are adjusted (epNum+Z-1) and added to season Y, Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
