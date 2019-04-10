@@ -4,9 +4,6 @@
   <anime anidbid="14627" tvdbid="359645" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
     <name>Fairy Gone</name>
   </anime>
-  <anime anidbid="13893" tvdbid="354154" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
-    <name>Carole and Tuesday</name>
-  </anime>
   <anime anidbid="13869" tvdbid="357047" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
     <name>Sarazanmai</name>
   </anime>
@@ -16,13 +13,13 @@
   <anime anidbid="14234" tvdbid="358181" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
     <name>Kono Oto Tomare!</name>
   </anime>
-  <anime anidbid="14490" tvdbid="357488" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
-    <name>Fruits Basket (2019)</name>
-  </anime>
   <anime anidbid="14245" tvdbid="360761" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
     <name>Mix Meisei Story</name>
   </anime>
   <anime anidbid="14493" tvdbid="360445" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
     <name>RobiHachi</name>
+  </anime>
+  <anime anidbid="14435" tvdbid="357471" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
+    <name>Isekai Quartet</name>
   </anime>
 </anime-list>
