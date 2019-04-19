@@ -1,16 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
 <anime-list>
-<!-- https://github.com/ScudLee/anime-lists/issues/264 -->
-  <anime anidbid="14245" tvdbid="360761" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
-    <name>Mix Meisei Story</name>
-  </anime>
-  <anime anidbid="14493" tvdbid="360445" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
-    <name>RobiHachi</name>
-  </anime>
-  <anime anidbid="14435" tvdbid="357471" defaulttvdbseason="" episodeoffset="" tmdbid="" imdbid="">
-    <name>Isekai Quartet</name>
-  </anime>
-  <anime anidbid="14230" tvdbid="305075" defaulttvdbseason="2" episodeoffset="" tmdbid="" imdbid="">
-    <name>Bungo Stray Dogs 3</name>
-  </anime>
-</anime-list>
