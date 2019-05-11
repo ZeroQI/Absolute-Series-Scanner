@@ -325,6 +325,11 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
       i += char_len
   return original_string if asian_language else ''.join(string)
 
+def filter_chars(string):
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ( "), (")", " ) ")]:    # remove leftover parenthesis (work with code a bit above)
+    if char in string:                              string = string.replace(char, subst)                                             # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
+  return string
+
 ### Allow to display ints even if equal to None at times ################################################
 CS_PARENTHESIS     = com(r"\([^\(\)]*?\)")
 CS_BRACKETS_CHAR   = com(r"(\[|\]|\{|\})")
@@ -343,8 +348,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   if not no_whack:
     for index, word in enumerate(WHACK_PRE_CLEAN):  string = word.sub(" ", string, 1) if WHACK_PRE_CLEAN_RAW[index].lower() in string.lower() else string  # Remove words present in pre-clean list
   string = CS_SPECIAL_EP_PAT.sub(CS_SPECIAL_EP_REP, string)                                                                          # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
-  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ( "), (")", " ) ")]:    # remove leftover parenthesis (work with code a bit above)
-    if char in string:                              string = string.replace(char, subst)                                             # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
+  string = filter_chars(string)
   string = string.replace("DoNoTfIlTeR", '.')                                                                                        # Replace 13DoNoTfIlTeR5 into 13.5 back
   string = CS_CRC_HEX.sub(' ', string)                                                                                               # CRCs removal
   string = CS_VIDEO_SIZE.sub(' ', string)                                                                                            # Video size ratio removal
@@ -547,7 +551,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("".ljust(157, '='))
   
   #### Folders, Forced ids, grouping folders ###
-  folder_show  = reverse_path[0] if reverse_path else ""
+  folder_show  = filter_chars(reverse_path[0]) if reverse_path else ""
   array, misc_words, misc_count = (), [], {}
   tvdb_mapping, unknown_series_length = {}, False
   mappingList, offset_season, offset_episode = {}, 0, 0
