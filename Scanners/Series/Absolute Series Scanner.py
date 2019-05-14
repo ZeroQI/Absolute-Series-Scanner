@@ -889,7 +889,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             
       ### Word search for ep number in scrubbed title ###
       words, loop_completed, rx, is_special = list(filter(None, clean_string(ep, False, no_underscore=True).split())), False, "Word Search", False                    #
-      for word in words:                                                                                                                                              #
+      for word in words if path else []:                                                                                                                              #
         ep=word.lower().strip('-.')                                                                                                                                   # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
         if WS_VERSION.search(ep):                                                                                  ep=ep[:-2].rstrip('-.')                            #
         if not ep:                                                                                                 continue                                           #
