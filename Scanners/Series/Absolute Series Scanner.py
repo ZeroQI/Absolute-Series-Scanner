@@ -923,7 +923,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         continue
 
       ### Check for Regex: SERIES_RX + ANIDB_RX ###
-      ep = filename.lower()
+      ep = filename
       for rx in ANIDB_RX if is_special else (SERIES_RX + ANIDB_RX):
         match = rx.search(ep)
         if match:
