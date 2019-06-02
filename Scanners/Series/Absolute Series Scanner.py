@@ -727,11 +727,17 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           
           # Process if entries are found for the anidbid with a valid tvdbid
           if len(season_map) > 0:
-            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, "tvdb-%s.xml" % a3_tvdbid)).xpath('Episode'):  # Get the max season number from TVDB API
+            # Get the max season number from TVDB API
+            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, "tvdb-%s.xml" % a3_tvdbid)).xpath('Episode'):
               if int(episode.xpath('SeasonNumber')[0].text) > max_season:  max_season = int(episode.xpath('SeasonNumber')[0].text)
-            for entry in season_map:                                                           # Set the min/max season for a series with 'defaulttvdbseason' == 'a' or convert to ints
-              season_map[entry] = {'min': 1, 'max': max_season} if season_map[entry]['min'] == 'a' else {'min': int(season_map[entry]['min']), 'max': int(season_map[entry]['max'])}
-            for entry in season_map:                                                           # Generate a relations map using all anidbid's using the same tvdbid stored earlier
+            # Set the min/max season to ints & update max value to the next min-1 to handle multi tvdb season anidb entries
+            map_min_values = [int(season_map[x]['min']) for x in season_map for y in season_map[x] if y=='min']
+            for entry in season_map:
+              entry_min, entry_max = int(season_map[entry]['min']), int(season_map[entry]['max'])
+              while entry_min!=0 and entry_max+1 not in map_min_values + [max_season+1]:  entry_max += 1
+              season_map[entry] = {'min': entry_min, 'max': entry_max}
+            # Generate a relations map using all anidbid's using the same tvdbid stored earlier
+            for entry in season_map:
               relations_map[entry] = {}
               for anime in etree.fromstring(read_cached_url(ANIDB_HTTP_API_URL+entry, "anidb-%s.xml" % entry)).xpath('/anime/relatedanime/anime'):
                 if anime.get('type') in relations_map[entry]: relations_map[entry][anime.get('type')].append(anime.get('id'))  # Additional anidbid with an existing relation type
@@ -764,8 +770,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             mappingList['defaulttvdbseason'], mappingList['episodeoffset'] = str(new_season), str(new_episode)
             for key in mappingList.keys():  # Clear out possible mapping list entries for season 1 to leave the default season and episode offset to be applied while keeping season 0 mapping
               if key.startswith("s1"): del mappingList[key]
-            Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', mappingList: %s" % (id, a3_tvdbid, max_season, str(mappingList)))
-          else: Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', no override set so using unmodified mapping" % (id, a3_tvdbid, max_season))
+            Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', mappingList: %s, season_map: %s" % (id, a3_tvdbid, max_season, str(mappingList), str(season_map)))
+          else: Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', season_map: %s, no override set so using unmodified mapping" % (id, a3_tvdbid, max_season, str(season_map)))
           folder_show = clean_string(folder_show) + " [tvdb%s-%s]" % ('' if source=="anidb3" else "6", a3_tvdbid)
         except Exception as e:  Log.error("Error parsing content, Exception: '%s'" % e)
       Log.info("".ljust(157, '-'))
