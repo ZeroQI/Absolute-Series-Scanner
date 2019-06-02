@@ -326,8 +326,8 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
   return original_string if asian_language else ''.join(string)
 
 def filter_chars(string):
-  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ( "), (")", " ) ")]:    # remove leftover parenthesis (work with code a bit above)
-    if char in string:                              string = string.replace(char, subst)                                             # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]):
+    if char in string:  string = string.replace(char, subst)
   return string
 
 ### Allow to display ints even if equal to None at times ################################################
@@ -349,6 +349,8 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
     for index, word in enumerate(WHACK_PRE_CLEAN):  string = word.sub(" ", string, 1) if WHACK_PRE_CLEAN_RAW[index].lower() in string.lower() else string  # Remove words present in pre-clean list
   string = CS_SPECIAL_EP_PAT.sub(CS_SPECIAL_EP_REP, string)                                                                          # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
   string = filter_chars(string)
+  for char, subst in [("`", "'"), ("(", " ( "), (")", " ) ")]:                                                                       # remove leftover parenthesis (work with code a bit above)
+    if char in string:                              string = string.replace(char, subst)                                             # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
   string = string.replace("DoNoTfIlTeR", '.')                                                                                        # Replace 13DoNoTfIlTeR5 into 13.5 back
   string = CS_CRC_HEX.sub(' ', string)                                                                                               # CRCs removal
   string = CS_VIDEO_SIZE.sub(' ', string)                                                                                            # Video size ratio removal
