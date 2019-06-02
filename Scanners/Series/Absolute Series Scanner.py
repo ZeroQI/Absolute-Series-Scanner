@@ -826,7 +826,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         length2=len(os.path.basename(file))  # http://stackoverflow.com/questions/29776299/aligning-japanese-characters-in-python
         if length<length2: length = length2  # max len longest - dirname(file)
         for prefix in array:                 # remove cleansed folder name from cleansed filename and remove potential space
-          if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+"|"; break
+          if file.lower().startswith(prefix.lower()):  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " ", 1), True)+"|"; break
         else:   misc+= clean_string(os.path.basename(file), True)+"|"
       for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|') 
       misc = "|".join([s for s in misc.split('|') if s])  #Log.info("misc: '%s'" % misc)
@@ -860,7 +860,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if clean_string(file, True, no_dash=True)==clean_string(folder_show, True, no_dash=True):  filename, title  = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
         else:
           for prefix in array:
-            if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
+            if filename.lower().startswith(prefix.lower()):  filename = clean_string(filename.lower().replace(prefix.lower(), " ", 1), True); break
           else:
             filename = clean_string(filename)
             for item in misc_words:  filename = filename.lower().replace(item.lower(), ' ', 1)
