@@ -46,7 +46,7 @@ FILTER_CHARS           = "\\/:*?<>|~;"  #_.                                     
    
 SEASON_RX       = [                                                                                                                                                              ### Seasons Folders
                     cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
-                    cic(r'^(Season|Series|Book|Saison|Livre|S)[ _\-]*(?P<season>\d{1,2})'),                                                                                      # Season / Series / Book / Saison / Livre / S
+                    cic(r'^(Season|Series|Book|Saison|Livre|S)[ _\-\.]*(?P<season>\d{1,2})'),                                                                                      # Season / Series / Book / Saison / Livre / S
                     cic(r'^(?P<show>.*?)[\._\- ]+S(?P<season>\d{2})$'),                                                                                                          # (title) S01
                     cic(r'^(?P<season>\d{1,2})'),                                                                                                                                # ##
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
@@ -142,6 +142,9 @@ if not os.path.isdir(PLEX_ROOT):
                     'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
                     'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
   PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
+
+### Test integer ########################################################################################
+def is_integer(string):  return string.isdigit() or len(string)>1 and string.startswith("-") and string[1:].isdigit()
 
 ### Read in a local file ################################################################################  
 def read_file(local_file):
@@ -322,6 +325,11 @@ def encodeASCII(string, language=None): #from Unicodize and plex scanner and oth
       i += char_len
   return original_string if asian_language else ''.join(string)
 
+def filter_chars(string):
+  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]):
+    if char in string:  string = string.replace(char, subst)
+  return string
+
 ### Allow to display ints even if equal to None at times ################################################
 CS_PARENTHESIS     = com(r"\([^\(\)]*?\)")
 CS_BRACKETS_CHAR   = com(r"(\[|\]|\{|\})")
@@ -340,7 +348,8 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   if not no_whack:
     for index, word in enumerate(WHACK_PRE_CLEAN):  string = word.sub(" ", string, 1) if WHACK_PRE_CLEAN_RAW[index].lower() in string.lower() else string  # Remove words present in pre-clean list
   string = CS_SPECIAL_EP_PAT.sub(CS_SPECIAL_EP_REP, string)                                                                          # Used to create a non-filterable special ep number (EX: 13.5 -> 13DoNoTfIlTeR5) # Restricvted to max 999.99 # Does not start with a season/special char 'S|s' (s2.03) or a version char 'v' (v1.2)
-  for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ("(", " ( "), (")", " ) ")]:    # remove leftover parenthesis (work with code a bit above)
+  string = filter_chars(string)
+  for char, subst in [("`", "'"), ("(", " ( "), (")", " ) ")]:                                                                       # remove leftover parenthesis (work with code a bit above)
     if char in string:                              string = string.replace(char, subst)                                             # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
   string = string.replace("DoNoTfIlTeR", '.')                                                                                        # Replace 13DoNoTfIlTeR5 into 13.5 back
   string = CS_CRC_HEX.sub(' ', string)                                                                                               # CRCs removal
@@ -372,8 +381,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
   elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep, season = ep + int (mappingList['s%d' % season][2]), int(mappingList['s%d' % season][3])
   elif season > 0:
-    if 'episodeoffset'     in mappingList and mappingList['episodeoffset'    ].isdigit():  ep, ep2 = ep+int(mappingList['episodeoffset']), ep2+int(mappingList['episodeoffset']) if ep2 else None 
-    if 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'].isdigit():  season  = int(mappingList['defaulttvdbseason'])
+    if 'episodeoffset'     in mappingList and is_integer(mappingList['episodeoffset'    ]):  ep, ep2 = ep+int(mappingList['episodeoffset']), ep2+int(mappingList['episodeoffset']) if ep2 else None 
+    if 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'].isdigit():    season  = int(mappingList['defaulttvdbseason'])
 
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
   if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
@@ -465,7 +474,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   folder_season, season_folder_first = None, False
   for folder in reverse_path[:-1]:                  # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
     for rx in SEASON_RX:                            # in anime, more specials folders than season folders, so doing it first
-      match = rx.search(folder)                     #
+      match = rx.search(clean_string(folder))       #
       if match:                                     # get season number but Skip last entry in seasons (skipped folders)
         if rx!=SEASON_RX[-1]: 
           folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
@@ -544,7 +553,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("".ljust(157, '='))
   
   #### Folders, Forced ids, grouping folders ###
-  folder_show  = reverse_path[0] if reverse_path else ""
+  folder_show  = filter_chars(reverse_path[0]) if reverse_path else ""
   array, misc_words, misc_count = (), [], {}
   tvdb_mapping, unknown_series_length = {}, False
   mappingList, offset_season, offset_episode = {}, 0, 0
@@ -558,7 +567,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         Log.info("### Grouping folders skipped, will be handled by root level scan ### [return]")
         return  #Grouping folders Plex call, but mess after one season folder is ok
       else: Log.info("### Grouping folders, not skipped as single series folder ###")
-      
+	  
     ### Forced guid modes ###
     match = SOURCE_IDS.search(folder_show) or (SOURCE_IDS.search(folder_show) if len(reverse_path)>1 else False)
     if match:
@@ -712,22 +721,29 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               for anime2 in AniDB_TVDB_mapping_tree.iter('anime'):                             # Load all anidbid's using the same tvdbid with their max tvdb season#
                 if anime2.get('tvdbid') == a3_tvdbid:
                   season_map[anime2.get("anidbid")] = {'min': anime2.get('defaulttvdbseason'), 'max': anime2.get('defaulttvdbseason')}  # Set the min/max season to the 'defaulttvdbseason'
-                  if source=="anidb4" and anime2.get('episodeoffset').isdigit() and int(anime2.get('episodeoffset'))>0:  season_map[anime2.get("anidbid")] = {'min': '0', 'max': '0'}  # Force series as special if not starting the TVDB season
+                  if source=="anidb4" and is_integer(anime2.get('episodeoffset')) and int(anime2.get('episodeoffset'))>0:  season_map[anime2.get("anidbid")] = {'min': '0', 'max': '0'}  # Force series as special if not starting the TVDB season
                   for season in anime2.iter('mapping'):
                     if season_map[anime2.get("anidbid")]['max'].isdigit() and int(season_map[anime2.get("anidbid")]['max']) < int(season.get("tvdbseason")): 
                       season_map[anime2.get("anidbid")]['max'] = season.get("tvdbseason")      # Update the max season to the largest 'tvdbseason' season seen in 'mapping-list'
           
           # Process if entries are found for the anidbid with a valid tvdbid
           if len(season_map) > 0:
-            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, "tvdb-%s.xml" % a3_tvdbid)).xpath('Episode'):  # Get the max season number from TVDB API
+            # Get the max season number from TVDB API
+            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, "tvdb-%s.xml" % a3_tvdbid)).xpath('Episode'):
               if int(episode.xpath('SeasonNumber')[0].text) > max_season:  max_season = int(episode.xpath('SeasonNumber')[0].text)
-            for entry in season_map:                                                           # Set the min/max season for a series with 'defaulttvdbseason' == 'a' or convert to ints
-              season_map[entry] = {'min': 1, 'max': max_season} if season_map[entry]['min'] == 'a' else {'min': int(season_map[entry]['min']), 'max': int(season_map[entry]['max'])}
-            for entry in season_map:                                                           # Generate a relations map using all anidbid's using the same tvdbid stored earlier
+            # Set the min/max season to ints & update max value to the next min-1 to handle multi tvdb season anidb entries
+            map_min_values = [int(season_map[x]['min']) for x in season_map for y in season_map[x] if y=='min']
+            for entry in season_map:
+              entry_min, entry_max = int(season_map[entry]['min']), int(season_map[entry]['max'])
+              while entry_min!=0 and entry_max+1 not in map_min_values + [max_season+1]:  entry_max += 1
+              season_map[entry] = {'min': entry_min, 'max': entry_max}
+            # Generate a relations map using all anidbid's using the same tvdbid stored earlier
+            for entry in season_map:
               relations_map[entry] = {}
               for anime in etree.fromstring(read_cached_url(ANIDB_HTTP_API_URL+entry, "anidb-%s.xml" % entry)).xpath('/anime/relatedanime/anime'):
                 if anime.get('type') in relations_map[entry]: relations_map[entry][anime.get('type')].append(anime.get('id'))  # Additional anidbid with an existing relation type
                 else:                                         relations_map[entry][anime.get('type')] = [anime.get('id')]      # First anidbid with a new relation type
+            #### Note: Below must match hama (variable names are different but logic matches) ####
             def get_prequel_info(prequel_id):
               #Log.info("get_prequel_info(prequel_id) = %s" % prequel_id)
               if source=="anidb3":
@@ -755,8 +771,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             mappingList['defaulttvdbseason'], mappingList['episodeoffset'] = str(new_season), str(new_episode)
             for key in mappingList.keys():  # Clear out possible mapping list entries for season 1 to leave the default season and episode offset to be applied while keeping season 0 mapping
               if key.startswith("s1"): del mappingList[key]
-            Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', mappingList: %s" % (id, a3_tvdbid, max_season, str(mappingList)))
-          else: Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', no override set so using unmodified mapping" % (id, a3_tvdbid, max_season))
+            Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', mappingList: %s, season_map: %s" % (id, a3_tvdbid, max_season, str(mappingList), str(season_map)))
+          else: Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', season_map: %s, no override set so using unmodified mapping" % (id, a3_tvdbid, max_season, str(season_map)))
           folder_show = clean_string(folder_show) + " [tvdb%s-%s]" % ('' if source=="anidb3" else "6", a3_tvdbid)
         except Exception as e:  Log.error("Error parsing content, Exception: '%s'" % e)
       Log.info("".ljust(157, '-'))
@@ -811,7 +827,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         length2=len(os.path.basename(file))  # http://stackoverflow.com/questions/29776299/aligning-japanese-characters-in-python
         if length<length2: length = length2  # max len longest - dirname(file)
         for prefix in array:                 # remove cleansed folder name from cleansed filename and remove potential space
-          if prefix.lower() in file.lower():  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " "), True)+"|"; break
+          if clean_string(file, no_whack=True).lower().startswith(prefix.lower()):  misc+= clean_string(os.path.basename(file).lower().replace(prefix.lower(), " ", 1), True)+"|"; break
         else:   misc+= clean_string(os.path.basename(file), True)+"|"
       for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|') 
       misc = "|".join([s for s in misc.split('|') if s])  #Log.info("misc: '%s'" % misc)
@@ -845,7 +861,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if clean_string(file, True, no_dash=True)==clean_string(folder_show, True, no_dash=True):  filename, title  = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
         else:
           for prefix in array:
-            if prefix.lower() in filename.lower():  filename = clean_string(filename.lower().replace(prefix.lower(), " "), True); break
+            if clean_string(filename, no_whack=True).lower().startswith(prefix.lower()):  filename = clean_string(filename.lower().replace(prefix.lower(), " ", 1), True); break
           else:
             filename = clean_string(filename)
             for item in misc_words:  filename = filename.lower().replace(item.lower(), ' ', 1)
@@ -882,7 +898,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             
       ### Word search for ep number in scrubbed title ###
       words, loop_completed, rx, is_special = list(filter(None, clean_string(ep, False, no_underscore=True).split())), False, "Word Search", False                    #
-      for word in words:                                                                                                                                              #
+      for word in words if path else []:                                                                                                                              #
         ep=word.lower().strip('-.')                                                                                                                                   # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
         if WS_VERSION.search(ep):                                                                                  ep=ep[:-2].rstrip('-.')                            #
         if not ep:                                                                                                 continue                                           #
@@ -914,7 +930,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         continue
 
       ### Check for Regex: SERIES_RX + ANIDB_RX ###
-      ep = filename.lower()
+      ep = filename
       for rx in ANIDB_RX if is_special else (SERIES_RX + ANIDB_RX):
         match = rx.search(ep)
         if match:
@@ -997,8 +1013,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         ### Extract season and transparent folder to reduce complexity and use folder as serie name ###
         reverse_path, season_folder_first = list(reversed(Utils.SplitPath(path))), False
         for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-          for rx in SEASON_RX :                          # in anime, more specials folders than season folders, so doing it first
-            if rx.search(folder):                        # get season number but Skip last entry in seasons (skipped folders)
+          for rx in SEASON_RX:                           # in anime, more specials folders than season folders, so doing it first
+            if rx.search(clean_string(folder)):          # get season number but Skip last entry in seasons (skipped folders)
               reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
               if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
               break
