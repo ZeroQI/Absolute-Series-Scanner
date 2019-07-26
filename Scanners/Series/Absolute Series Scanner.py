@@ -735,7 +735,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             map_min_values = [int(season_map[x]['min']) for x in season_map for y in season_map[x] if y=='min']
             for entry in season_map:
               entry_min, entry_max = int(season_map[entry]['min']), int(season_map[entry]['max'])
-              while entry_min!=0 and entry_max+1 not in map_min_values + [max_season+1]:  entry_max += 1
+              while entry_min!=0 and entry_max+1 not in map_min_values and entry_max < max_season:  entry_max += 1
               season_map[entry] = {'min': entry_min, 'max': entry_max}
             # Generate a relations map using all anidbid's using the same tvdbid stored earlier
             for entry in season_map:
