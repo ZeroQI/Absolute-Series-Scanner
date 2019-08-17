@@ -329,17 +329,18 @@ chmod -R 775 '/var/lib/plexmediaserver/Library/Application Support/Plex Media Se
 
 ## Logs
 Absolute series Scanner saves its custom logs in this relative path Plex Media Server\Plug-in Support\Data\com.plexapp.agents.hama\DataItems\_Logs\...
-You may create a X-Plex-Token.id file in 'Plex Media Server' folder with your token inside to have logs saved per library.
-See this link to find your token value: https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 
-If the scanner crash, you will get either no files (library creation) or no change (library already created) and will need to attach the Plex log "Plex Media Scanner.log"
+If the scanner crash, you will get either no files (library creation) or no change (library already created) and will need to attach:
+- [...]/Plex Media Server/Logs/Plex Media Scanner.log
 
-Include the following logs (in any case, specify if file not present):
-- [...]/Plex Media Server/Logs/Plex Media Scanner.log (scanner crash info, no new files added, etc...)
-- [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Library_name/Logs/root_folder_name.filelist.log
-- [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Library_name/Logs/root_folder_name.scanner.log
+To have logs saved per library and also a log is not created per series, you might need to create a Plex token id file (Never share your Plex token)
+- Plex Media Server/X-Plex-Token.id containing the Plex token id shown in the url after 'X-Plex-Token=' following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+
+For issues series specific (indicate if file not present, but create a token id file, see above):
 - [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs/root_folder_name.filelist.log
 - [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs/root_folder_name.scanner.log
+- [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs/Library_name/root_folder_name.filelist.log
+- [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs/Library_name/root_folder_name.scanner.log
 
 You will find per-serie logs there with the following extensions as HAMA and ASS gather all logs in one place
 - _root_/root folder name.filelist.log - Scanner filelist and 'plexignore logs
