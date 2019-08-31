@@ -415,7 +415,7 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   mappingList = {}
   for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree is not None else []:
     if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
-      mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = anime.get('episodeoffset'), anime.get('defaulttvdbseason')
+      mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = anime.get('episodeoffset', default=''), anime.get('defaulttvdbseason',default='')
       try:
         for season in anime.iter('mapping'):
           if season.get("offset"):  mappingList[ 's'+season.get("anidbseason")] = [season.get("start"), season.get("end"), season.get("offset"), season.get("tvdbseason")]
@@ -553,10 +553,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("".ljust(157, '='))
   
   #### Folders, Forced ids, grouping folders ###
-  folder_show  = filter_chars(reverse_path[0]) if reverse_path else ""
-  array, misc_words, misc_count = (), [], {}
-  tvdb_mapping, unknown_series_length = {}, False
-  mappingList, offset_season, offset_episode = {}, 0, 0
+  folder_show                                = filter_chars(reverse_path[0]) if reverse_path else ""
+  array, misc_words, misc_count, mappingList = (), [], {}, {}
+  tvdb_mapping, unknown_series_length        = {}, False
+  offset_season, offset_episode              = 0, 0
   
   if path:
     ### Grouping folders skip , unless single series folder ###
