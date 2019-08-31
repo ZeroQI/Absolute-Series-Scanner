@@ -854,6 +854,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if disc:  filename = ep
       else:
         filename = os.path.splitext(os.path.basename(file))[0]
+        if not path:  root_filename = filename
         filename = encodeASCII(filename)
       
       ### remove cleansed folder name from cleansed filename or keywords otherwise ###
@@ -875,6 +876,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if prefix in ep.lower() or prefix in misc_count and misc_count[prefix]>1:  ep = re.sub(prefix, "", ep, 1, re.IGNORECASE).lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
       if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
       
+      if not path:
+        root_filename = clean_string(root_filename.split(ep)[0] if ep else root_filename)
+        show          = root_filename
+        
       ### YouTube Channel numbering ###
       if source.startswith('youtube') and id.startswith('UC'):
         filename = os.path.basename(file)
@@ -986,7 +991,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
       COUNTER = COUNTER+1
       #Log.info('COUNTER "{}"'.format(COUNTER))
-      unknown_holding.append([file, root, path, show if path else title, 0, COUNTER, title or clean_string(filename, False, no_underscore=True), year, "", ""])
+      if not path and not title:  unknown_holding.append([file, root, path, clean_string(root_filename), 1, 1, title or clean_string(filename, False, no_underscore=True), year, "", ""])
+      else:                       unknown_holding.append([file, root, path, show if path else title, 0, COUNTER, title or clean_string(filename, False, no_underscore=True), year, "", ""])
     if run_count == 1 and len(files) > 0 and len(unknown_holding) == len(files):
       Log.info("[All files were seen as unknown(5XX). Trying one more time without miscellaneous string filtering.]")
       run_count, standard_holding, unknown_holding = run_count + 1, [], []
