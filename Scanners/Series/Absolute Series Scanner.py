@@ -144,7 +144,7 @@ if not os.path.isdir(PLEX_ROOT):
   PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
 
 ### Test integer ########################################################################################
-def is_integer(string):  return string.isdigit() or len(string)>1 and string.startswith("-") and string[1:].isdigit()
+def is_integer(string):  return string is not None and string.isdigit() or len(string)>1 and string.startswith("-") and string[1:].isdigit()
 
 ### Read in a local file ################################################################################  
 def read_file(local_file):
