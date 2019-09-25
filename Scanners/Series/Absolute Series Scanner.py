@@ -782,7 +782,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if source.startswith('youtube') and len(id)>2 and id[0:2] in ('PL', 'UU', 'FL', 'LP', 'RD'):
       try:
         xml = etree.fromstring(read_file(os.path.join(PLEX_ROOT, 'Plug-in Support', 'Preferences', 'com.plexapp.agents.youtube.xml')))
-        API_KEY = xml.xpath("/PluginPreferences/yt_apikey")[0].text.strip()
+        API_KEY = xml.xpath("/PluginPreferences/YouTube-Agent_youtube_api_key")[0].text.strip()
         Log.info("API_KEY: '{}'".format(API_KEY))
       except Exception as e:  Log.info('exception: {}'.format(e)); API_KEY='AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'
       
