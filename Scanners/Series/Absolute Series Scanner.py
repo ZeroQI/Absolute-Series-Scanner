@@ -9,7 +9,6 @@ import datetime                                                      # datetime
 import re                                                            # match, compile, sub
 import fnmatch                                                       # translate
 import logging, logging.handlers                                     # FileHandler, Formatter, getLogger, DEBUG | RotatingFileHandler
-import Utils                                                         # SplitPath
 import Media                                                         # Episode
 import VideoFiles                                                    # Scan
 import Stack                                                         # Scan
@@ -431,7 +430,7 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
-  reverse_path = list(reversed(Utils.SplitPath(path)))
+  reverse_path = list(reversed(path.split(os.sep)))
   log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
   anidb_xml    = None
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
@@ -1017,7 +1016,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       else:  ### Not skipped
         
         ### Extract season and transparent folder to reduce complexity and use folder as serie name ###
-        reverse_path, season_folder_first = list(reversed(Utils.SplitPath(path))), False
+        reverse_path, season_folder_first = list(reversed(path.split(os.sep))), False
         for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
           for rx in SEASON_RX:                           # in anime, more specials folders than season folders, so doing it first
             if rx.search(clean_string(folder)):          # get season number but Skip last entry in seasons (skipped folders)
