@@ -218,7 +218,7 @@ def os_filename_clean_string(string):
 ### Set Logging to proper logging file ##################################################################
 def set_logging(foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
   global handler, CACHE_PATH, LOG_FILE
-  CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
+  CACHE_PATH = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
   if foldername: CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
   if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
 
@@ -814,7 +814,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       else:  Log.info('json_full is empty')
     files_per_date = []
     if id.startswith('UC') or id.startswith('HC'):
-      files_per_date = sorted(os.listdir(os.path.join(root, path)), key=getmtime) #to have latest ep first, add: ", reverse=True"
+      files_per_date = sorted([os.path.basename(file) for file in files], key=getmtime) #to have latest ep first, add: ", reverse=True"
       Log.info('files_per_date: {}'.format(files_per_date))
       
     ### Build misc variable to check numbers in titles ###
