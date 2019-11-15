@@ -689,7 +689,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
       
       # Set folder_show from successful mapping
-      if a2_tvdbid:  folder_show = clean_string(folder_show)+" [tvdb-%s]" % a2_tvdbid
+      if a2_tvdbid: folder_show = clean_string(folder_show) + " [tvdb-%s]" % a2_tvdbid
+      else: folder_show = clean_string(folder_show) + " [anidb-%s]" % (id)
       Log.info("".ljust(157, '-'))
     
     if source in ["anidb3", "anidb4"]:
@@ -772,7 +773,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               if key.startswith("s1"): del mappingList[key]
             Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', mappingList: %s, season_map: %s" % (id, a3_tvdbid, max_season, str(mappingList), str(season_map)))
           else: Log.info("anidbid: '%s', tvdbid: '%s', max_season: '%s', season_map: %s, no override set so using unmodified mapping" % (id, a3_tvdbid, max_season, str(season_map)))
-          folder_show = clean_string(folder_show) + " [tvdb%s-%s]" % ('' if source=="anidb3" else "6", a3_tvdbid)
+          if a3_tvdbid: folder_show = clean_string(folder_show) + " [tvdb%s-%s]" % ('' if source=="anidb3" else "6", a3_tvdbid)
+          else: folder_show = clean_string(folder_show) + " [anidb-%s]" % (id)
         except Exception as e:  Log.error("Error parsing content, Exception: '%s'" % e)
       Log.info("".ljust(157, '-'))
 
