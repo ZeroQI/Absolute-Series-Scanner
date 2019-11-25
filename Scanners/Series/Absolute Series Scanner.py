@@ -653,7 +653,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         try:
           tvdbanime = etree.fromstring(read_cached_url(tvdb_guid_url, "tvdb-%s.xml" % id))
           for episode in tvdbanime.xpath('Episode'):
-            if episode.xpath('SeasonNumber')[0].text != '0' and episode.xpath('absolute_number')[0].text:
+            if episode.xpath('absolute_number')[0].text:
               mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
           Log.info("mappingList: %s" % str(mappingList))
         except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
