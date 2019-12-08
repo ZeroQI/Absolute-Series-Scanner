@@ -378,7 +378,6 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     season, ep = mappingList[ep_orig_single][1:].split("e"); season = int(season)
     if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep, ep2 = int(ep), int(ep2) if ep2 and ep2.isdigit() else None
     else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
-  elif 's%d' % season in mappingList and int(mappingList['s%d' % season][0])<=ep and ep<=int(mappingList['s%d' % season][1]):  ep, season = ep + int (mappingList['s%d' % season][2]), int(mappingList['s%d' % season][3])
   elif season > 0:
     if 'episodeoffset'     in mappingList and is_integer(mappingList['episodeoffset'    ]):  ep, ep2 = ep+int(mappingList['episodeoffset']), ep2+int(mappingList['episodeoffset']) if ep2 else None 
     if 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'].isdigit():    season  = int(mappingList['defaulttvdbseason'])
@@ -417,8 +416,11 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
       mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = anime.get('episodeoffset', default=''), anime.get('defaulttvdbseason',default='')
       try:
         for season in anime.iter('mapping'):
-          if season.get("offset"):  mappingList[ 's'+season.get("anidbseason")] = [season.get("start"), season.get("end"), season.get("offset"), season.get("tvdbseason")]
-          for string2 in filter(None, season.text.split(';')) if season.text else []:  mappingList[ 's'+season.get("anidbseason") + 'e' + string2.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + string2.split('-')[1] 
+          for episode in range(int(season.get("start")), int(season.get("end"))+1) if season.get("offset") else []:
+            mappingList[ 's'+season.get("anidbseason") + 'e' + str(episode)          ] = 's' + season.get("tvdbseason") + 'e' + str(episode-int(season.get("offset")))
+          for episode in filter(None, season.text.split(';')) if season.text else []:
+            mappingList[ 's'+season.get("anidbseason") + 'e' + episode.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + episode.split('-')[1] 
+      except Exception as e: Log.error("mappingList creation exception: {}, mappingList: {}".format(e, mappingList))
       except: Log.error("mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
       else:   Log.info("anidb: '%s', tvbdid: '%s', name: '%s', mappingList: %s" % (anidbid, anime.get('tvdbid'), anime.xpath("name")[0].text, str(mappingList)) )
       return anime.get('tvdbid'), mappingList
