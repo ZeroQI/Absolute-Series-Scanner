@@ -417,7 +417,7 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
       try:
         for season in anime.iter('mapping'):
           for episode in range(int(season.get("start")), int(season.get("end"))+1) if season.get("offset") else []:
-            mappingList[ 's'+season.get("anidbseason") + 'e' + str(episode)          ] = 's' + season.get("tvdbseason") + 'e' + str(episode-int(season.get("offset")))
+            mappingList[ 's'+season.get("anidbseason") + 'e' + str(episode)          ] = 's' + season.get("tvdbseason") + 'e' + str(episode+int(season.get("offset")))
           for episode in filter(None, season.text.split(';')) if season.text else []:
             mappingList[ 's'+season.get("anidbseason") + 'e' + episode.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + episode.split('-')[1] 
       except Exception as e: Log.error("mappingList creation exception: {}, mappingList: {}".format(e, mappingList))
