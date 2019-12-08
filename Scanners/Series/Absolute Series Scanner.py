@@ -421,7 +421,6 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
           for episode in filter(None, season.text.split(';')) if season.text else []:
             mappingList[ 's'+season.get("anidbseason") + 'e' + episode.split('-')[0] ] = 's' + season.get("tvdbseason") + 'e' + episode.split('-')[1] 
       except Exception as e: Log.error("mappingList creation exception: {}, mappingList: {}".format(e, mappingList))
-      except: Log.error("mappingList creation exception, mappingList: '%s'" % (str(mappingList)))
       else:   Log.info("anidb: '%s', tvbdid: '%s', name: '%s', mappingList: %s" % (anidbid, anime.get('tvdbid'), anime.xpath("name")[0].text, str(mappingList)) )
       return anime.get('tvdbid'), mappingList
   Log.error("-- No valid tvbdbid found for anidbid '%s'" % (anidbid))
