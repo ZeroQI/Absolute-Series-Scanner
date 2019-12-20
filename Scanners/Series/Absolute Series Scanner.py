@@ -142,9 +142,6 @@ if not os.path.isdir(PLEX_ROOT):
                     'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
   PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
 
-### Test integer ########################################################################################
-def is_integer(string):  return string is not None and string.isdigit() or len(string)>1 and string.startswith("-") and string[1:].isdigit()
-
 ### Read in a local file ################################################################################  
 def read_file(local_file):
   file_content = ""
@@ -384,8 +381,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep, ep2 = int(ep), int(ep2) if ep2 and ep2.isdigit() else None
     else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
   elif season > 0:
-    if 'episodeoffset'     in mappingList and is_integer(mappingList['episodeoffset'    ]):  ep, ep2 = ep+int(mappingList['episodeoffset']), ep2+int(mappingList['episodeoffset']) if ep2 else None 
-    if 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'].isdigit():    season  = int(mappingList['defaulttvdbseason'])
+    ep, ep2 = ep+int(Dict(mappingList, 'episodeoffset', default='0')), ep2+int(Dict(mappingList, 'episodeoffset', default='0')) if ep2 else None 
+    season  = int(Dict(mappingList, 'defaulttvdbseason', default='1'))
 
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
   if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
@@ -418,7 +415,9 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   mappingList = {}
   for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree is not None else []:
     if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
-      mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = anime.get('episodeoffset', default=''), anime.get('defaulttvdbseason',default='')
+      mappingList['episodeoffset']     = anime.get('episodeoffset',    default='0')
+      mappingList['defaulttvdbseason'] = anime.get('defaulttvdbseason',default='1')
+      if mappingList['defaulttvdbseason'] == 'a':  mappingList['defaulttvdbseason'] = '1'
       try:
         for season in anime.iter('mapping'):
           for episode in range(int(season.get("start")), int(season.get("end"))+1) if season.get("offset") else []:
@@ -702,7 +701,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if source in ["anidb3", "anidb4"]:
       a3_tvdbid, season_map, relations_map, max_season, new_season, new_episode = "", {}, {}, 0, '', ''
       Log.info("AniDB mode (%s) enabled, loading season and relation mapping for all associated tvdbid entries" % source)
-      if source=="anidb3" and 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'] != '0':
+      if source=="anidb3" and Dict(mappingList, 'defaulttvdbseason', default='1') != '0':
         Log.info("defaulttvdbseason: '%s', is not season 0 so using unmodified mapping" % mappingList['defaulttvdbseason'])
       else:
         try:
@@ -726,8 +725,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               a3_tvdbid = anime1.get('tvdbid')                                                 # Set the tvdbid found from the anidbid
               for anime2 in AniDB_TVDB_mapping_tree.iter('anime'):                             # Load all anidbid's using the same tvdbid with their max tvdb season#
                 if anime2.get('tvdbid') == a3_tvdbid:
-                  season_map[anime2.get("anidbid")] = {'min': anime2.get('defaulttvdbseason'), 'max': anime2.get('defaulttvdbseason')}  # Set the min/max season to the 'defaulttvdbseason'
-                  if source=="anidb4" and is_integer(anime2.get('episodeoffset')) and int(anime2.get('episodeoffset'))>0:  season_map[anime2.get("anidbid")] = {'min': '0', 'max': '0'}  # Force series as special if not starting the TVDB season
+                  season_map[anime2.get("anidbid")] = {'min': anime2.get('defaulttvdbseason', default='1'), 'max': anime2.get('defaulttvdbseason', default='1')}  # Set the min/max season to the 'defaulttvdbseason'
+                  if source=="anidb4" and int(anime2.get('episodeoffset', default='0'))>0:  season_map[anime2.get("anidbid")] = {'min': '0', 'max': '0'}  # Force series as special if not starting the TVDB season
                   for season in anime2.iter('mapping'):
                     if season_map[anime2.get("anidbid")]['max'].isdigit() and int(season_map[anime2.get("anidbid")]['max']) < int(season.get("tvdbseason")): 
                       season_map[anime2.get("anidbid")]['max'] = season.get("tvdbseason")      # Update the max season to the largest 'tvdbseason' season seen in 'mapping-list'
