@@ -135,8 +135,10 @@ WS_MULTI_EP_COMPLEX = com(r"^(ep?[ -]?)?(?P<ep>\d{1,3})(-|ep?|-ep?)(?P<ep2>\d{1,
 WS_SPECIALS         = com(r"^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)(\d{1,3})?$)")
 
 ### Check config files on boot up then create library variables #########################################
-PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
 HANDLER          = None
+PLEX_LIBRARY     = {}
+PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+PLEX_ROOT        = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
 if not os.path.isdir(PLEX_ROOT):
   path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
                     'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
@@ -258,8 +260,6 @@ def set_logging(root='', foldername='', filename='', backup_count=0, format='%(m
 
 ### Log #################################################################################################
 Log              = logging.getLogger('main');  Log.setLevel(logging.DEBUG);  set_logging()
-PLEX_LIBRARY     = {}
-PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
   Log.info("'X-Plex-Token.id' file present")
   PLEX_LIBRARY_URL += "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
