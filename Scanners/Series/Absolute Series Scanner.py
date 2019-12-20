@@ -213,10 +213,16 @@ def os_filename_clean_string(string):
   return string
 
 ### Set Logging to proper logging file ##################################################################
-def set_logging(foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
+def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
   global handler, CACHE_PATH, LOG_FILE
-  CACHE_PATH = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
-  if foldername: CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
+  if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':
+    CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
+  else:  CACHE_PATH = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
+
+  if not foldername:  foldername = Dict(PLEX_LIBRARY, root, 'title')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
+
+  if foldername:  CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
+
   if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
 
   filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
@@ -490,7 +496,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       return       #if not grouping folder scan, skip grouping folder
   
   ### Create *.filelist.log file ###
-  set_logging(foldername=GetLibrary(root), filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
+  set_logging(root=root, filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
@@ -550,7 +556,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
   ### Logging to *.scanner.log ###
-  set_logging(foldername=GetLibrary(root), filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
+  set_logging(root=root, filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
   Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
@@ -1054,7 +1060,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
-          set_logging(foldername=GetLibrary(root), filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
+          set_logging(root=root, filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
 
   Log.info("".ljust(157, '='))
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
