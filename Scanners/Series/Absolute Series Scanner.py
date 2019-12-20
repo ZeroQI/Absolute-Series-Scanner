@@ -172,7 +172,7 @@ def read_url(url, data=None):
 def read_cached_url(url, foldername='', filename='', max_age_sec=6*24*60*60):
   local_filename, file_content, hama_folder = "", "", ""
   if not filename:  filename = os.path.basename(url)
-  if foldername and filename:
+  if foldername:
     hama_folder    = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', foldername)
   if foldername and os.path.exists(hama_folder):
     local_filename = os.path.join(hama_folder, filename)
