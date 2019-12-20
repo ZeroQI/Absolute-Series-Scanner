@@ -247,10 +247,15 @@ if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
   PLEX_LIBRARY_URL += "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
 try:
   library_xml = etree.fromstring(read_url(PLEX_LIBRARY_URL))
-  for library in library_xml.iterchildren('Directory'):
-    for path in library.iterchildren('Location'):
-      PLEX_LIBRARY[path.get("path")] = library.get("title")
+  for directory in library_xml.iterchildren('Directory'):
+    for location in directory.iterchildren('Location'):
+      PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
+      Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
 except:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
+
+def GetLibrary(root):
+  if root in PLEX_LIBRARY:  return PLEX_LIBRARY[root]['title']
+  else:                     return ''
 
 def Dict(var, *arg, **kwarg):  #Avoid TypeError: argument of type 'NoneType' is not iterable ############
   """ Return the value of an (imbricated) dictionnary, if all fields exist else return "" unless "default=new_value" specified as end argument
@@ -486,9 +491,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       return       #if not grouping folder scan, skip grouping folder
   
   ### Create *.filelist.log file ###
-  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
+  set_logging(foldername=GetLibrary(root), filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(GetLibrary(root) or "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
   Log.info("".ljust(157, '='))
@@ -546,9 +551,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
   ### Logging to *.scanner.log ###
-  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
+  set_logging(foldername=GetLibrary(root), filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(GetLibrary(root) or "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("".ljust(157, '='))
   
@@ -1050,7 +1055,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
-          set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
+          set_logging(foldername=GetLibrary(root), filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
 
   Log.info("".ljust(157, '='))
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
