@@ -492,7 +492,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### Create *.filelist.log file ###
   set_logging(foldername=GetLibrary(root), filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(GetLibrary(root) or "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
   Log.info("".ljust(157, '='))
@@ -552,7 +552,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### Logging to *.scanner.log ###
   set_logging(foldername=GetLibrary(root), filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(GetLibrary(root) or "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("".ljust(157, '='))
   
