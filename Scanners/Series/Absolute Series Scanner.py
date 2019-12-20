@@ -136,6 +136,7 @@ WS_SPECIALS         = com(r"^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|
 
 ### Check config files on boot up then create library variables #########################################
 PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
+HANDLER          = None
 if not os.path.isdir(PLEX_ROOT):
   path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
                     'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
@@ -231,35 +232,32 @@ def Dict(var, *arg, **kwarg):
 
 ### Set Logging to proper logging file ##################################################################
 def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
-  global handler, CACHE_PATH, LOG_FILE
   if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':
-    CACHE_PATH = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
-  else:  CACHE_PATH = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
+    cache_path = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
+  else:  cache_path = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
 
   if not foldername:  foldername = Dict(PLEX_LIBRARY, root, 'title')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
 
-  if foldername:  CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
+  if foldername:  cache_path = os.path.join(cache_path, os_filename_clean_string(foldername))
 
-  if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
+  if not os.path.exists(cache_path):  os.makedirs(cache_path)
 
   filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
-  LOG_FILE = os.path.join(CACHE_PATH, filename)
-  if os.sep=="\\":  LOG_FILE = winapi_path(LOG_FILE, 'utf-8') # Bypass DOS path MAX_PATH limitation
+  log_file = os.path.join(cache_path, filename)
+  if os.sep=="\\":  log_file = winapi_path(log_file, 'utf-8') # Bypass DOS path MAX_PATH limitation
 
-  mode = 'a' if os.path.exists(LOG_FILE) and os.stat(LOG_FILE).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
+  mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
 
-  if handler: Log.removeHandler(handler)
-  if backup_count:  handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=10*1024*1024, backupCount=backup_count)
-  else:             handler = logging.FileHandler                 (LOG_FILE, mode=mode)
-  handler.setFormatter(logging.Formatter(format))
-  handler.setLevel(logging.DEBUG)
-  Log.addHandler(handler)
+  global HANDLER
+  if HANDLER: Log.removeHandler(HANDLER)
+  if backup_count:  HANDLER = logging.handlers.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=backup_count)
+  else:             HANDLER = logging.FileHandler                 (log_file, mode=mode)
+  HANDLER.setFormatter(logging.Formatter(format))
+  HANDLER.setLevel(logging.DEBUG)
+  Log.addHandler(HANDLER)
 
-### Log + CACHE_PATH calculated once for all calls ######################################################
-handler          = None
+### Log #################################################################################################
 Log              = logging.getLogger('main');  Log.setLevel(logging.DEBUG);  set_logging()
-CACHE_PATH       = ""
-LOG_FILE         = ""
 PLEX_LIBRARY     = {}
 PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
