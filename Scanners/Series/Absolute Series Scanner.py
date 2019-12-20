@@ -659,11 +659,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         match_season, match_episode = "", ""
         if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
         if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
-        ####################################################################################################
-        # TODO: tvdb_mapping is not populated yet. Something is off here for the 'tvdb_mapping' variable.
-        # Broken ZeroQI committed on Mar 17, 2018
-        # https://github.com/ZeroQI/Absolute-Series-Scanner/commit/4ed5bffa0a4a971e4b3c08b8994050ef0f2f1e7e
-        ####################################################################################################
         if tvdb_mapping and match_season!='s0': 
           season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
           offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
