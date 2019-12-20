@@ -206,6 +206,7 @@ def read_cached_url(url, foldername='', filename='', max_age_sec=6*24*60*60):
     Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
     raise e
 
+#########################################################################################################
 def winapi_path(dos_path, encoding=None): # https://stackoverflow.com/questions/36219317/pathname-too-long-to-open/36219497
     if (not isinstance(dos_path, unicode) and encoding is not None):  dos_path = dos_path.decode(encoding)
     path = os.path.abspath(dos_path)
@@ -217,6 +218,16 @@ def os_filename_clean_string(string):
   for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:    # remove leftover parenthesis (work with code a bit above)
     if char in string:  string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
   return string
+
+#########################################################################################################  
+def Dict(var, *arg, **kwarg):
+  """ Return the value of an (imbricated) dictionnary, if all fields exist else return "" unless "default=new_value" specified as end argument
+      Ex: Dict(variable_dict, 'field1', 'field2', default = 0)
+  """
+  for key in arg:
+    if isinstance(var, dict) and key and key in var:  var = var[key]
+    else:  return kwarg['default'] if kwarg and 'default' in kwarg else ""   # Allow Dict(var, tvdbid).isdigit() for example
+  return kwarg['default'] if var in (None, '', 'N/A', 'null') and kwarg and 'default' in kwarg else "" if var in (None, '', 'N/A', 'null') else var
 
 ### Set Logging to proper logging file ##################################################################
 def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
@@ -261,15 +272,6 @@ try:
       PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
       Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
 except:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
-
-def Dict(var, *arg, **kwarg):  #Avoid TypeError: argument of type 'NoneType' is not iterable ############
-  """ Return the value of an (imbricated) dictionnary, if all fields exist else return "" unless "default=new_value" specified as end argument
-      Ex: Dict(variable_dict, 'field1', 'field2', default = 0)
-  """
-  for key in arg:
-    if isinstance(var, dict) and key and key in var:  var = var[key]
-    else:  return kwarg['default'] if kwarg and 'default' in kwarg else ""   # Allow Dict(var, tvdbid).isdigit() for example
-  return kwarg['default'] if var in (None, '', 'N/A', 'null') and kwarg and 'default' in kwarg else "" if var in (None, '', 'N/A', 'null') else var
 
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] #####################
 def natural_sort_key(s, _nsre=com(r'(\d+)')):  return [int(text) if text.isdigit() else text.lower() for text in _nsre.split(s)]
