@@ -166,9 +166,15 @@ def read_url(url, data=None):
   except Exception as e:  Log.error("Error reading url '%s', Exception: '%s'" % (url, e)); raise e
 
 ### Download a url into the environment temp directory ##################################################
-def read_cached_url(url, filename=None, max_age_sec=6*24*60*60):
+def read_cached_url(url, foldername='', filename='', max_age_sec=6*24*60*60):
+  local_filename, file_content, hama_folder = "", "", ""
   if not filename:  filename = os.path.basename(url)
-  local_filename, file_content = os.path.join(tempfile.gettempdir(), "ASS-" + filename), ""
+  if foldername and filename:
+    hama_folder    = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', foldername)
+  if foldername and os.path.exists(hama_folder):
+    local_filename = os.path.join(hama_folder, filename)
+  else:
+    local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + (foldername.replace(os.path.sep, '-') + '-' if foldername else '') + filename)
   try:
     if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
       Log.info("URL: '%s', Using cached file: '%s'" % (url, local_filename))
@@ -602,7 +608,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           #Load series episode pages and group them in one dict
           episodes_json, page = [], 1
           while page not in (None, '', 'null'):
-            episodes_json_page = json.loads(read_cached_url(TVDB_API2_EPISODES.format(id, page), "tvdb-%s-%s.json" % (id, page)))
+            episodes_json_page = json.loads(read_cached_url(TVDB_API2_EPISODES.format(id, page), foldername=os.path.join('TheTVDB','json',id), filename="episodes_page{}_en.json".format(page)))
             episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info('TVDB_API2_EPISODES: {}, links: {}'.format(TVDB_API2_EPISODES.format(id, page), Dict(episodes_json_page, 'links')))
             page = Dict(episodes_json_page, 'links', 'next')
           
@@ -643,7 +649,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         tvdb_guid_url = TVDB_API1_URL % id
         Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (source, tvdb_guid_url))
         try:
-          tvdbanime = etree.fromstring(read_cached_url(tvdb_guid_url, "tvdb-%s.xml" % id))
+          tvdbanime = etree.fromstring(read_cached_url(tvdb_guid_url, foldername=os.path.join('TheTVDB','json',id), filename="series_en.xml"))
           for episode in tvdbanime.xpath('Episode'):
             if episode.xpath('absolute_number')[0].text:
               mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
@@ -687,12 +693,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD)), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD, foldername='AnimeLists')), id)
         except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
       
       # Online mapping file = ANIDB_TVDB_MAPPING (anime-list-master.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING, foldername='AnimeLists')), id)
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
       
       # Set folder_show from successful mapping
@@ -707,8 +713,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         Log.info("defaulttvdbseason: '%s', is not season 0 so using unmodified mapping" % mappingList['defaulttvdbseason'])
       else:
         try:
-          AniDB_TVDB_mapping_tree     = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING))      # Load ScudLee mapping
-          AniDB_TVDB_mapping_tree_mod = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD))  # Load ASS mod mapping
+          AniDB_TVDB_mapping_tree     = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING,     foldername='AnimeLists'))  # Load ScudLee mapping
+          AniDB_TVDB_mapping_tree_mod = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD, foldername='AnimeLists'))  # Load ASS mod mapping
           
           # Override/Add ASS mod entries into ScudLee mapping
           mod_anidbids, mod_anidbid_elem = [], []
@@ -736,7 +742,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           # Process if entries are found for the anidbid with a valid tvdbid
           if len(season_map) > 0:
             # Get the max season number from TVDB API
-            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, "tvdb-%s.xml" % a3_tvdbid)).xpath('Episode'):
+            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, foldername=os.path.join('TheTVDB','json',a3_tvdbid), filename="series_en.xml")).xpath('Episode'):
               if int(episode.xpath('SeasonNumber')[0].text) > max_season:  max_season = int(episode.xpath('SeasonNumber')[0].text)
             # Set the min/max season to ints & update max value to the next min-1 to handle multi tvdb season anidb entries
             map_min_values = [int(season_map[x]['min']) for x in season_map for y in season_map[x] if y=='min']
@@ -747,7 +753,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             # Generate a relations map using all anidbid's using the same tvdbid stored earlier
             for entry in season_map:
               relations_map[entry] = {}
-              for anime in etree.fromstring(read_cached_url(ANIDB_HTTP_API_URL+entry, "anidb-%s.xml" % entry)).xpath('/anime/relatedanime/anime'):
+              for anime in etree.fromstring(read_cached_url(ANIDB_HTTP_API_URL+entry, foldername=os.path.join('AniDB','xml'), filename="%s.xml" % entry)).xpath('/anime/relatedanime/anime'):
                 if anime.get('type') in relations_map[entry]: relations_map[entry][anime.get('type')].append(anime.get('id'))  # Additional anidbid with an existing relation type
                 else:                                         relations_map[entry][anime.get('type')] = [anime.get('id')]      # First anidbid with a new relation type
             #### Note: Below must match hama (variable names are different but logic matches) ####
@@ -963,7 +969,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             season = 0                                                                                                                                  # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
             # AniDB xml load (ALWAYS GZIPPED)
             if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
-              anidb_str = read_cached_url(ANIDB_HTTP_API_URL+id, "anidb-%s.xml" % id)
+              anidb_str = read_cached_url(ANIDB_HTTP_API_URL+id, foldername=os.path.join('AniDB','xml'), filename="%s.xml" % id)
               anidb_xml = etree.fromstring( anidb_str )
               
               #Build AniDB_op
