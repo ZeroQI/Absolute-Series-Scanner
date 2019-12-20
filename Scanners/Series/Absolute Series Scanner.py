@@ -593,21 +593,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
     Log.info("".ljust(157, '-'))
     
-    if source.startswith('tvdb') or source.startswith('anidb'):
-      ### Calculate offset for season or episode ###
-      offset_match = ANIDB_TVDB_ID_OFFSET.search(id)
-      if offset_match:
-        match_season, match_episode = "", ""
-        if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
-        if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
-        if tvdb_mapping and match_season!='s0': 
-          season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
-          offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
-        folder_show, id = folder_show.replace("-"+match_season+match_episode+"]", "]"), offset_match.group('id')
-        if offset_season!=0 or offset_episode!=0:
-          Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
-          Log.info("".ljust(157, '-'))
-    
     if source.startswith('tvdb'):
       #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
       if source in ('tvdb2', 'tvdb3'): 
@@ -667,6 +652,26 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if tvdb_mapping:  Log.info("unknown_series_length: %s, tvdb_mapping: %s (showing changing seasons/episodes only)" % (unknown_series_length, str({x:tvdb_mapping[x] for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)})))  #[for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)]
       Log.info("".ljust(157, '-'))
         
+    ### Calculate offset for season or episode (must be done after 'tvdb_mapping' is populated) ###
+    if source.startswith('tvdb') or source.startswith('anidb'):  # 
+      offset_match = ANIDB_TVDB_ID_OFFSET.search(id)
+      if offset_match:
+        match_season, match_episode = "", ""
+        if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
+        if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
+        ####################################################################################################
+        # TODO: tvdb_mapping is not populated yet. Something is off here for the 'tvdb_mapping' variable.
+        # Broken ZeroQI committed on Mar 17, 2018
+        # https://github.com/ZeroQI/Absolute-Series-Scanner/commit/4ed5bffa0a4a971e4b3c08b8994050ef0f2f1e7e
+        ####################################################################################################
+        if tvdb_mapping and match_season!='s0': 
+          season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
+          offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
+        folder_show, id = folder_show.replace("-"+match_season+match_episode+"]", "]"), offset_match.group('id')
+        if offset_season!=0 or offset_episode!=0:
+          Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
+          Log.info("".ljust(157, '-'))
+    
     ### forced guid modes - anidb2/3/4 (requires ScudLee's mapping xml file) ###
     if source in ["anidb2", "anidb3", "anidb4"]:
       a2_tvdbid = ""
