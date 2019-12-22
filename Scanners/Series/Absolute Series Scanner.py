@@ -22,40 +22,44 @@ except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python < 
 try:                 from urllib.request import urlopen, Request     # Python >= 3.0
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
 
+### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 def com(string):  return re.compile(string)                 #RE Compile
 def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore Case
 
-### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
+### Log variables, regex, skipped folders, words to remove, character maps ###
 SetupDone        = False
 Log              = None
+Handler          = None
 PLEX_ROOT        = ""
 PLEX_LIBRARY     = {}
-PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 
-SOURCE_IDS             = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
-SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]      #
-ANIDB_TVDB_ID_OFFSET   = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
+SOURCE_IDS       = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
+SOURCE_ID_FILES  = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]
+SOURCE_ID_OFFSET = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
+
 ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
-ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
-ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
-ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'                                                                                                                                 # custom local correction for ScudLee mapping file url
-TVDB_API1_URL          = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'                                                                                          #
+ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
+ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'
+ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'  # Custom local correction for ScudLee mapping file url
+TVDB_API1_URL          = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
 TVDB_API2_LOGIN        = "https://api.thetvdb.com/login"
 TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
-ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'                                                                            #
-SSL_CONTEXT            = ssl.SSLContext(SSL_PROTOCOL)                                                                                                                            #
-HEADERS                = {'Content-type': 'application/json'}
-FILTER_CHARS           = "\\/:*?<>|~;"  #_.                                                                                                                                      # Windows file naming limitations + "~;" as plex cut title at this for the agent
-   
+ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
+
+SSL_CONTEXT = ssl.SSLContext(SSL_PROTOCOL)
+HEADERS     = {'Content-type': 'application/json'}
+
+FILTER_CHARS    = "\\/:*?<>|~;"  #_.                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
 SEASON_RX       = [                                                                                                                                                              ### Seasons Folders
                     cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
-                    cic(r'^(Season|Series|Book|Saison|Livre|S)[ _\-\.]*(?P<season>\d{1,2})'),                                                                                      # Season / Series / Book / Saison / Livre / S
+                    cic(r'^(Season|Series|Book|Saison|Livre|S)[ _\-\.]*(?P<season>\d{1,2})'),                                                                                    # Season / Series / Book / Saison / Livre / S
                     cic(r'^(?P<show>.*?)[\._\- ]+S(?P<season>\d{2})$'),                                                                                                          # (title) S01
                     cic(r'^(?P<season>\d{1,2})'),                                                                                                                                # ##
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
-  cic(r'(^|(?P<show>.*?)[ _\.\-]+)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                      #  0 # 1x01
+  cic(r'(^|(?P<show>.*?)[ _\.\-]+)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                    #  0 # 1x01
   cic(r'(^|(?P<show>.*?)[ _\.\-]+)S(?P<season>\d{1,2})[ _\.\-]?EP?(?P<ep>\d{1,3})(([ _\.\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,3}))?[ _\.]*(?P<title>.*?)$'),                          #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,3})[ _\.\-]?of[ _\.\-]?\d{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   cic(r'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'),                                                                      #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   cic(r'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,3})\][ _\.](?P<title>.*)$')]                                                                              #  3 # Serie [Sxx] [Exxx] title.ext
@@ -76,7 +80,7 @@ COUNTER         = 500
 
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDouble', r'\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder',   ###### Ignored folders
-                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr'] #, "VIDEO_TS"]                   #      source: Filters.py  removed '\..*',
+                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr']                        # source: Filters.py  removed '\..*',
 IGNORE_DIRS_RX      = [cic(entry) for entry in IGNORE_DIRS_RX_RAW]
 # Uses re.match() so forces a '^'
 IGNORE_FILES_RX_RAW = [ r'[ _\.\-]?sample', r'-Recap\.', r'\._', 'OST', 'soundtrack']                                                                                            # Skipped files (samples, trailers)
@@ -139,8 +143,6 @@ WS_MULTI_EP_SIMPLE  = com(r"^(?P<ep>\d{1,3})-(?P<ep2>\d{1,3})$")
 WS_MULTI_EP_COMPLEX = com(r"^(ep?[ -]?)?(?P<ep>\d{1,3})(-|ep?|-ep?)(?P<ep2>\d{1,3})")
 WS_SPECIALS         = com(r"^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)(\d{1,3})?$)")
 
-### Check config files on boot up then create library variables #########################################
-HANDLER          = None
 ### Setup core variables ################################################################################
 def setup():
   global SetupDone, PLEX_ROOT
@@ -279,13 +281,13 @@ def set_logging(root='', foldername='', filename='', backup_count=0, format='%(m
 
   mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
 
-  global HANDLER
-  if HANDLER: Log.removeHandler(HANDLER)
-  if backup_count:  HANDLER = logging.handlers.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=backup_count)
-  else:             HANDLER = logging.FileHandler                 (log_file, mode=mode)
-  HANDLER.setFormatter(logging.Formatter(format))
-  HANDLER.setLevel(logging.DEBUG)
-  Log.addHandler(HANDLER)
+  global Handler
+  if Handler: Log.removeHandler(Handler)
+  if backup_count:  Handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=backup_count)
+  else:             Handler = logging.FileHandler                 (log_file, mode=mode)
+  Handler.setFormatter(logging.Formatter(format))
+  Handler.setLevel(logging.DEBUG)
+  Log.addHandler(Handler)
 
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] #####################
 def natural_sort_key(s, _nsre=com(r'(\d+)')):  return [int(text) if text.isdigit() else text.lower() for text in _nsre.split(s)]
@@ -679,7 +681,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         
     ### Calculate offset for season or episode (must be done after 'tvdb_mapping' is populated) ###
     if source.startswith('tvdb') or source.startswith('anidb'):  # 
-      offset_match = ANIDB_TVDB_ID_OFFSET.search(id)
+      offset_match = SOURCE_ID_OFFSET.search(id)
       if offset_match:
         match_season, match_episode = "", ""
         if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
