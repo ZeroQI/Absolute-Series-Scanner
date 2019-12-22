@@ -145,12 +145,13 @@ WS_SPECIALS         = com(r"^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|
 
 ### Setup core variables ################################################################################
 def setup():
-  global SetupDone, PLEX_ROOT
+  global SetupDone
   if SetupDone:  return
   else:          SetupDone = True
   
   ### Define PLEX_ROOT ##################################################################################
-  PLEX_ROOT        = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
+  global PLEX_ROOT
+  PLEX_ROOT = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
   if not os.path.isdir(PLEX_ROOT):
     path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
                       'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
@@ -164,6 +165,8 @@ def setup():
   set_logging()
   
   ### Populate PLEX_LIBRARY #############################################################################
+  Log.info("".ljust(157, '='))
+  Log.info("Plex scan start: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
     Log.info("'X-Plex-Token.id' file present")
     url = PLEX_LIBRARY_URL + "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
@@ -293,12 +296,12 @@ def set_logging(root='', foldername='', filename='', backup_count=0, format='%(m
 def natural_sort_key(s, _nsre=com(r'(\d+)')):  return [int(text) if text.isdigit() else text.lower() for text in _nsre.split(s)]
 
 ### Return number of bytes of Unicode characters ########################################################
-def unicodeCharLen (char):                                       # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
+def unicodeCharLen(char):                                       # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
   for x in range(1,6):                                           # start at 1, 6 times 
     if ord(char) < 256-pow(2, 7-x)+(2 if x==6 else 0): return x  # 256-2pow(x) with x(7->0) = 128 192 224 240 248 252 254 255 = 1 to 8 bits at 1 from the left, 256-2pow(7-x) starts form left
  
 ### Return correct String length even with Unicode characters ###########################################
-def unicodeLen (string): 
+def unicodeLen(string): 
   length = 0
   for char in string:  length += unicodeCharLen(char)
   return length
