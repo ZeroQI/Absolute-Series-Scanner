@@ -26,7 +26,12 @@ def com(string):  return re.compile(string)                 #RE Compile
 def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore Case
 
 ### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
-#ssl._create_default_https_context = ssl._create_unverified_context
+SetupDone        = False
+Log              = None
+PLEX_ROOT        = ""
+PLEX_LIBRARY     = {}
+PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+
 SOURCE_IDS             = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]      #
 ANIDB_TVDB_ID_OFFSET   = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
@@ -136,14 +141,38 @@ WS_SPECIALS         = com(r"^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|
 
 ### Check config files on boot up then create library variables #########################################
 HANDLER          = None
-PLEX_LIBRARY     = {}
-PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
-PLEX_ROOT        = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
-if not os.path.isdir(PLEX_ROOT):
-  path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
-                    'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
-                    'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
-  PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
+### Setup core variables ################################################################################
+def setup():
+  global SetupDone, PLEX_ROOT
+  if SetupDone:  return
+  else:          SetupDone = True
+  
+  ### Define PLEX_ROOT ##################################################################################
+  PLEX_ROOT        = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
+  if not os.path.isdir(PLEX_ROOT):
+    path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
+                      'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
+                      'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
+    PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
+  
+  ### Define logging setup ##############################################################################
+  global Log
+  Log = logging.getLogger('main')
+  Log.setLevel(logging.DEBUG)
+  set_logging()
+  
+  ### Populate PLEX_LIBRARY #############################################################################
+  if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
+    Log.info("'X-Plex-Token.id' file present")
+    url = PLEX_LIBRARY_URL + "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
+    try:
+      library_xml = etree.fromstring(read_url(url))
+      for directory in library_xml.iterchildren('Directory'):
+        for location in directory.iterchildren('Location'):
+          PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
+          Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
+    except:  pass
+  if not PLEX_LIBRARY:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
 
 ### Read in a local file ################################################################################  
 def read_file(local_file):
@@ -257,19 +286,6 @@ def set_logging(root='', foldername='', filename='', backup_count=0, format='%(m
   HANDLER.setFormatter(logging.Formatter(format))
   HANDLER.setLevel(logging.DEBUG)
   Log.addHandler(HANDLER)
-
-### Log #################################################################################################
-Log              = logging.getLogger('main');  Log.setLevel(logging.DEBUG);  set_logging()
-if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
-  Log.info("'X-Plex-Token.id' file present")
-  PLEX_LIBRARY_URL += "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
-try:
-  library_xml = etree.fromstring(read_url(PLEX_LIBRARY_URL))
-  for directory in library_xml.iterchildren('Directory'):
-    for location in directory.iterchildren('Location'):
-      PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
-      Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
-except:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
 
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] #####################
 def natural_sort_key(s, _nsre=com(r'(\d+)')):  return [int(text) if text.isdigit() else text.lower() for text in _nsre.split(s)]
@@ -443,6 +459,8 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
+  setup()  # Call setup to get core info. If setup is already done, it just returns and does nothing.
+  
   reverse_path = list(reversed(path.split(os.sep)))
   log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
   anidb_xml    = None
