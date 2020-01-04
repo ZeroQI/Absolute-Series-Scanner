@@ -431,8 +431,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep, ep2 = int(ep), int(ep2) if ep2 and ep2.isdigit() else None
     else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
   elif season > 0:
-    ep, ep2 = ep+int(Dict(mappingList, 'episodeoffset', default='0')), ep2+int(Dict(mappingList, 'episodeoffset', default='0')) if ep2 else None 
-    season  = int(Dict(mappingList, 'defaulttvdbseason', default='1'))
+    if Dict(mappingList, 'episodeoffset'):  ep, ep2 = ep+int(Dict(mappingList, 'episodeoffset')), ep2+int(Dict(mappingList, 'episodeoffset')) if ep2 else None 
+    if Dict(mappingList, 'defaulttvdbseason') and not Dict(mappingList, 'defaulttvdbseason_a', default=False):  season = int(Dict(mappingList, 'defaulttvdbseason'))
 
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
   if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
@@ -467,7 +467,8 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
     if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
       mappingList['episodeoffset']     = anime.get('episodeoffset')     or '0'  # Either entry is missing or exists but is blank
       mappingList['defaulttvdbseason'] = anime.get('defaulttvdbseason') or '1'  # Either entry is missing or exists but is blank
-      if mappingList['defaulttvdbseason'] == 'a':  mappingList['defaulttvdbseason'] = '1'
+      if mappingList['defaulttvdbseason'] == 'a':  mappingList['defaulttvdbseason_a'] = True; mappingList['defaulttvdbseason'] = '1'
+      else:                                        mappingList['defaulttvdbseason_a'] = False
       try:
         for season in anime.iter('mapping'):
           for episode in range(int(season.get("start")), int(season.get("end"))+1) if season.get("offset") else []:
