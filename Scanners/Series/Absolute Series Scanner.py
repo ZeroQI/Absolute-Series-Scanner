@@ -223,7 +223,7 @@ def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6da
     # Check cached file's anime enddate and adjust cache age (same as HAMA)
     if "api.anidb.net" in url and file_content_cache:
       xml = etree.fromstring(file_content_cache)
-      ed = xml.xpath('enddate')[0].text or datetime.datetime.now().strftime("%Y-%m-%d")
+      ed = (xml.xpath('enddate')[0].text if xml.xpath('enddate') else '') or datetime.datetime.now().strftime("%Y-%m-%d")
       enddate = datetime.datetime.strptime("{}-12-31".format(ed) if len(ed)==4 else "{}-{}".format(ed, ([30, 31] if int(ed[-2:])<=7 else [31, 30])[int(ed[-2:]) % 2] if ed[-2:]!='02' else 28) if len(ed)==7 else ed, '%Y-%m-%d')
       days_old = (datetime.datetime.now() - enddate).days
       if   days_old > 1825:  cache = 365*24*60*60                  # enddate > 5 years ago => 1 year cache
