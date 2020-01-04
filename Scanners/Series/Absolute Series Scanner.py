@@ -645,6 +645,18 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
     Log.info("".ljust(157, '-'))
     
+    ### Calculate offset for season or episode (tvdb 2/3/4 mode's offset_episode adjustment is done after tvdb_mapping is populated) ###
+    if source.startswith('tvdb') or source.startswith('anidb'):  # 
+      offset_match = SOURCE_ID_OFFSET.search(id)
+      if offset_match:
+        match_season, match_episode = "", ""
+        if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
+        if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
+        folder_show, id = folder_show.replace("-"+match_season+match_episode+"]", "]"), offset_match.group('id')
+        if offset_season!=0 or offset_episode!=0:
+          Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
+          Log.info("".ljust(157, '-'))
+    
     if source.startswith('tvdb'):
       #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
       if source in ('tvdb2', 'tvdb3'): 
@@ -705,19 +717,16 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info("".ljust(157, '-'))
         
     ### Calculate offset for season or episode (must be done after 'tvdb_mapping' is populated) ###
-    if source.startswith('tvdb') or source.startswith('anidb'):  # 
-      offset_match = SOURCE_ID_OFFSET.search(id)
-      if offset_match:
-        match_season, match_episode = "", ""
-        if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
-        if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
-        if tvdb_mapping and match_season!='s0': 
-          season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
-          offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
-        folder_show, id = folder_show.replace("-"+match_season+match_episode+"]", "]"), offset_match.group('id')
-        if offset_season!=0 or offset_episode!=0:
-          Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
-          Log.info("".ljust(157, '-'))
+    if offset_match and tvdb_mapping:  # Can't retest as fist go removed the offset entry from 'id' so just reuse earlier matching results
+      match_season, match_episode = "", ""
+      if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
+      if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
+      if tvdb_mapping and match_season!='s0': 
+        season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
+        offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
+      if offset_season!=0 or offset_episode!=0:
+        Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
+        Log.info("".ljust(157, '-'))
     
     ### forced guid modes - anidb2/3/4 (requires ScudLee's mapping xml file) ###
     if source in ["anidb2", "anidb3", "anidb4"]:
