@@ -38,14 +38,19 @@ SOURCE_IDS       = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imd
 SOURCE_ID_FILES  = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]
 SOURCE_ID_OFFSET = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
 
-ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
+ANIDB_HTTP_API_URL = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
+ANIDB_SLEEP_MIN    = 6
+AniDBBan           = False
+
 ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'
 ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'  # Custom local correction for ScudLee mapping file url
+
 TVDB_API1_URL          = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
 TVDB_API2_LOGIN        = "https://api.thetvdb.com/login"
 TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
+
 ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
 
 SSL_CONTEXT = ssl.SSLContext(SSL_PROTOCOL)
@@ -203,44 +208,60 @@ def read_url(url, data=None):
   except Exception as e:  Log.error("Error reading url '%s', Exception: '%s'" % (url, e)); raise e
 
 ### Download a url into the environment temp directory ##################################################
-def read_cached_url(url, foldername='', filename='', max_age_sec=6*24*60*60):
-  local_filename, file_content, hama_folder = "", "", ""
+def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6days in seconds
+  local_filename, hama_folder, file_content, file_content_cache, file_age = "", "", "", "", cache+1
   if not filename:  filename = os.path.basename(url)
-  if foldername:
-    hama_folder    = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', foldername)
-  if foldername and os.path.exists(hama_folder):
-    local_filename = os.path.join(hama_folder, filename)
-  else:
-    local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + (foldername.replace(os.path.sep, '-') + '-' if foldername else '') + filename)
+  # Determine if files should be stored in the HAMA/DataItems folders or in the Temp directory
+  if foldername:  hama_folder = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', foldername)
+  if foldername and os.path.exists(hama_folder):  local_filename = os.path.join(hama_folder, filename)
+  else:                                           local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + (foldername.replace(os.path.sep, '-') + '-' if foldername else '') + filename)
+  # Load the cached file's contents
+  if os.path.exists(local_filename):
+    file_content_cache = read_file(local_filename)
+    file_age           = time.time() - os.path.getmtime(local_filename)
   try:
-    if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
-      Log.info("URL: '%s', Using cached file: '%s'" % (url, local_filename))
-      file_content = read_file(local_filename)
-    else:
-      Log.info("URL: '%s', Updating cached file: '%s'" % (url, local_filename) if os.path.exists(local_filename) else "URL: '%s', Creating cached file: '%s'" % (url, local_filename))
-      if "api.anidb.net" in url:
-        import StringIO, gzip
-        file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
-        Log.info("-- Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
-        if len(file_content)<512:
-          Log.info("-- Bad response received: %s" % file_content)
-          if os.path.exists(local_filename):
-            file_content = read_file(local_filename)
-            Log.info("-- Loading previously cached file")
-          return file_content  # return the bad response or old loaded file and don't save
-      elif "api.thetvdb.com" in url:
-          if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
-          else:                    
-            Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-            page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
-            HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-          file_content = read_url(Request(url, headers=HEADERS))
+    # Check cached file's anime enddate and adjust cache age (same as HAMA)
+    if "api.anidb.net" in url and file_content_cache:
+      xml = etree.fromstring(file_content_cache)
+      ed = xml.xpath('enddate')[0].text or datetime.datetime.now().strftime("%Y-%m-%d")
+      enddate = datetime.datetime.strptime("{}-12-31".format(ed) if len(ed)==4 else "{}-{}".format(ed, ([30, 31] if int(ed[-2:])<=7 else [31, 30])[int(ed[-2:]) % 2] if ed[-2:]!='02' else 28) if len(ed)==7 else ed, '%Y-%m-%d')
+      days_old = (datetime.datetime.now() - enddate).days
+      if   days_old > 1825:  cache = 365*24*60*60                  # enddate > 5 years ago => 1 year cache
+      elif days_old >   30:  cache = (days_old*365*24*60*60)/1825  # enddate > 30 days ago => (days_old/5yrs ended = x/1yrs cache)
+    # Return the cached file string if it exists and is not too old
+    if file_content_cache and file_age <= cache:
+      Log.info("Using cached file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+      return file_content_cache
+    # Pull the content down as either cache does not exist or is too old
+    if "api.anidb.net" in url:
+      global AniDBBan
+      if AniDBBan:  # If a ban has been hit in scan run's life, return cached content (or nothing if there is no cached content)
+        Log.info("Using cached file (AniDBBan) - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+        return file_content_cache
+      import StringIO, gzip
+      file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
+      time.sleep(ANIDB_SLEEP_MIN)
+      if len(file_content)<512:  # Check if the content is too short and thus an error response
+        if 'banned' in file_content:  AniDBBan = True
+        Log.info("Using {action} file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="cached file" if file_content_cache else "error response", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+        Log.info("-- Error response received: {}".format(file_content))
+        return file_content_cache or file_content  # If an error has been hit, return cached content (or error response if there is no cached content)
+    elif "api.thetvdb.com" in url:
+      if 'Authorization' in HEADERS:  Log.info('Authorised, HEADERS: {}'.format(HEADERS))
       else:
-        file_content = read_url(url)
+        page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
+        HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token']
+        Log.info('Now authorised, HEADERS: {}'.format(HEADERS))
+      file_content = read_url(Request(url, headers=HEADERS))
+    else:
+      file_content = read_url(url)
+    # Content was pulled down so save it
+    if file_content:
+      Log.info("{action} cached file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="Updating" if os.path.exists(local_filename) else "Creating", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
       write_file(local_filename, file_content)
     return file_content
-  except Exception as e:
-    Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
+  except Exception as e:  # Exception hit from possible: xml parsing, file reading/writing, bad url call
+    Log.error("Error downloading '{}', Exception: '{}'".format(url, e))
     raise e
 
 #########################################################################################################
