@@ -613,7 +613,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   folder_show                                = filter_chars(reverse_path[0]) if reverse_path else ""
   array, misc_words, misc_count, mappingList = (), [], {}, {}
   tvdb_mapping, unknown_series_length        = {}, False
-  offset_season, offset_episode              = 0, 0
+  offset_match, offset_season, offset_episode = None, 0, 0
   
   if path:
     ### Grouping folders skip , unless single series folder ###
@@ -650,12 +650,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       offset_match = SOURCE_ID_OFFSET.search(id)
       if offset_match:
         match_season, match_episode = "", ""
-        if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
-        if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
+        if offset_match.group('season' ):  match_season  = offset_match.group('season' )
+        if offset_match.group('episode'):  match_episode = offset_match.group('episode')
         folder_show, id = folder_show.replace("-"+match_season+match_episode+"]", "]"), offset_match.group('id')
-        if offset_season!=0 or offset_episode!=0:
-          Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
-          Log.info("".ljust(157, '-'))
     
     if source.startswith('tvdb'):
       #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
@@ -717,7 +714,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info("".ljust(157, '-'))
         
     ### Calculate offset for season or episode (must be done after 'tvdb_mapping' is populated) ###
-    if offset_match and tvdb_mapping:  # Can't retest as fist go removed the offset entry from 'id' so just reuse earlier matching results
+    if offset_match:  # Can't retest as fist go removed the offset entry from 'id' so just reuse earlier matching results
       match_season, match_episode = "", ""
       if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
       if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
