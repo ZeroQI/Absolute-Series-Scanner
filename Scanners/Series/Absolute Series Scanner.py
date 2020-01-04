@@ -212,9 +212,13 @@ def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6da
   local_filename, hama_folder, file_content, file_content_cache, file_age = "", "", "", "", cache+1
   if not filename:  filename = os.path.basename(url)
   # Determine if files should be stored in the HAMA/DataItems folders or in the Temp directory
-  if foldername:  hama_folder = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', foldername)
-  if foldername and os.path.exists(hama_folder):  local_filename = os.path.join(hama_folder, filename)
-  else:                                           local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + (foldername.replace(os.path.sep, '-') + '-' if foldername else '') + filename)
+  if foldername:  hama_folder = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems')
+  if foldername and os.path.exists(hama_folder):
+    hama_folder = os.path.join(hama_folder, foldername)
+    if not os.path.exists(hama_folder):  os.makedirs(hama_folder)
+    local_filename = os.path.join(hama_folder, filename)
+  else:
+    local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + (foldername.replace(os.path.sep, '-') + '-' if foldername else '') + filename)
   # Load the cached file's contents
   if os.path.exists(local_filename):
     file_content_cache = read_file(local_filename)
