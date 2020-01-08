@@ -22,35 +22,49 @@ except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python < 
 try:                 from urllib.request import urlopen, Request     # Python >= 3.0
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
 
+### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 def com(string):  return re.compile(string)                 #RE Compile
 def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore Case
 
-### Log variables, regex, skipped folders, words to remove, character maps ###                                                                                                      ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
-#ssl._create_default_https_context = ssl._create_unverified_context
-SOURCE_IDS             = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
-SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]      #
-ANIDB_TVDB_ID_OFFSET   = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
-ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
-ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'                                                                                   #
-ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'                                                                   #
-ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'                                                                                                                                 # custom local correction for ScudLee mapping file url
-TVDB_API1_URL          = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'                                                                                          #
+### Log variables, regex, skipped folders, words to remove, character maps ###
+SetupDone        = False
+Log              = None
+Handler          = None
+PLEX_ROOT        = ""
+PLEX_LIBRARY     = {}
+PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+
+SOURCE_IDS       = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
+SOURCE_ID_FILES  = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]
+SOURCE_ID_OFFSET = cic(r"(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?")
+
+ANIDB_HTTP_API_URL = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
+ANIDB_SLEEP_MIN    = 6
+AniDBBan           = False
+
+ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
+ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'
+ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'  # Custom local correction for ScudLee mapping file url
+
+TVDB_API1_URL          = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
 TVDB_API2_LOGIN        = "https://api.thetvdb.com/login"
 TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
-ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'                                                                            #
-SSL_CONTEXT            = ssl.SSLContext(SSL_PROTOCOL)                                                                                                                            #
-HEADERS                = {'Content-type': 'application/json'}
-FILTER_CHARS           = "\\/:*?<>|~;"  #_.                                                                                                                                      # Windows file naming limitations + "~;" as plex cut title at this for the agent
-   
+
+ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
+
+SSL_CONTEXT = ssl.SSLContext(SSL_PROTOCOL)
+HEADERS     = {'Content-type': 'application/json'}
+
+FILTER_CHARS    = "\\/:*?<>|~;"  #_.                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
 SEASON_RX       = [                                                                                                                                                              ### Seasons Folders
                     cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
-                    cic(r'^(Season|Series|Book|Saison|Livre|S)[ _\-\.]*(?P<season>\d{1,2})'),                                                                                      # Season / Series / Book / Saison / Livre / S
+                    cic(r'^(Season|Series|Book|Saison|Livre|S)[ _\-\.]*(?P<season>\d{1,2})'),                                                                                    # Season / Series / Book / Saison / Livre / S
                     cic(r'^(?P<show>.*?)[\._\- ]+S(?P<season>\d{2})$'),                                                                                                          # (title) S01
                     cic(r'^(?P<season>\d{1,2})'),                                                                                                                                # ##
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
-  cic(r'(^|(?P<show>.*?)[ _\.\-]+)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                      #  0 # 1x01
+  cic(r'(^|(?P<show>.*?)[ _\.\-]+)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                    #  0 # 1x01
   cic(r'(^|(?P<show>.*?)[ _\.\-]+)S(?P<season>\d{1,2})[ _\.\-]?EP?(?P<ep>\d{1,3})(([ _\.\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,3}))?[ _\.]*(?P<title>.*?)$'),                          #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,3})[ _\.\-]?of[ _\.\-]?\d{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   cic(r'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'),                                                                      #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   cic(r'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,3})\][ _\.](?P<title>.*)$')]                                                                              #  3 # Serie [Sxx] [Exxx] title.ext
@@ -71,7 +85,7 @@ COUNTER         = 500
 
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDouble', r'\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder',   ###### Ignored folders
-                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr'] #, "VIDEO_TS"]                   #      source: Filters.py  removed '\..*',
+                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr']                        # source: Filters.py  removed '\..*',
 IGNORE_DIRS_RX      = [cic(entry) for entry in IGNORE_DIRS_RX_RAW]
 # Uses re.match() so forces a '^'
 IGNORE_FILES_RX_RAW = [ r'[ _\.\-]?sample', r'-Recap\.', r'\._', 'OST', 'soundtrack']                                                                                            # Skipped files (samples, trailers)
@@ -134,16 +148,41 @@ WS_MULTI_EP_SIMPLE  = com(r"^(?P<ep>\d{1,3})-(?P<ep2>\d{1,3})$")
 WS_MULTI_EP_COMPLEX = com(r"^(ep?[ -]?)?(?P<ep>\d{1,3})(-|ep?|-ep?)(?P<ep2>\d{1,3})")
 WS_SPECIALS         = com(r"^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)(\d{1,3})?$)")
 
-### Check config files on boot up then create library variables #########################################
-PLEX_ROOT  = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
-if not os.path.isdir(PLEX_ROOT):
-  path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
-                    'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
-                    'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
-  PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
-
-### Test integer ########################################################################################
-def is_integer(string):  return string is not None and string.isdigit() or len(string)>1 and string.startswith("-") and string[1:].isdigit()
+### Setup core variables ################################################################################
+def setup():
+  global SetupDone
+  if SetupDone:  return
+  else:          SetupDone = True
+  
+  ### Define PLEX_ROOT ##################################################################################
+  global PLEX_ROOT
+  PLEX_ROOT = os.path.abspath(os.path.join(os.path.dirname(inspect.getfile(inspect.currentframe())), "..", ".."))
+  if not os.path.isdir(PLEX_ROOT):
+    path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
+                      'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
+                      'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
+    PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
+  
+  ### Define logging setup ##############################################################################
+  global Log
+  Log = logging.getLogger('main')
+  Log.setLevel(logging.DEBUG)
+  set_logging()
+  
+  ### Populate PLEX_LIBRARY #############################################################################
+  Log.info("".ljust(157, '='))
+  Log.info("Plex scan start: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
+  if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
+    Log.info("'X-Plex-Token.id' file present")
+    url = PLEX_LIBRARY_URL + "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
+    try:
+      library_xml = etree.fromstring(read_url(url))
+      for directory in library_xml.iterchildren('Directory'):
+        for location in directory.iterchildren('Location'):
+          PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
+          Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
+    except:  pass
+  if not PLEX_LIBRARY:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
 
 ### Read in a local file ################################################################################  
 def read_file(local_file):
@@ -169,40 +208,67 @@ def read_url(url, data=None):
   except Exception as e:  Log.error("Error reading url '%s', Exception: '%s'" % (url, e)); raise e
 
 ### Download a url into the environment temp directory ##################################################
-def read_cached_url(url, filename=None, max_age_sec=6*24*60*60):
+def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6days in seconds
+  local_filename, hama_folder, file_content, file_content_cache, file_age = "", "", "", "", cache+1
   if not filename:  filename = os.path.basename(url)
-  local_filename, file_content = os.path.join(tempfile.gettempdir(), "ASS-" + filename), ""
+  # Determine if files should be stored in the HAMA/DataItems folders or in the Temp directory
+  if foldername:  hama_folder = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems')
+  if foldername and os.path.exists(hama_folder):
+    hama_folder = os.path.join(hama_folder, foldername)
+    if not os.path.exists(hama_folder):  os.makedirs(hama_folder)
+    local_filename = os.path.join(hama_folder, filename)
+  else:
+    local_filename = os.path.join(tempfile.gettempdir(), "ASS-" + (foldername.replace(os.path.sep, '-') + '-' if foldername else '') + filename)
+  # Load the cached file's contents
+  if os.path.exists(local_filename):
+    file_content_cache = read_file(local_filename)
+    file_age           = time.time() - os.path.getmtime(local_filename)
   try:
-    if os.path.exists(local_filename) and int(time.time() - os.path.getmtime(local_filename)) <= max_age_sec:
-      Log.info("URL: '%s', Using cached file: '%s'" % (url, local_filename))
-      file_content = read_file(local_filename)
-    else:
-      Log.info("URL: '%s', Updating cached file: '%s'" % (url, local_filename) if os.path.exists(local_filename) else "URL: '%s', Creating cached file: '%s'" % (url, local_filename))
-      if "api.anidb.net" in url:
-        import StringIO, gzip
-        file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
-        Log.info("-- Sleeping 6sec to prevent AniDB ban"); time.sleep(6)
-        if len(file_content)<512:
-          Log.info("-- Bad response received: %s" % file_content)
-          if os.path.exists(local_filename):
-            file_content = read_file(local_filename)
-            Log.info("-- Loading previously cached file")
-          return file_content  # return the bad response or old loaded file and don't save
-      elif "api.thetvdb.com" in url:
-          if 'Authorization' in HEADERS:  Log.info('authorised, HEADERS: {}'.format(HEADERS))   #and not timed out
-          else:                    
-            Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-            page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
-            HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token'];  Log.info('not authorised, HEADERS: {}'.format(HEADERS))
-          file_content = read_url(Request(url, headers=HEADERS))
+    # Check cached file's anime enddate and adjust cache age (same as HAMA)
+    if "api.anidb.net" in url and file_content_cache:
+      xml = etree.fromstring(file_content_cache)
+      ed = (xml.xpath('enddate')[0].text if xml.xpath('enddate') else '') or datetime.datetime.now().strftime("%Y-%m-%d")
+      enddate = datetime.datetime.strptime("{}-12-31".format(ed) if len(ed)==4 else "{}-{}".format(ed, ([30, 31] if int(ed[-2:])<=7 else [31, 30])[int(ed[-2:]) % 2] if ed[-2:]!='02' else 28) if len(ed)==7 else ed, '%Y-%m-%d')
+      days_old = (datetime.datetime.now() - enddate).days
+      if   days_old > 1825:  cache = 365*24*60*60                  # enddate > 5 years ago => 1 year cache
+      elif days_old >   30:  cache = (days_old*365*24*60*60)/1825  # enddate > 30 days ago => (days_old/5yrs ended = x/1yrs cache)
+    # Return the cached file string if it exists and is not too old
+    if file_content_cache and file_age <= cache:
+      Log.info("Using cached file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+      return file_content_cache
+    # Pull the content down as either cache does not exist or is too old
+    if "api.anidb.net" in url:
+      global AniDBBan
+      if AniDBBan:  # If a ban has been hit in scan run's life, return cached content (or nothing if there is no cached content)
+        Log.info("Using cached file (AniDBBan) - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+        return file_content_cache
+      import StringIO, gzip
+      file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
+      time.sleep(ANIDB_SLEEP_MIN)
+      if len(file_content)<512:  # Check if the content is too short and thus an error response
+        if 'banned' in file_content:  AniDBBan = True
+        Log.info("Using {action} file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="cached file" if file_content_cache else "error response", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+        Log.info("-- Error response received: {}".format(file_content))
+        return file_content_cache or file_content  # If an error has been hit, return cached content (or error response if there is no cached content)
+    elif "api.thetvdb.com" in url:
+      if 'Authorization' in HEADERS:  Log.info('Authorised, HEADERS: {}'.format(HEADERS))
       else:
-        file_content = read_url(url)
+        page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
+        HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token']
+        Log.info('Now authorised, HEADERS: {}'.format(HEADERS))
+      file_content = read_url(Request(url, headers=HEADERS))
+    else:
+      file_content = read_url(url)
+    # Content was pulled down so save it
+    if file_content:
+      Log.info("{action} cached file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="Updating" if os.path.exists(local_filename) else "Creating", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
       write_file(local_filename, file_content)
     return file_content
-  except Exception as e:
-    Log.error("Error downloading '%s', Exception: '%s'" % (url, e))
+  except Exception as e:  # Exception hit from possible: xml parsing, file reading/writing, bad url call
+    Log.error("Error downloading '{}', Exception: '{}'".format(url, e))
     raise e
 
+#########################################################################################################
 def winapi_path(dos_path, encoding=None): # https://stackoverflow.com/questions/36219317/pathname-too-long-to-open/36219497
     if (not isinstance(dos_path, unicode) and encoding is not None):  dos_path = dos_path.decode(encoding)
     path = os.path.abspath(dos_path)
@@ -215,44 +281,8 @@ def os_filename_clean_string(string):
     if char in string:  string = string.replace(char, subst)                                                         # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
   return string
 
-### Set Logging to proper logging file ##################################################################
-def set_logging(foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
-  global handler, CACHE_PATH, LOG_FILE
-  CACHE_PATH = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
-  if foldername: CACHE_PATH = os.path.join(CACHE_PATH, os_filename_clean_string(foldername))
-  if not os.path.exists(CACHE_PATH):  os.makedirs(CACHE_PATH)
-
-  filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
-  LOG_FILE = os.path.join(CACHE_PATH, filename)
-  if os.sep=="\\":  LOG_FILE = winapi_path(LOG_FILE, 'utf-8') # Bypass DOS path MAX_PATH limitation
-
-  mode = 'a' if os.path.exists(LOG_FILE) and os.stat(LOG_FILE).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
-
-  if handler: Log.removeHandler(handler)
-  if backup_count:  handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=10*1024*1024, backupCount=backup_count)
-  else:             handler = logging.FileHandler                 (LOG_FILE, mode=mode)
-  handler.setFormatter(logging.Formatter(format))
-  handler.setLevel(logging.DEBUG)
-  Log.addHandler(handler)
-
-### Log + CACHE_PATH calculated once for all calls ######################################################
-handler          = None
-Log              = logging.getLogger('main');  Log.setLevel(logging.DEBUG);  set_logging()
-CACHE_PATH       = ""
-LOG_FILE         = ""
-PLEX_LIBRARY     = {}
-PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"    # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
-if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
-  Log.info("'X-Plex-Token.id' file present")
-  PLEX_LIBRARY_URL += "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
-try:
-  library_xml = etree.fromstring(read_url(PLEX_LIBRARY_URL))
-  for library in library_xml.iterchildren('Directory'):
-    for path in library.iterchildren('Location'):
-      PLEX_LIBRARY[path.get("path")] = library.get("title")
-except:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
-
-def Dict(var, *arg, **kwarg):  #Avoid TypeError: argument of type 'NoneType' is not iterable ############
+#########################################################################################################  
+def Dict(var, *arg, **kwarg):
   """ Return the value of an (imbricated) dictionnary, if all fields exist else return "" unless "default=new_value" specified as end argument
       Ex: Dict(variable_dict, 'field1', 'field2', default = 0)
   """
@@ -261,16 +291,42 @@ def Dict(var, *arg, **kwarg):  #Avoid TypeError: argument of type 'NoneType' is 
     else:  return kwarg['default'] if kwarg and 'default' in kwarg else ""   # Allow Dict(var, tvdbid).isdigit() for example
   return kwarg['default'] if var in (None, '', 'N/A', 'null') and kwarg and 'default' in kwarg else "" if var in (None, '', 'N/A', 'null') else var
 
+### Set Logging to proper logging file ##################################################################
+def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
+  if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':
+    cache_path = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
+  else:  cache_path = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
+
+  if not foldername:  foldername = Dict(PLEX_LIBRARY, root, 'title')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
+
+  if foldername:  cache_path = os.path.join(cache_path, os_filename_clean_string(foldername))
+
+  if not os.path.exists(cache_path):  os.makedirs(cache_path)
+
+  filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
+  log_file = os.path.join(cache_path, filename)
+  if os.sep=="\\":  log_file = winapi_path(log_file, 'utf-8') # Bypass DOS path MAX_PATH limitation
+
+  mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
+
+  global Handler
+  if Handler: Log.removeHandler(Handler)
+  if backup_count:  Handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=backup_count)
+  else:             Handler = logging.FileHandler                 (log_file, mode=mode)
+  Handler.setFormatter(logging.Formatter(format))
+  Handler.setLevel(logging.DEBUG)
+  Log.addHandler(Handler)
+
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] #####################
 def natural_sort_key(s, _nsre=com(r'(\d+)')):  return [int(text) if text.isdigit() else text.lower() for text in _nsre.split(s)]
 
 ### Return number of bytes of Unicode characters ########################################################
-def unicodeCharLen (char):                                       # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
+def unicodeCharLen(char):                                       # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
   for x in range(1,6):                                           # start at 1, 6 times 
     if ord(char) < 256-pow(2, 7-x)+(2 if x==6 else 0): return x  # 256-2pow(x) with x(7->0) = 128 192 224 240 248 252 254 255 = 1 to 8 bits at 1 from the left, 256-2pow(7-x) starts form left
  
 ### Return correct String length even with Unicode characters ###########################################
-def unicodeLen (string): 
+def unicodeLen(string): 
   length = 0
   for char in string:  length += unicodeCharLen(char)
   return length
@@ -379,8 +435,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep, ep2 = int(ep), int(ep2) if ep2 and ep2.isdigit() else None
     else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
   elif season > 0:
-    if 'episodeoffset'     in mappingList and is_integer(mappingList['episodeoffset'    ]):  ep, ep2 = ep+int(mappingList['episodeoffset']), ep2+int(mappingList['episodeoffset']) if ep2 else None 
-    if 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'].isdigit():    season  = int(mappingList['defaulttvdbseason'])
+    if Dict(mappingList, 'episodeoffset'):  ep, ep2 = ep+int(Dict(mappingList, 'episodeoffset')), ep2+int(Dict(mappingList, 'episodeoffset')) if ep2 else None 
+    if Dict(mappingList, 'defaulttvdbseason') and not Dict(mappingList, 'defaulttvdbseason_a', default=False):  season = int(Dict(mappingList, 'defaulttvdbseason'))
 
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
   if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
@@ -413,7 +469,10 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   mappingList = {}
   for anime in AniDB_TVDB_mapping_tree.iter('anime') if AniDB_TVDB_mapping_tree is not None else []:
     if anime.get("anidbid") == anidbid and anime.get('tvdbid').isdigit():
-      mappingList['episodeoffset'], mappingList['defaulttvdbseason'] = anime.get('episodeoffset', default=''), anime.get('defaulttvdbseason',default='')
+      mappingList['episodeoffset']     = anime.get('episodeoffset')     or '0'  # Either entry is missing or exists but is blank
+      mappingList['defaulttvdbseason'] = anime.get('defaulttvdbseason') or '1'  # Either entry is missing or exists but is blank
+      if mappingList['defaulttvdbseason'] == 'a':  mappingList['defaulttvdbseason_a'] = True; mappingList['defaulttvdbseason'] = '1'
+      else:                                        mappingList['defaulttvdbseason_a'] = False
       try:
         for season in anime.iter('mapping'):
           for episode in range(int(season.get("start")), int(season.get("end"))+1) if season.get("offset") else []:
@@ -431,6 +490,8 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
 
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
+  setup()  # Call setup to get core info. If setup is already done, it just returns and does nothing.
+  
   reverse_path = list(reversed(path.split(os.sep)))
   log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
   anidb_xml    = None
@@ -486,9 +547,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       return       #if not grouping folder scan, skip grouping folder
   
   ### Create *.filelist.log file ###
-  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
+  set_logging(root=root, filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
   Log.info("".ljust(157, '='))
@@ -546,9 +607,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
   ### Logging to *.scanner.log ###
-  set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
+  set_logging(root=root, filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(PLEX_LIBRARY[root] if root in PLEX_LIBRARY else "no valid X-Plex-Token.id", root, path, len(files or []), len(dirs or [])))
+  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("".ljust(157, '='))
   
@@ -556,7 +617,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   folder_show                                = filter_chars(reverse_path[0]) if reverse_path else ""
   array, misc_words, misc_count, mappingList = (), [], {}, {}
   tvdb_mapping, unknown_series_length        = {}, False
-  offset_season, offset_episode              = 0, 0
+  offset_match, offset_season, offset_episode = None, 0, 0
   
   if path:
     ### Grouping folders skip , unless single series folder ###
@@ -588,20 +649,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
     Log.info("".ljust(157, '-'))
     
-    if source.startswith('tvdb') or source.startswith('anidb'):
-      ### Calculate offset for season or episode ###
-      offset_match = ANIDB_TVDB_ID_OFFSET.search(id)
+    ### Calculate offset for season or episode (tvdb 2/3/4 mode's offset_episode adjustment is done after tvdb_mapping is populated) ###
+    if source.startswith('tvdb') or source.startswith('anidb'):  # 
+      offset_match = SOURCE_ID_OFFSET.search(id)
       if offset_match:
         match_season, match_episode = "", ""
-        if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
-        if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
-        if tvdb_mapping and match_season!='s0': 
-          season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
-          offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
+        if offset_match.group('season' ):  match_season  = offset_match.group('season' )
+        if offset_match.group('episode'):  match_episode = offset_match.group('episode')
         folder_show, id = folder_show.replace("-"+match_season+match_episode+"]", "]"), offset_match.group('id')
-        if offset_season!=0 or offset_episode!=0:
-          Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
-          Log.info("".ljust(157, '-'))
     
     if source.startswith('tvdb'):
       #tvdb2, tvdb3 - Absolutely numbered serie displayed with seasons with episodes re-numbered (tvdb2) or staying absolute (tvdb3, for long running shows without proper seasons like dbz, one piece)
@@ -611,7 +666,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           #Load series episode pages and group them in one dict
           episodes_json, page = [], 1
           while page not in (None, '', 'null'):
-            episodes_json_page = json.loads(read_cached_url(TVDB_API2_EPISODES.format(id, page), "tvdb-%s-%s.json" % (id, page)))
+            episodes_json_page = json.loads(read_cached_url(TVDB_API2_EPISODES.format(id, page), foldername=os.path.join('TheTVDB','json',id), filename="episodes_page{}_en.json".format(page)))
             episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info('TVDB_API2_EPISODES: {}, links: {}'.format(TVDB_API2_EPISODES.format(id, page), Dict(episodes_json_page, 'links')))
             page = Dict(episodes_json_page, 'links', 'next')
           
@@ -652,7 +707,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         tvdb_guid_url = TVDB_API1_URL % id
         Log.info("TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (source, tvdb_guid_url))
         try:
-          tvdbanime = etree.fromstring(read_cached_url(tvdb_guid_url, "tvdb-%s.xml" % id))
+          tvdbanime = etree.fromstring(read_cached_url(tvdb_guid_url, foldername=os.path.join('TheTVDB','json',id), filename="series_en.xml"))
           for episode in tvdbanime.xpath('Episode'):
             if episode.xpath('absolute_number')[0].text:
               mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
@@ -662,6 +717,18 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if tvdb_mapping:  Log.info("unknown_series_length: %s, tvdb_mapping: %s (showing changing seasons/episodes only)" % (unknown_series_length, str({x:tvdb_mapping[x] for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)})))  #[for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)]
       Log.info("".ljust(157, '-'))
         
+    ### Calculate offset for season or episode (must be done after 'tvdb_mapping' is populated) ###
+    if offset_match:  # Can't retest as fist go removed the offset entry from 'id' so just reuse earlier matching results
+      match_season, match_episode = "", ""
+      if offset_match.group('season' ):  match_season,  offset_season  = offset_match.group('season' ), int(offset_match.group('season' )[1:])-1
+      if offset_match.group('episode'):  match_episode, offset_episode = offset_match.group('episode'), int(offset_match.group('episode')[1:])-(1 if int(offset_match.group('episode')[1:])>=0 else 0)
+      if tvdb_mapping and match_season!='s0': 
+        season_ep1      = min([e[1] for e in tvdb_mapping.values() if e[0] == offset_season+1]) if source in ['tvdb3','tvdb4'] else 1
+        offset_episode += list(tvdb_mapping.keys())[list(tvdb_mapping.values()).index((offset_season+1,season_ep1))] - 1
+      if offset_season!=0 or offset_episode!=0:
+        Log.info("Manual file offset - (season: '%s', episode: '%s') -> (offset_season: '%s', offset_episode: '%s')" % (match_season, match_episode, offset_season, offset_episode))
+        Log.info("".ljust(157, '-'))
+    
     ### forced guid modes - anidb2/3/4 (requires ScudLee's mapping xml file) ###
     if source in ["anidb2", "anidb3", "anidb4"]:
       a2_tvdbid = ""
@@ -681,12 +748,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD)), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD, foldername='AnimeLists')), id)
         except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
       
       # Online mapping file = ANIDB_TVDB_MAPPING (anime-list-master.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING)), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING, foldername='AnimeLists')), id)
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
       
       # Set folder_show from successful mapping
@@ -697,12 +764,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if source in ["anidb3", "anidb4"]:
       a3_tvdbid, season_map, relations_map, max_season, new_season, new_episode = "", {}, {}, 0, '', ''
       Log.info("AniDB mode (%s) enabled, loading season and relation mapping for all associated tvdbid entries" % source)
-      if source=="anidb3" and 'defaulttvdbseason' in mappingList and mappingList['defaulttvdbseason'] != '0':
+      if source=="anidb3" and Dict(mappingList, 'defaulttvdbseason', default='1') != '0':
         Log.info("defaulttvdbseason: '%s', is not season 0 so using unmodified mapping" % mappingList['defaulttvdbseason'])
       else:
         try:
-          AniDB_TVDB_mapping_tree     = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING))      # Load ScudLee mapping
-          AniDB_TVDB_mapping_tree_mod = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD))  # Load ASS mod mapping
+          AniDB_TVDB_mapping_tree     = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING,     foldername='AnimeLists'))  # Load ScudLee mapping
+          AniDB_TVDB_mapping_tree_mod = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD, foldername='AnimeLists'))  # Load ASS mod mapping
           
           # Override/Add ASS mod entries into ScudLee mapping
           mod_anidbids, mod_anidbid_elem = [], []
@@ -721,8 +788,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               a3_tvdbid = anime1.get('tvdbid')                                                 # Set the tvdbid found from the anidbid
               for anime2 in AniDB_TVDB_mapping_tree.iter('anime'):                             # Load all anidbid's using the same tvdbid with their max tvdb season#
                 if anime2.get('tvdbid') == a3_tvdbid:
-                  season_map[anime2.get("anidbid")] = {'min': anime2.get('defaulttvdbseason'), 'max': anime2.get('defaulttvdbseason')}  # Set the min/max season to the 'defaulttvdbseason'
-                  if source=="anidb4" and is_integer(anime2.get('episodeoffset')) and int(anime2.get('episodeoffset'))>0:  season_map[anime2.get("anidbid")] = {'min': '0', 'max': '0'}  # Force series as special if not starting the TVDB season
+                  season_map[anime2.get("anidbid")] = {'min': anime2.get('defaulttvdbseason') or '1', 'max': anime2.get('defaulttvdbseason') or '1'}  # Set the min/max season to the 'defaulttvdbseason'
+                  if source=="anidb4" and int(anime2.get('episodeoffset') or '0')>0:  season_map[anime2.get("anidbid")] = {'min': '0', 'max': '0'}    # Force series as special if not starting the TVDB season
                   for season in anime2.iter('mapping'):
                     if season_map[anime2.get("anidbid")]['max'].isdigit() and int(season_map[anime2.get("anidbid")]['max']) < int(season.get("tvdbseason")): 
                       season_map[anime2.get("anidbid")]['max'] = season.get("tvdbseason")      # Update the max season to the largest 'tvdbseason' season seen in 'mapping-list'
@@ -730,7 +797,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           # Process if entries are found for the anidbid with a valid tvdbid
           if len(season_map) > 0:
             # Get the max season number from TVDB API
-            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, "tvdb-%s.xml" % a3_tvdbid)).xpath('Episode'):
+            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, foldername=os.path.join('TheTVDB','json',a3_tvdbid), filename="series_en.xml")).xpath('Episode'):
               if int(episode.xpath('SeasonNumber')[0].text) > max_season:  max_season = int(episode.xpath('SeasonNumber')[0].text)
             # Set the min/max season to ints & update max value to the next min-1 to handle multi tvdb season anidb entries
             map_min_values = [int(season_map[x]['min']) for x in season_map for y in season_map[x] if y=='min']
@@ -741,7 +808,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             # Generate a relations map using all anidbid's using the same tvdbid stored earlier
             for entry in season_map:
               relations_map[entry] = {}
-              for anime in etree.fromstring(read_cached_url(ANIDB_HTTP_API_URL+entry, "anidb-%s.xml" % entry)).xpath('/anime/relatedanime/anime'):
+              for anime in etree.fromstring(read_cached_url(ANIDB_HTTP_API_URL+entry, foldername=os.path.join('AniDB','xml'), filename="%s.xml" % entry)).xpath('/anime/relatedanime/anime'):
                 if anime.get('type') in relations_map[entry]: relations_map[entry][anime.get('type')].append(anime.get('id'))  # Additional anidbid with an existing relation type
                 else:                                         relations_map[entry][anime.get('type')] = [anime.get('id')]      # First anidbid with a new relation type
             #### Note: Below must match hama (variable names are different but logic matches) ####
@@ -957,7 +1024,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             season = 0                                                                                                                                  # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
             # AniDB xml load (ALWAYS GZIPPED)
             if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
-              anidb_str = read_cached_url(ANIDB_HTTP_API_URL+id, "anidb-%s.xml" % id)
+              anidb_str = read_cached_url(ANIDB_HTTP_API_URL+id, foldername=os.path.join('AniDB','xml'), filename="%s.xml" % id)
               anidb_xml = etree.fromstring( anidb_str )
               
               #Build AniDB_op
@@ -1050,7 +1117,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
-          set_logging(foldername=PLEX_LIBRARY[root] if root in PLEX_LIBRARY else '', filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
+          set_logging(root=root, filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
 
   Log.info("".ljust(157, '='))
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
