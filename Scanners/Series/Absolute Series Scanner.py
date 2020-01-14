@@ -1064,7 +1064,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       else:                       unknown_holding.append([file, root, path, show if path else title, 0, COUNTER, title or clean_string(filename, False, no_underscore=True), year, "", ""])
     if run_count == 1 and len(files) > 0 and len(unknown_holding) == len(files):
       Log.info("[All files were seen as unknown(5XX). Trying one more time without miscellaneous string filtering.]")
-      run_count, standard_holding, unknown_holding = run_count + 1, [], []
+      run_count, standard_holding, unknown_holding, COUNTER = run_count + 1, [], [], COUNTER - len(unknown_holding)
     else:  break  #Break out and don't try a second run as not all files are unknown or there are no files
   for entry in standard_holding + unknown_holding:  add_episode_into_plex(media, *entry)
   if not files:  Log.info("[no files detected] #1")
