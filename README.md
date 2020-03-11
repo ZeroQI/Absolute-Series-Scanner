@@ -206,6 +206,21 @@ You can specify the guid to use the following way:
 </TBODY>
 </TABLE>
 
+You can force the tvdb4 mapping with a "tvdb4.mapping" file in the series folder containing the mapping format.
+Because it doesn't have an XML extension, it won't accept XML tags inside. Format exemple is fom anime tvdbid="331753" name="Black Clover":
+<PRE><CODE>
+    01|001|013|Introduction Arc
+    02|014|019|Dungeon Exploration Arc
+    03|020|027|Royal Capital Arc
+    04|028|039|Eye of the Midnight Sun Arc
+    05|040|050|Seabed Temple Arc
+    06|051|065|Witches' Forest Arc
+    07|066|072|Hot Springs Training Camp Arc
+    08|073|084|Royal Knights Arc
+    09|085|120|Reincarnation Arc
+    10|121|121|Arc 10 (unknown length)
+</CODE></PRE>
+        
 ##### Advanced modes
 For when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
 - " [anidb2-xxxxx]" will find the season & episode offset defined in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
