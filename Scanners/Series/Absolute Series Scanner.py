@@ -931,10 +931,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if clean_string(file, True, no_dash=True)==clean_string(folder_show, True, no_dash=True):  filename, title  = "01", folder_show                  ### If a file name matches the folder name, place as episode 1
         else:
           for prefix in array:
-            if clean_string(filename, no_whack=True).lower().startswith(prefix.lower()):  filename = clean_string(filename.lower().replace(prefix.lower(), " ", 1), True); break
+            if clean_string(filename, no_whack=True).lower().startswith(prefix.lower()):  filename = clean_string(re.sub(prefix, " ", filename, 1, re.IGNORECASE), True); break
           else:
             filename = clean_string(filename)
-            for item in misc_words:  filename = filename.lower().replace(item.lower(), ' ', 1)
+            for item in misc_words:  filename = re.sub(item, " ", filename, 1, re.IGNORECASE)
       else:  filename = clean_string(filename)
       ep = filename
       if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0]   ### Movies ### If using WebAOM (anidb rename) and movie on root
