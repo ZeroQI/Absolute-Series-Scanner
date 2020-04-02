@@ -22,6 +22,10 @@ except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python < 
 try:                 from urllib.request import urlopen, Request     # Python >= 3.0
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
 
+try:     import 'xattr.py' #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
+except:  FilebotID = {}
+else:    FileBot   = {'TheTVDB': 'tvdb', 'AniDB': 'anidb', 'TheMovieDB::TV': 'tsdb', 'movie': 'tmdb'}
+	
 ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 def com(string):  return re.compile(string)                 #RE Compile
 def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore Case
@@ -644,11 +648,23 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
           break
       else:
-        Log.info('No forced id found in series folder name nor id file')
-        source, id = "", ""
-        folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
-    Log.info("".ljust(157, '-'))
-    
+        if Filebot:
+          attr, db, sid = None
+          for file in files:
+            attr = xattr_metadata(file)
+            if attr:
+              db, sid = series_id(attr)  # db = attr_get(attr, 'seriesInfo', 'database')  # id = attr_get(attr, 'seriesInfo', 'id')  #if attr.get('imdbId'):  db, id = 'movie', movie_id(attr)
+              if db in FileBot and sid:  # movies: mid = movie_id(attr), imdb_id = attr.get('imdbId'),tmdb_id = attr.get('tmdbId')
+                source, id = FileBot[db], sid
+                Log.info('Filebot Xattr found, source: {}, id: {}, attr: {}'.format(source, id, attr))
+                folder_show = id if source=='tvdb' else "%s [%s-%s]" % (clean_string(reverse_path[0]), source, id)  #or source=='tmdb' in movie scanner
+                break
+          else:
+	    Log.info('No forced id found in series folder name nor id file or Filebot Xattr')
+            source, id = "", ""
+            folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
+         Log.info("".ljust(157, '-'))
+    	
     ### Calculate offset for season or episode (tvdb 2/3/4 mode's offset_episode adjustment is done after tvdb_mapping is populated) ###
     if source.startswith('tvdb') or source.startswith('anidb'):  # 
       offset_match = SOURCE_ID_OFFSET.search(id)
