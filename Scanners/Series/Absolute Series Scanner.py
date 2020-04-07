@@ -937,8 +937,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             for item in misc_words:  filename = re.sub(item, " ", filename, 1, re.IGNORECASE)
       else:  filename = clean_string(filename)
       ep = filename
-      if not path and " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0]   ### Movies ### If using WebAOM (anidb rename) and movie on root
-      elif len(files)==1 and (not re.search(r"\d+(\.\d+)?", clean_string(filename, True)) or "-m" in folder_show.split()):
+      if " - Complete Movie" in ep:  ep, title, show = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0]   ### Movies ### If using WebAOM (anidb rename)
+      elif len(files)==1 and (not re.search(r"\d+(\.\d+)?", clean_string(filename, True)) or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in ep.lower()+folder_show.lower() or "-m" in folder_show.split()):
         ep, title = "01", folder_show  #if  ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
       if folder_show and folder_season >= 1:                                                                                                                                         # 
         for prefix in ("s%d" % folder_season, "s%02d" % folder_season):                                                         #"%s %d " % (folder_show, folder_season), 
