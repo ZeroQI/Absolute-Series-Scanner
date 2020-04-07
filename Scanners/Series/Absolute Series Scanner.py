@@ -22,9 +22,9 @@ except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python < 
 try:                 from urllib.request import urlopen, Request     # Python >= 3.0
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
 
-try:     import 'xattr.py' #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
-except:  FilebotID = {}
-else:    FileBot   = {'TheTVDB': 'tvdb', 'AniDB': 'anidb', 'TheMovieDB::TV': 'tsdb', 'movie': 'tmdb'}
+try:     import xattr #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
+except:  Filebot = {}
+else:    FileBot = {'TheTVDB': 'tvdb', 'AniDB': 'anidb', 'TheMovieDB::TV': 'tsdb', 'movie': 'tmdb'}
 	
 ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 def com(string):  return re.compile(string)                 #RE Compile
