@@ -23,7 +23,7 @@ try:                 from urllib.request import urlopen, Request     # Python >=
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
 
 try:     import xattr #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
-except:  Filebot = {}
+except:  FileBot = {}
 else:    FileBot = {'TheTVDB': 'tvdb', 'AniDB': 'anidb', 'TheMovieDB::TV': 'tsdb', 'movie': 'tmdb'}
 	
 ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
@@ -648,7 +648,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           folder_show = "%s [%s-%s]" % (clean_string(reverse_path[0]), os.path.splitext(file)[0], id)
           break
       else:
-        if Filebot:
+        if FileBot:
           attr, db, sid = None
           for file in files:
             attr = xattr_metadata(file)
@@ -656,7 +656,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               db, sid = series_id(attr)  # db = attr_get(attr, 'seriesInfo', 'database')  # id = attr_get(attr, 'seriesInfo', 'id')  #if attr.get('imdbId'):  db, id = 'movie', movie_id(attr)
               if db in FileBot and sid:  # movies: mid = movie_id(attr), imdb_id = attr.get('imdbId'),tmdb_id = attr.get('tmdbId')
                 source, id = FileBot[db], sid
-                Log.info('Filebot Xattr found, source: {}, id: {}, attr: {}'.format(source, id, attr))
+                Log.info('FileBot Xattr found, source: {}, id: {}, attr: {}'.format(source, id, attr))
                 folder_show = id if source=='tvdb' else "%s [%s-%s]" % (clean_string(reverse_path[0]), source, id)  #or source=='tmdb' in movie scanner
                 break
           else:
