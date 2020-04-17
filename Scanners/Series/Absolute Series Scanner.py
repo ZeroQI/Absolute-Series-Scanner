@@ -22,7 +22,7 @@ except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python < 
 try:                 from urllib.request import urlopen, Request     # Python >= 3.0
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
 
-try:     import xattr #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
+try:     import filebot #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
 except:  FileBot = {}
 else:    FileBot = {'TheTVDB': 'tvdb', 'AniDB': 'anidb', 'TheMovieDB::TV': 'tsdb', 'movie': 'tmdb'}
 	
@@ -649,11 +649,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           break
       else:
         if FileBot:
-          attr, db, sid = None
+          attr, db, sid = None, "", ""
           for file in files:
-            attr = xattr_metadata(file)
+            attr = filebot.xattr_metadata(file)
             if attr:
-              db, sid = series_id(attr)  # db = attr_get(attr, 'seriesInfo', 'database')  # id = attr_get(attr, 'seriesInfo', 'id')  #if attr.get('imdbId'):  db, id = 'movie', movie_id(attr)
+              db, sid = filebot.series_id(attr).split('_')  # db = attr_get(attr, 'seriesInfo', 'database')  # id = attr_get(attr, 'seriesInfo', 'id')  #if attr.get('imdbId'):  db, id = 'movie', movie_id(attr)
               if db in FileBot and sid:  # movies: mid = movie_id(attr), imdb_id = attr.get('imdbId'),tmdb_id = attr.get('tmdbId')
                 source, id = FileBot[db], sid
                 Log.info('FileBot Xattr found, source: {}, id: {}, attr: {}'.format(source, id, attr))
