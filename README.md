@@ -336,20 +336,20 @@ chmod -R 775 '/var/lib/plexmediaserver/Library/Application Support/Plex Media Se
   - Make sure you did create a "Series" library, as a "Movie" library will not show a "Series" scanner like ASS
   - Make sure it is saved in [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
   - Check scanner file size and open the scanner file to check if it does have html/xml tags.
-- Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
+- [Optional] Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
 - if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
 - If Episodes are missing, wrong seasons or episode numbers, or series missing, check all "(custom ASS)" logs
 - If library doesn't add new content then most likelly the scanner is crashing (after scanner update) and will revert any changes to the library so nothing changes...
-- For scanner or agent issues where the agent doesn't crash, please include impacted series filelist and scanner logs, location below
+- Please include impacted series scanner logs on EACH initial post when reporting "Issues", location below
 
 ## Logs
-Absolute series Scanner saves its custom logs in this relative path Plex Media Server\Plug-in Support\Data\com.plexapp.agents.hama\DataItems\_Logs\...
+Absolute series Scanner saves its custom logs in this relative path: Plex Media Server\Logs\ASS Scanner Logs\...
 
 If the scanner crash, you will get either no files (library creation) or no change (library already created) and will need to attach:
 - [...]/Plex Media Server/Logs/Plex Media Scanner.log
 
 To have logs saved per library and also a log is not created per series, you might need to create a Plex token id file (Never share your Plex token)
-- Plex Media Server/X-Plex-Token.id containing the Plex token id shown in the url after 'X-Plex-Token=' following https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+- Plex Media Server/X-Plex-Token.id containing the Plex token id by loggin on plex.tv/desktop, then https://plex.tv/devices.xml, it will be MediaContainer/Device ... token="xxxxxxxxxxxxxx"
 
 For issues series specific (indicate if file not present, but create a token id file, see above):
 - [...]/Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs/root_folder_name.filelist.log
