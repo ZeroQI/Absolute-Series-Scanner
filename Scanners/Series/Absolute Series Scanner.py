@@ -6,7 +6,7 @@ import os                                                            # path, lis
 import tempfile                                                      # NamedTemporaryFile
 import time                                                          # strftime
 import datetime                                                      # datetime
-import re                                                            # match, compile, sub
+import re                                                            # match, compilef, sub
 import fnmatch                                                       # translate
 import logging, logging.handlers                                     # FileHandler, Formatter, getLogger, DEBUG | RotatingFileHandler
 import Media                                                         # Episode
@@ -36,7 +36,7 @@ Log              = None
 Handler          = None
 PLEX_ROOT        = ""
 PLEX_LIBRARY     = {}
-PLEX_LIBRARY_URL = "http://127.0.0.1:32400/library/sections/"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
+PLEX_LIBRARY_URL = "http://localhost:32400/library/sections/"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 
 SOURCE_IDS       = cic(r'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-5])|tmdb|tsdb|imdb|youtube(|2)))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
 SOURCE_ID_FILES  = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id"]
