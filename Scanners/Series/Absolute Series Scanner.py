@@ -60,7 +60,7 @@ ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/mast
 SSL_CONTEXT = ssl.SSLContext(SSL_PROTOCOL)
 HEADERS     = {'Content-type': 'application/json'}
 
-FILTER_CHARS    = "\\/:*?<>|~;"  #_.                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
+FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
 SEASON_RX       = [                                                                                                                                                              ### Seasons Folders
                     cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
                     cic(r'^(Season|Series|Book|Saison|Livre|S)[ _\-\.]*(?P<season>\d{1,4})'),                                                                                    # Season / Series / Book / Saison / Livre / S
