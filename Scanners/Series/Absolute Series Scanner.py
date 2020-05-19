@@ -968,12 +968,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       ### YouTube Channel numbering ###
       if source.startswith('youtube') and id.startswith('UC'):
         filename = os.path.basename(file)
-	if re.match("/^([12]\d{3}[-. ](0[1-9]|1[0-2])[-. ](0[1-9]|[12]\d|3[01])).*/",filename):
-		folder_season = int(filename[0:4])
-		Log.info('Youtube folder season regex,  season: {}, file: {}'.format(folder_season, filename))
-	else:
-		folder_season = time.gmtime(os.path.getmtime(os.path.join(root, path, filename)) )[0]
-		Log.info('Youtube folder season regex,  season: {}, file: {}'.format(folder_season, filename))
+        folder_season=0
+        if ((re.match("^([12]\d{3}[-. ](0[1-9]|1[0-2])[-. ](0[1-9]|[12]\d|3[01]))",filename) is not None) or (re.match("^([12]\d{3}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01]))",filename) is not None)):
+          folder_season = int(filename[0:4])
+          Log.info('Youtube folder season regex,  season: {}, file: {}'.format(folder_season, filename))
+        else:
+          folder_season = time.gmtime(os.path.getmtime(os.path.join(root, path, filename)) )[0]
+          Log.info('Youtube folder season gmtime,  season: {}, file: {}'.format(folder_season, filename))
         ep            = files_per_date.index(filename)+1 if filename in files_per_date else 0
         standard_holding.append([os.path.join(root, path, filename), root, path, folder_show if id in folder_show else folder_show+'['+id+']', int(folder_season if folder_season is not None else 1), ep, filename, folder_season, ep, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList])
         continue
