@@ -781,7 +781,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       a3_tvdbid, season_map, relations_map, max_season, new_season, new_episode = "", {}, {}, 0, '', ''
       Log.info("AniDB mode (%s) enabled, loading season and relation mapping for all associated tvdbid entries" % source)
       if source=="anidb3" and Dict(mappingList, 'defaulttvdbseason', default='1') != '0':
-        Log.info("defaulttvdbseason: '%s', is not season 0 so using unmodified mapping" % mappingList['defaulttvdbseason'])
+        Log.info("defaulttvdbseason: '%s', is not season 0 so using unmodified mapping" % Dict(mappingList, 'defaulttvdbseason', default=''))
       else:
         try:
           AniDB_TVDB_mapping_tree     = etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING,     foldername='AnimeLists'))  # Load ScudLee mapping
