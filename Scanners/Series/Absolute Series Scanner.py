@@ -152,7 +152,7 @@ WS_MULTI_EP_SIMPLE  = com(r"^(?P<ep>\d{1,3})-(?P<ep2>\d{1,3})$")
 WS_MULTI_EP_COMPLEX = com(r"^(ep?[ -]?)?(?P<ep>\d{1,3})(-|ep?|-ep?)(?P<ep2>\d{1,3})")
 WS_SPECIALS         = com(r"^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)(\d{1,3})?$)")
 # Switch to turn on youtube date scanning
-SW_YOUTUBE_DATE     = True
+SW_YOUTUBE_DATE     = False
 
 ### Setup core variables ################################################################################
 def setup():
