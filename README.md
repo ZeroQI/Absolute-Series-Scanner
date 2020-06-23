@@ -316,6 +316,7 @@ You can actually move the plex system folder/storage/database here: (i give no w
 ## Install / Update
 - Download  https://raw.githubusercontent.com/ZeroQI/Absolute-Series-Scanner/master/Scanners/Series/Absolute%20Series%20Scanner.py
 - Save into [...]/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
+
 Note:
 - "Scanners" and "Series" folder are not created by default and will need to be created.
 - "Scanners" folder will be at the same level as "Plug-in Support" folder (in other words the same parent directory)
