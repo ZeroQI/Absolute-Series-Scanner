@@ -267,4 +267,51 @@
     03|030|053|Monaco Cup Arc
     04|054|069|Yakitate!! 9 Arc
   </anime>
+  <anime tvdbid="76894" name="Yu-Gi-Oh! Duel Monsters">
+    01|001|040|Duelist Kingdom
+    02|041|049|Domino City Battles
+    03|050|097|Battle City (Part 1)
+    04|098|121|Virtual World
+    05|122|144|Battle City (Part 2)
+    06|145|184|Doma the Dark Organization
+    07|185|198|KC Grand Prix
+    08|199|219|Pharaoh's Memories
+    09|220|224|Ceremonial Battle
+  </anime>
+  <anime tvdbid="76113" name="Yu-Gi-Oh! GX">
+    01|001|052|Seven Stars
+    02|053|104|Society of Light
+    03|105|156|Dimension World
+    04|157|180|Darkness
+  </anime>
+  <anime tvdbid="84911" name="Yu-Gi-Oh! 5D's">
+    01|001|027|Fortune Cup
+    02|028|064|Dark Signers
+    03|065|098|Pre-World Racing Grand Prix
+    04|099|129|World Racing Grand Prix
+    05|130|154|Ark Cradle
+  </anime>
+  <anime tvdbid="248049" name="Yu-Gi-Oh! Zexal">
+    01|001|025|Pre-World Duel Carnival
+    02|026|049|World Duel Carnival Preliminaries
+    03|050|073|World Duel Carnival Finals
+    04|074|098|Barian Invasion
+    05|099|123|Mythyrian Numbers War
+    06|124|146|Barian Emperor Onslaught
+  </anime>
+  <anime tvdbid="278975" name="Yu-Gi-Oh! Arc-V">
+    01|001|026|Pre-Arc League Championship
+    02|027|049|Arc League Championship
+    03|050|075|Friendship Cup
+    04|076|099|Friendship Cup Finals
+    05|100|125|Heartland City
+    06|126|148|Duel Academy
+  </anime>
+  <anime tvdbid="327245" name="Yu-Gi-Oh! VRAINS">
+    01|001|021|Pre-Tower of Hanoi
+    02|022|046|Tower of Hanoi
+    03|047|070|Lost Ignis
+    04|071|102|Ignis War
+    05|103|120|Ai's Rebellion
+  </anime>
 </tvdb4entries>
