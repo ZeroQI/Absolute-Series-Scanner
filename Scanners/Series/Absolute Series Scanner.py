@@ -557,7 +557,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info("".ljust(157, '='))
 
   ### Remove directories un-needed (mathing IGNORE_DIRS_RX) ###
-  for subdir in dirs:
+  for subdir in dirs[:]:
     for rx in IGNORE_DIRS_RX:
       if rx.match(os.path.basename(subdir)):
         dirs.remove(subdir)
