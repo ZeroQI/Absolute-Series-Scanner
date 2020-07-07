@@ -178,17 +178,13 @@ def setup():
   ### Populate PLEX_LIBRARY #############################################################################
   Log.info("".ljust(157, '='))
   Log.info("Plex scan start: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
-  if os.path.isfile(os.path.join(PLEX_ROOT, "X-Plex-Token.id")):
-    Log.info("'X-Plex-Token.id' file present")
-    url = PLEX_LIBRARY_URL + "?X-Plex-Token=" + read_file(os.path.join(PLEX_ROOT, "X-Plex-Token.id")).strip()
-    try:
-      library_xml = etree.fromstring(read_url(url))
-      for directory in library_xml.iterchildren('Directory'):
-        for location in directory.iterchildren('Location'):
-          PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
-          Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
-    except:  pass
-  if not PLEX_LIBRARY:  Log.info("Place Plex token string in file in Plex root '.../Plex Media Server/X-Plex-Token.id' to have a log per library - https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token")
+  try:
+    library_xml = etree.fromstring(read_url(Request(PLEX_LIBRARY_URL, headers={"X-Plex-Token": os.environ['X_PLEX_TOKEN']})))
+    for directory in library_xml.iterchildren('Directory'):
+      for location in directory.iterchildren('Location'):
+        PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
+        Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
+  except:  pass
 
 ### Read in a local file ################################################################################  
 def read_file(local_file):
