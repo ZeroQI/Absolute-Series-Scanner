@@ -117,6 +117,14 @@
     06|http://vignette3.wikia.nocookie.net/hunterxhunter/images/e/e2/Chimera_ant_arc_poster.png
     07|http://vignette2.wikia.nocookie.net/hunterxhunter/images/f/f1/13th_Hunter_Chairman_Election_arc_2011.png
   </posters>
+  <posters tvdbid="[tvdbid]" name="[Series Name]" note="Example Entry">
+    01|https://artworks.thetvdb.com/banners/posters/262954-6.jpg
+    02|https://artworks.thetvdb.com/banners/posters/262954-7.jpg
+    03|https://artworks.thetvdb.com/banners/posters/262954-8.jpg
+    04|https://artworks.thetvdb.com/banners/posters/262954-12.jpg
+    05|https://artworks.thetvdb.com/banners/posters/5ba6a2c1587ad.jpg
+    06|https://static.jojowiki.com/images/b/b3/latest/20191015215117/Volume_66.jpg
+  </posters>
   <posters tvdbid="74474" name="Mobile Suit Gundam SEED">
     01|https://images-na.ssl-images-amazon.com/images/I/51QFZ8AMTML.jpg
     02|https://images-na.ssl-images-amazon.com/images/I/51NJ70NPSVL.jpg
