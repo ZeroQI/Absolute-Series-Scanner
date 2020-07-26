@@ -3,4 +3,12 @@
   <anime anidbid="13239" tvdbid="278154" defaulttvdbseason="3" episodeoffset="" tmdbid="" imdbid="">
     <name>Sidonia no Kishi 3</name>
   </anime>
+  <!-- https://github.com/ScudLee/anime-lists/issues/342 -->
+  <anime anidbid="14662" tvdbid="366334" defaulttvdbseason="1" episodeoffset="" tmdbid="" imdbid="tt10431310">
+    <name>Katsute Kami Datta Kemono-tachi e</name>
+  </anime>
+  <!-- https://github.com/ScudLee/anime-lists/issues/342 -->
+  <anime anidbid="14229" tvdbid="354171" defaulttvdbseason="1" episodeoffset="" tmdbid="" imdbid="tt8731478">
+    <name>Mahou Shoujo Tokushusen Asuka</name>
+  </anime>
 </anime-list>
