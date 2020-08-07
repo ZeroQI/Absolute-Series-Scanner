@@ -15,4 +15,8 @@
   <anime anidbid="11318" tvdbid="294001" defaulttvdbseason="2" episodeoffset="" tmdbid="" imdbid="">
     <name>Ushio to Tora (2016)</name>
   </anime>
+  <!-- https://github.com/ScudLee/anime-lists/issues/345 -->
+  <anime anidbid="14203" tvdbid="82484" defaulttvdbseason="3" episodeoffset="" tmdbid="" imdbid="">
+    <name>Dai 501 Tougou Sentou Koukuu Dan Strike Witches: Road to Berlin</name>
+  </anime>
 </anime-list>
