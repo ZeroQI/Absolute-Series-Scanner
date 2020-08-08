@@ -898,10 +898,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       else:  Log.info('json_full is empty')
     files_per_date = []
     if id.startswith('UC') or id.startswith('HC'):
-      if (SW_YOUTUBE_DATE==False):
-        files_per_date = sorted([os.path.basename(file) for file in files], key=getmtime) #to have latest ep first, add: ", reverse=True"
-      else:
-        files_per_date = sorted([os.path.basename(file) for file in files], key=natural_sort_key) #to have latest ep first, add: ", reverse=True"
+      files_per_date = sorted([os.path.basename(file) for file in files], key=natural_sort_key if SW_YOUTUBE_DATE else getmtime) #to have latest ep first, add: ", reverse=True"
       Log.info('files_per_date: {}'.format(files_per_date))
       
     ### Build misc variable to check numbers in titles ###
@@ -968,21 +965,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         
       ### YouTube Channel numbering ###
       if source.startswith('youtube') and id.startswith('UC'):
-        filename = os.path.basename(file)
-        folder_season=0
-        if ((SW_YOUTUBE_DATE==True) and ((re.match("^([12]\d{3}[-. ](0[1-9]|1[0-2])[-. ](0[1-9]|[12]\d|3[01]))",filename) is not None) or (re.match("^([12]\d{3}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01]))",filename) is not None))):
-          # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd", so take first four digits as the season year
-          folder_season = int(filename[0:4])
-          Log.info('Youtube folder season date regex,  season: {}, file: {}'.format(folder_season, filename))
-        elif ((SW_YOUTUBE_DATE==True) and (re.match("^NA - ",filename) is not None)):
-          # sometime youtube-dl gets bad upload date and sets date to NA, mark these as season 0 (specials) so user notices and can fix if wanted
-          folder_season = 0
-          Log.info('Youtube folder season date error set season 0,  season: {}, file: {}'.format(folder_season, filename))
+        filename, folder_season = os.path.basename(file), 0  # sometime youtube-dl gets bad upload date and sets date to NA, mark these as season 0 (specials) so user notices and can fix if wanted
+        if SW_YOUTUBE_DATE:
+          match = re.match(r"([12]\d{3}[-. ]?(0[1-9]|1[0-2])[-. ]?(0[1-9]|[12]\d|3[01]))",filename)
+          if match:  folder_season = int(filename[0:4])  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd", so take first four digits as the season year
+          Log.info('Youtube folder season date {}, season: {}, file: {}'.format("regex" if match else "error set season 0", folder_season, filename))
         else:
-          # no info from file or flag not set, revert to original way of reading the file date
-          folder_season = time.gmtime(os.path.getmtime(os.path.join(root, path, filename)) )[0]
+          folder_season = time.gmtime(os.path.getmtime(os.path.join(root, path, filename)))[0]  # no info from file or flag not set, revert to original way of reading the file date
           Log.info('Youtube folder season gmtime,  season: {}, file: {}'.format(folder_season, filename))
-        ep            = files_per_date.index(filename)+1 if filename in files_per_date else 0
+        ep = files_per_date.index(filename)+1 if filename in files_per_date else 0
         standard_holding.append([os.path.join(root, path, filename), root, path, folder_show if id in folder_show else folder_show+'['+id+']', int(folder_season if folder_season is not None else 1), ep, filename, folder_season, ep, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList])
         continue
         
