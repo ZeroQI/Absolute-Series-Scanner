@@ -750,7 +750,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       
       # Local custom mapping file
       dir = os.path.join(root, path)
-      while dir and os.path.splitdrive(dir)[1] != os.sep:
+      while dir:
         scudlee_filename_custom = os.path.join(dir, ANIDB_TVDB_MAPPING_LOC)
         if os.path.exists( scudlee_filename_custom ):
           try:
@@ -758,7 +758,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_file(scudlee_filename_custom)), id)
           except:  Log.info("Invalid local custom mapping file content")
           else:    break
-        dir = os.path.dirname(dir)
+        dir = os.path.dirname(dir) if len(dir) > len(root) else ''  # Clear variable if we've just finished processing down to (and including) root
       
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
