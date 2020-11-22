@@ -32,8 +32,8 @@
       <mapping anidbseason="1" tvdbseason="2" start="28" end="54" offset="-27"/>
       <mapping anidbseason="1" tvdbseason="3" start="55" end="82" offset="-54"/>
       <mapping anidbseason="1" tvdbseason="4" start="83" end="110" offset="-82"/>
-      <mapping anidbseason="1" tvdbseason="5" start="111" end="139" offset="-110"/>
-      <mapping anidbseason="1" tvdbseason="6" start="140" end="167" offset="-139"/>
+      <mapping anidbseason="1" tvdbseason="5" start="111" end="138" offset="-110"/>
+      <mapping anidbseason="1" tvdbseason="6" start="139" end="167" offset="-138"/>
     </mapping-list>
   </anime>
 </anime-list>
