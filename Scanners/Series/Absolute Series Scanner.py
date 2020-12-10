@@ -948,7 +948,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             if clean_string(filename, no_whack=True).lower().startswith(prefix.lower()):  filename = clean_string(re.sub(prefix, " ", filename, 1, re.IGNORECASE), True); break
           else:
             filename = clean_string(filename)
-            for item in misc_words:  filename = re.sub(item, " ", filename, 1, re.IGNORECASE)
+            for item in misc_words:  filename = re.sub(re.escape(item), " ", filename, 1, re.IGNORECASE) ## need to escape names, otherwise words with certain characters (like c++) will make it think its an invalid regex string
       else:  filename = clean_string(filename)
       ep = filename
       if " - Complete Movie" in ep:  ep = "01"  ### Movies ### If using WebAOM (anidb rename)
