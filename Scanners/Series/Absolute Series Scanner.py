@@ -46,7 +46,7 @@ ANIDB_HTTP_API_URL = 'http://api.anidb.net:9001/httpapi?request=anime&client=ham
 ANIDB_SLEEP_MIN    = 6
 AniDBBan           = False
 
-ANIDB_TVDB_MAPPING     = 'https://rawgit.com/ScudLee/anime-lists/master/anime-list-master.xml'
+ANIDB_TVDB_MAPPING     = 'https://raw.githubusercontent.com/Anime-Lists/anime-lists/master/anime-list-master.xml'
 ANIDB_TVDB_MAPPING_MOD = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/anime-list-corrections.xml'
 ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'  # Custom local correction for ScudLee mapping file url
 
