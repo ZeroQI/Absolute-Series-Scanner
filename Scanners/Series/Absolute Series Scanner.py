@@ -957,7 +957,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if folder_show and folder_season >= 1:                                                                                                                                         # 
         for prefix in ("s%d" % folder_season, "s%02d" % folder_season):                                                         #"%s %d " % (folder_show, folder_season), 
           if prefix in ep.lower() or prefix in misc_count and misc_count[prefix]>1:  ep = re.sub(prefix, "", ep, 1, re.IGNORECASE).lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
-      if folder_show and ep.lower().startswith("special") or "omake" in ep.lower() or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
+      if folder_show and ep.lower().startswith("special") or re.search(r"[^a-z]omake[^a-z]", ep.lower()) or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ### 
       
       if not path:
         root_filename = clean_string(root_filename.split(ep)[0] if ep else root_filename)
