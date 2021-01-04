@@ -166,7 +166,8 @@ def setup():
   if not os.path.isdir(PLEX_ROOT):
     path_location = { 'Windows': '%LOCALAPPDATA%\\Plex Media Server',
                       'MacOSX':  '$HOME/Library/Application Support/Plex Media Server',
-                      'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server' }
+                      'Linux':   '$PLEX_HOME/Library/Application Support/Plex Media Server',
+                      'Android': '/storage/emulated/0/Plex Media Server' }
     PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
   
   ### Define logging setup ##############################################################################
