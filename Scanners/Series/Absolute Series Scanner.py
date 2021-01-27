@@ -881,7 +881,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if json_full:  json_full['items'].extend(json_page['items'])
           else:          json_full = json_page
         iteration +=1
-      Log.info('---- count: {}'.format(len(json_full['items'])))
+      Log.info('---- count: {}'.format(len(json_full['items']) if json_full and 'items' in json_full else 0))
       
       if json_full:
         for file in os.listdir(os.path.join(root, path)):
