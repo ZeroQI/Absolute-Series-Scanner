@@ -1042,7 +1042,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if match.groupdict().has_key('title' ) and match.group('title' ):               title  = clean_string( match.group('title' ))                 #
           elif rx in ANIDB_RX:                                                            title  = ANIDB_TYPE[ANIDB_RX.index(rx)] + ' ' + ep            # Dingmatt fix for opening with just the ep number
           
-          if rx in ANIDB_RX[-2:]:                                                                                                                       ### AniDB Specials ################################################################
+          if rx in ANIDB_RX[:-2]:                                                                                                                       ### AniDB Specials ################################################################
             season = 0                                                                                                                                  # offset = 100 for OP, 150 for ED, etc... #Log.info("ep: '%s', rx: '%s', file: '%s'" % (ep, rx, file))
             # AniDB xml load (ALWAYS GZIPPED)
             if source.startswith('anidb') and id and anidb_xml is None and rx in ANIDB_RX[1:3]:  #2nd and 3rd rx
