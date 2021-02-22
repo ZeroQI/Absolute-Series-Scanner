@@ -64,7 +64,7 @@ FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                            
 SEASON_RX       = [                                                                                                                                                              ### Seasons Folders
                     cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
                     cic(r'^(Season|Series|Book|Saison|Livre|Temporada|S)[ _\-\.]*(?P<season>\d{1,4})'),                                                                                    # Season / Series / Book / Saison / Livre / S
-                    cic(r'^(?P<show>.*?)[\._\- ]+S(?P<season>\d{2})$'),                                                                                                          # (title) S01
+                    cic(r'^(?P<show>.*?)[\._\- ]+S(?P<season>\d{2})'),                                                                                                          # (title) S01
                     cic(r'^(?P<season>\d{1,2})'),                                                                                                                                # ##
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
@@ -101,7 +101,7 @@ VIDEO_EXTS          = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 
 
 WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC", 
                         'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
-                        "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release",
+                        "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release", "Paramount",
                         "By UniversalFreedom", "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
                         'xvid-saints', "XviD-T00NG0D", "XViD-ViCKY", "XviD-BiA", "XVID-FHW", "PROPER-LOL", "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "WEB_DL",
                         "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
