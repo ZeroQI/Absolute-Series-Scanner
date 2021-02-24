@@ -222,13 +222,15 @@ Because it doesn't have an XML extension, it won't accept XML tags inside. Forma
 </CODE></PRE>
         
 ##### Advanced modes
-For when you have episodes of a series in SEPARATE parent folders but want them to show as a single series in Plex:
-- " [anidb2-xxxxx]" will find the season & episode offset defined in the ScudLee file and add into Plex with it's corresponding TVDB series/season/episode numbers
-- " [anidb3-xxxxx]" will find the season & episode offset defined in the ScudLee file and add into Plex ?????
-- " [anidb4-xxxxx]" will find the season & episode offset defined in the ScudLee file and add into Plex ????
-- " [tvdb/2/3/4-xxxxx-sY]" episode numbers found in the files are left alone and added to season Y
-- " [tvdb/2/3/4-xxxxx-eZ]" episode numbers found in the files are adjusted (epNum+Z-1)
-- " [tvdb/2/3/4-xxxxx-sYeZ]" episode numbers found in the files are adjusted (epNum+Z-1) and added to season Y, Z is the offset for the episodes in season Y for when we want it to start mid tvdb season
+If the season and/or episode numbers of your files don't match up with the AniDB or TVDB episodes, you can manually specify the season and the episode offset in the parent folder name.
+
+The following suffixes are supported:
+- `-sY]` All episodes in the folder are assigned to season Y, but the episode number stays the same.
+- `-eZ]` Episode numbers found in the files are adjusted.
+  - For positive offsets, the episode number becomes epNum+Z-1. (Episode 1 will show up as episode Z)
+  - For negative offsets, the episode number becomes epNum+Z. (For Z=-13, episode 14 will show up as episode 1)
+- `-sYeZ]` The effects of the options above are combined.
+
 - **!!IMPORTANT NOTES!!**
   - When defining your modes on your folders:
     - If you don't use the same mode or compatible modes for all separate folders for a series, you will run into issues.
@@ -250,9 +252,9 @@ For when you have episodes of a series in SEPARATE parent folders but want them 
 - "Sailor Moon Crystal Season 3 [anidb2-11665]" = "[tvdb-275039-s3]" | "[tvdb2-275039-s3]" (depending if you keep absolute numbered eps in seasons)
   
 == Example 3 ==
-  "Bleach                                    [tvdb3-74796]"
-  "Bleach movie 1 Memories in the Rain       [tvdb3-74796-s0e3]"
-  "Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
+- "Bleach                                    [tvdb3-74796]"
+- "Bleach movie 1 Memories in the Rain       [tvdb3-74796-s0]"
+- "Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
   
 == Example 4 == tvdb4 Custom selected Arcs as seasons (as tvdb use them as half seasons for black lagoon for example)
   The arc definition to split into seasons the absolute numbering is done using the following order:
