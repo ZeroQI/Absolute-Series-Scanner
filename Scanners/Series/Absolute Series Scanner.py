@@ -72,6 +72,7 @@ SERIES_RX       = [                                                             
   cic(r'(^|(?P<show>.*?)[ _\.\-]*)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,3})(([ _\.\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,3}))?[ _\.]*(?P<title>.*?)$'),                          #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,3})[ _\.\-]?of[ _\.\-]?\d{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   cic(r'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'),                                                                      #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   cic(r'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,3})\][ _\.](?P<title>.*)$')]
+MOVIE_RX        = cic(r'(^|(?P<show>.*) (?P<year>\d{4})$')
 DATE_RX         = [ #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
                     cic(r'(?P<year>\d{4})\W+(?P<month>\d{2})\W+(?P<day>\d{2})(\D|$)'),   # 2009-02-10
                     cic(r'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]       # 02-10-2009
@@ -1016,14 +1017,23 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           #elif ep.isdigit() and len(ep)==4:  filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));   continue                                           # take everything after supposed episode number
           if   ep.isdigit() and len(ep)==4 and int(ep)>= 1930: filename = clean_string( " ".join(words).replace(ep, "(%s)" % ep));   continue                                           # take everything after supposed episode number
         if "." in ep and ep.split(".", 1)[0].isdigit() and ep.split(".")[1].isdigit():                             season, ep, title = 0, ep.split(".", 1)[0], "Special " + ep; break # ep 12.5 = "12" title "Special 12.5"
-        if not path  and not " - Complete Movie" in file:  show = clean_string( " ".join(words[:words.index(word)]) if words.index(word)>0 else "No title", False)    # root folder and 
         title = clean_string( " ".join(words[words.index(word):])[" ".join(words[words.index(word):]).lower().index(ep)+len(ep):] )                                   # take everything after supposed episode number
         break
       else:  loop_completed = True
+      
+      ### Check for movies at root ###
+      if not path:
+        if " - Complete Movie" in file:
+          ep, title, show, loop_completed = "01", ep.split(" - Complete Movie")[0], ep.split(" - Complete Movie")[0], False    # root folder and movie    
+        else:
+          match = MOVIE_RX.search(ep)
+          if match:  ep, title, year, loop_completed = "01", match.group('show'), match.group('year'), False
+       
       if not loop_completed and ep.isdigit():
         standard_holding.append([file, root, path, show, season, int(ep), title, year, int(ep2) if ep2 and ep2.isdigit() else None, rx, tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList])
         continue
-
+      
+     
       ### Check for Regex: SERIES_RX + ANIDB_RX ###
       ep = filename
       for rx in ANIDB_RX if is_special else (SERIES_RX + ANIDB_RX):
