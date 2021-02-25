@@ -63,9 +63,9 @@ HEADERS     = {'Content-type': 'application/json'}
 FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
 SEASON_RX       = [                                                                                                                                                              ### Seasons Folders
                     cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
-                    cic(r'^(Season|Series|Book|Saison|Livre|Temporada|S)[ _\-\.]*(?P<season>\d{1,4})'),                                                                                    # Season / Series / Book / Saison / Livre / S
-                    cic(r'^(?P<show>.*?)[\._\- ]+S(?P<season>\d{2})'),                                                                                                          # (title) S01
-                    cic(r'^(?P<season>\d{1,2})'),                                                                                                                                # ##
+                    #cic(r'^(Season|Series|Book|Saison|Livre|Temporada|S)[ _\-\.]*(?P<season>\d{1,4})(.*)?'),                                                                                    # Season / Series / Book / Saison / Livre / S
+                    cic(r'^(?P<show>.*)?[\._\- ]*?(Season|Series|Book|Saison|Livre|Temporada|[Ss])[\._\- ]*?(?P<season>\d{1,4}).*?'),                                                                                                          # (title) S01
+                    cic(r'^(?P<season>\d{1,2})$'),                                                                                                                                # ##
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
   cic(r'(^|(?P<show>.*?)[ _\.\-]+)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                    #  0 # 1x01
@@ -106,13 +106,13 @@ WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKO
                         'xvid-saints', "XviD-T00NG0D", "XViD-ViCKY", "XviD-BiA", "XVID-FHW", "PROPER-LOL", "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "WEB_DL",
                         "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
                         "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
-                        "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", 
+                        "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", "CasStudio",
                         "(BD 1920x1080 Hi10P, JPN+ENG)", "(BD 1280x720 Hi10P)", "(DVD_480p)", "(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", "x264-RedBlade",
                         "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p.BluRay", "FLAC5.1", "x264-CTR", "1080p-Hi10p", "FLAC2.0",
                         "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)", "[720p]",
-                        "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV", "SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", 
+                        "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV", "SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", "BDRip",
                         "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0", "AAC", "1080p", 'DD2.1', 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
-                        "(Exiled_Destiny)", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en",
+                        "(Exiled_Destiny)", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en", "Rus", "Eng", "UNCENSORED", "THD", "H264", "2xDVO", "MVO", "VO", "Subs", "Sub",
                         "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5",
                         "%28", "%29", " (1)", "(Clean)", "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits", 
                         "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP"
@@ -397,7 +397,8 @@ CS_CRC_HEX         = com(r"[0-9a-fA-F]{8}")
 CS_VIDEO_SIZE      = com(r"\d{3,4} ?[Xx] ?\d{3,4}")
 CS_PAREN_SPACE_PAT, CS_PAREN_SPACE_REP = com(r'\([ _\.]*(?P<internal>[^\(\)]*?)[ _\.]*\)'), r'(\g<internal>)'
 CS_PAREN_EMPTY     = com(r'\([-Xx]?\)')
-def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no_underscore=False):
+
+def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no_underscore=False, no_dot=False):
   if not string: return ""                                                                                                           # if empty return empty string
   if no_parenthesis:                                                                                                                 # delete parts between parenthesis if needed
     while CS_PARENTHESIS.search(string):            string = CS_PARENTHESIS.sub(' ', string)                                         # support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
@@ -416,6 +417,7 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   if string.rstrip().endswith(", A"  ):             string = "A "   + ''.join( string.split(", A"  , 1) )                            # ", A"   is rellocated in front
   if not no_whack:                                  string = " ".join([word for word in filter(None, string.split()) if word.lower() not in WHACK]).strip()  # remove double spaces + words present in "WHACK" list #filter(None, string.split())
   if no_dash:                                       string = string.replace("-", " ")                                                # replace the dash '-'
+  if no_dot:                                        string = string.replace(".", " ")                                                # replace the dash '-'
   if no_underscore:                                 string = string.replace("_", " ")                                                # replace the underscore '_'
   string = CS_PAREN_EMPTY.sub('', CS_PAREN_SPACE_PAT.sub(CS_PAREN_SPACE_REP, string))                                                # Remove internal spaces in parenthesis then remove empty parenthesis
   string = " ".join([word for word in filter(None, string.split())]).strip(" _.-")                                                   # remove multiple spaces and cleanup the ends
@@ -1103,12 +1105,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
   ### root level manual call to Grouping folders ###
   if not path:
-    Log.info("root level manual call to Grouping folders")
+    Log.info("root level call to potential Grouping folders")
     folder_count, subfolders = {}, dirs[:]
     while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
       full_path = subfolders.pop(0)
       path      = os.path.relpath(full_path, root)
-
+      
       ### Ignore dirs ###
       for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
         if rx.match(os.path.basename(path)):                      # if folder match rx
@@ -1119,12 +1121,16 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         ### Extract season and transparent folder to reduce complexity and use folder as serie name ###
         reverse_path, season_folder_first = list(reversed(path.split(os.sep))), False
         for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
+          folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True)
+          folder_clean = folder_clean.replace(os.path.dirname(path), "") 
           for rx in SEASON_RX:                           # in anime, more specials folders than season folders, so doing it first
-            if rx.search(clean_string(folder)):          # get season number but Skip last entry in seasons (skipped folders)
+            if rx.search(folder_clean):          # get season number but Skip last entry in seasons (skipped folders)
               reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
               if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
+              Log.info('Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format(SEASON_RX.index(rx),folder_clean, folder))
               break
-        
+          else:  Log.info('Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format("False", folder_clean, folder))
+              
         ### Process subfolders ###
         subdir_dirs, subdir_files = [], []
         folder_count[path]        = 0
@@ -1134,7 +1140,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)                          #Fullpath
         if not subdir_files and subdir_dirs:  # Only add in subfolders if no valid video files in the folder
           Log.info(''.ljust(157, '-'))
-          for x in subdir_dirs:  Log.info("[Added] " + x);  subfolders.append(x)
+          for x in subdir_dirs:  subfolders.append(x)  #Log.info("[Added] " + x);  
           
         ### Call Grouping folders series ###
         #if subdir_files:                                                           ### Calling Scan for every folder with files ###
@@ -1149,7 +1155,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(root=root, filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
-
+          
   Log.info("".ljust(157, '='))
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
