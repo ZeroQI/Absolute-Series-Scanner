@@ -72,7 +72,7 @@ SERIES_RX       = [                                                             
   cic(r'(^|(?P<show>.*?)[ _\.\-]*)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,3})(([ _\.\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,3}))?[ _\.]*(?P<title>.*?)$'),                          #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,3})[ _\.\-]?of[ _\.\-]?\d{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   cic(r'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'),                                                                      #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   cic(r'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,3})\][ _\.](?P<title>.*)$')]
-MOVIE_RX        = cic(r'(^|(?P<show>.*) (?P<year>\d{4})$')
+MOVIE_RX        = cic(r'(?P<show>.*) \((?P<year>\d{4})\)$')
 DATE_RX         = [ #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
                     cic(r'(?P<year>\d{4})\W+(?P<month>\d{2})\W+(?P<day>\d{2})(\D|$)'),   # 2009-02-10
                     cic(r'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]       # 02-10-2009
