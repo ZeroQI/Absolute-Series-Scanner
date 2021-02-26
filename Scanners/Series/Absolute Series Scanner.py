@@ -306,7 +306,7 @@ def set_logging(root='', foldername='', filename='', backup_count=0, format='%(m
 
   if not os.path.exists(cache_path):  os.makedirs(cache_path)
 
-  filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
+  filename = os_filename_clean_string(filename).decode('utf-8') if filename else '_root_.scanner.log'
   log_file = os.path.join(cache_path, filename)
   if os.sep=="\\":  log_file = winapi_path(log_file, 'utf-8') # Bypass DOS path MAX_PATH limitation
 
@@ -556,7 +556,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### Create *.filelist.log file ###
   set_logging(root=root, filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id").encode('utf-8'), root.encode('utf-8'), path.encode('utf-8'), len(files or []), len(dirs or [])))
+  try:                    Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id").encode('utf-8'), root, path, len(files or []), len(dirs or [])))
+  except Exception as e:  Log.info('exception: {}'.format(e))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
   Log.info("".ljust(157, '='))
@@ -616,9 +617,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### Logging to *.scanner.log ###
   set_logging(root=root, filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
-  Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
+  try:                    Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id").encode('utf-8'), root, path, len(files or []), len(dirs or [])))
+  except Exception as e:  Log.info('exception: {} repr: {}'.format(e, repr(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id")) ))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
-  Log.info("".ljust(157, '='))
+  Log.info("2".ljust(157, '='))
   
   #### Folders, Forced ids, grouping folders ###
   folder_show                                = filter_chars(reverse_path[0]) if reverse_path else ""
@@ -1141,7 +1143,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if os.path.isdir(path_item):                 subdir_dirs.append(path_item);  folder_count[path] +=1  #Fullpath
           elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)                          #Fullpath
         if not subdir_files and subdir_dirs:  # Only add in subfolders if no valid video files in the folder
-          Log.info(''.ljust(157, '-'))
+          #Log.info(''.ljust(157, '-'))
           for x in subdir_dirs:  subfolders.append(x)  #Log.info("[Added] " + x);  
           
         ### Call Grouping folders series ###
