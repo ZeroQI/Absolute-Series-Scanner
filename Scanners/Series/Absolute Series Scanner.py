@@ -183,8 +183,8 @@ def setup():
     library_xml = etree.fromstring(read_url(Request(PLEX_LIBRARY_URL, headers={"X-Plex-Token": os.environ['X_PLEX_TOKEN']})))
     for directory in library_xml.iterchildren('Directory'):
       for location in directory.iterchildren('Location'):
-        PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title').encode('utf-8'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
-        Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title').encode('utf-8'), location.get("path")))
+        PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
+        Log.info(u'id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
   except Exception as e:  Log.error("Exception: '%s', library_xml could not be loaded. X-Plex-Token file created?" % (e))
   Log.info("".ljust(157, '='))
   
@@ -238,20 +238,20 @@ def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6da
       elif days_old >   30:  cache = (days_old*365*24*60*60)/1825  # enddate > 30 days ago => (days_old/5yrs ended = x/1yrs cache)
     # Return the cached file string if it exists and is not too old
     if file_content_cache and file_age <= cache:
-      Log.info("Using cached file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+      Log.info(u"Using cached file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
       return file_content_cache
     # Pull the content down as either cache does not exist or is too old
     if "api.anidb.net" in url:
       global AniDBBan
       if AniDBBan:  # If a ban has been hit in scan run's life, return cached content (or nothing if there is no cached content)
-        Log.info("Using cached file (AniDBBan) - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+        Log.info(u"Using cached file (AniDBBan) - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
         return file_content_cache
       import StringIO, gzip
       file_content = gzip.GzipFile(fileobj=StringIO.StringIO(read_url(url))).read()
       time.sleep(ANIDB_SLEEP_MIN)
       if len(file_content)<512:  # Check if the content is too short and thus an error response
         if 'banned' in file_content:  AniDBBan = True
-        Log.info("Using {action} file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="cached file" if file_content_cache else "error response", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+        Log.info(u"Using {action} file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="cached file" if file_content_cache else "error response", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
         Log.info("-- Error response received: {}".format(file_content))
         return file_content_cache or file_content  # If an error has been hit, return cached content (or error response if there is no cached content)
     elif "api.thetvdb.com" in url:
@@ -265,7 +265,7 @@ def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6da
       file_content = read_url(url)
     # Content was pulled down so save it
     if file_content:
-      Log.info("{action} cached file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="Updating" if os.path.exists(local_filename) else "Creating", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
+      Log.info(u"{action} cached file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="Updating" if os.path.exists(local_filename) else "Creating", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
       write_file(local_filename, file_content)
     return file_content
   except Exception as e:  # Exception hit from possible: xml parsing, file reading/writing, bad url call
@@ -300,19 +300,21 @@ def set_logging(root='', foldername='', filename='', backup_count=0, format='%(m
   if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':  cache_path = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
   else:                                                               cache_path = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
 
-  if not foldername:  foldername = Dict(PLEX_LIBRARY, root, 'title').decode('utf-8')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
+  if not foldername:  foldername = Dict(PLEX_LIBRARY, root, 'title')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
   if foldername:  cache_path = os.path.join(cache_path, os_filename_clean_string(foldername))
+
   if not os.path.exists(cache_path):  os.makedirs(cache_path)
 
-  filename = os_filename_clean_string(filename).decode('utf-8') if filename else '_root_.scanner.log'
+  filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
   log_file = os.path.join(cache_path, filename)
   if os.sep=="\\":  log_file = winapi_path(log_file, 'utf-8') # Bypass DOS path MAX_PATH limitation
+
   mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
 
   global Handler
   if Handler: Log.removeHandler(Handler)
-  if backup_count:  Handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=backup_count)
-  else:             Handler = logging.FileHandler                 (log_file, mode=mode)
+  if backup_count:  Handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=backup_count, encoding='utf-8')
+  else:             Handler = logging.FileHandler                 (log_file, mode=mode, encoding='utf-8')
   Handler.setFormatter(logging.Formatter(format))
   Handler.setLevel(logging.DEBUG)
   Log.addHandler(Handler)
@@ -456,15 +458,15 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
-      tv_show = Media.Episode(show, season, epn, title, year)
+      tv_show = Media.Episode(show.encode('utf-8'), season, epn, title.encode('utf-8'), year)
       tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
       if filename.upper()=="VIDEO_TS.IFO":  
         for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
-          if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item))
-      else:  tv_show.parts.append(file)
+          if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item).encode(sys.getfilesystemencoding()))
+      else:  tv_show.parts.append(file.encode(sys.getfilesystemencoding()))
       media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = "SERIES_RX-"+str(SERIES_RX.index(rx)) if rx in SERIES_RX else "ANIDB_RX-"+str(ANIDB_RX.index(rx)) if rx in ANIDB_RX else rx  # rank of the regex used from 0
-  Log.info('"{show}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or '__', title=title if clean_string(title).replace('_', '') else "", file=filename))
+  Log.info(u'"{show}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or '__', title=title if clean_string(title).replace('_', '') else "", file=filename))
 
 ### Get the tvdbId from the AnimeId #####################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -490,9 +492,21 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
 ### extension, as os.path.splitext ignore leading dots so ".plexignore" file is splitted into ".plexignore" and "" ###
 def extension(file):  return file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()
 
+### Make sure the path is unicode, if it is not, decode using OS filesystem's encoding ###
+def sanitize_path(p):
+  if not isinstance(p, unicode):
+    return p.decode(sys.getfilesystemencoding())
+  return p
+
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
   setup()  # Call setup to get core info. If setup is already done, it just returns and does nothing.
+  # Sanitize all path
+  path = sanitize_path(path)
+  if root is not None:
+    root = sanitize_path(root)
+  files = [sanitize_path(p) for p in files]
+  dirs = [sanitize_path(p) for p in dirs]
   
   reverse_path = list(reversed(path.split(os.sep)))
   log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
@@ -547,16 +561,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         reverse_path.remove(folder)                 # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         break
     if not kwargs and len(reverse_path)>1 and path.count(os.sep) and "Plex Versions" not in path and "Optimized for " not in path and len(dirs)>1:
-      Log.info("grouping folder? dirs: {}, reverse_path: {} [return]".format(dirs, reverse_path))
+      Log.info(u"grouping folder? dirs: {}, reverse_path: {} [return]".format(dirs, reverse_path))
       return       #if not grouping folder scan, skip grouping folder
   
   ### Create *.filelist.log file ###
   set_logging(root=root, filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
-  try:                    Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id").encode('utf-8'), root, path, len(files or []), len(dirs or [])))
-  except Exception as e:  Log.info('exception: {}'.format(e))
+  Log.info(u"Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
-  Log.info("plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
+  Log.info(u"plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
   Log.info("".ljust(157, '='))
 
   ### Remove directories un-needed (mathing IGNORE_DIRS_RX) ###
@@ -564,7 +577,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     for rx in IGNORE_DIRS_RX:
       if rx.match(os.path.basename(subdir)):
         dirs.remove(subdir)
-        Log.info("# Folder: '{}' match '{}' pattern: '{}'".format(os.path.relpath(subdir, root), 'IGNORE_DIRS_RX', rx))
+        Log.info(u"# Folder: '{}' match '{}' pattern: '{}'".format(os.path.relpath(subdir, root), 'IGNORE_DIRS_RX', rx))
         break  #skip dirs to be ignored
     else:  Log.info("[folder] " + os.path.relpath(subdir, root))
   
@@ -575,15 +588,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if ext in VIDEO_EXTS:
       for rx in IGNORE_FILES_RX + [cic(entry) for entry in plexignore_files]:  # Filter trailers and sample files
         if rx.match(os.path.basename(file)):
-          Log.info("# File: '{}' match '{}' pattern: '{}'".format(os.path.relpath(file, root), 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore', rx))
+          Log.info(u"# File: '{}' match '{}' pattern: '{}'".format(os.path.relpath(file, root), 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore', rx))
           files.remove(file)
           break
       else:
         try:                    Log.info("[file] " + os.path.relpath(file, root))
-        except Exception as e:  Log.info('exception: {}, file: {}, root: {}'.format(e, file, root))
+        except Exception as e:  Log.info(u'exception: {}, file: {}, root: {}'.format(e, file, root))
     else:
       files.remove(file)
-      Log.info("# File: '{}' not in '{}'".format(os.path.relpath(file, root), 'VIDEO_EXTS'))
+      Log.info(u"# File: '{}' not in '{}'".format(os.path.relpath(file, root), 'VIDEO_EXTS'))
       
       ### ZIP ###
       if ext == 'zip':
@@ -614,8 +627,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### Logging to *.scanner.log ###
   set_logging(root=root, filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
-  try:                    Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id").encode('utf-8'), root, path, len(files or []), len(dirs or [])))
-  except Exception as e:  Log.info('exception: {} repr: {}'.format(e, repr(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id")) ))
+  Log.info(u"Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("".ljust(157, '='))
   
@@ -1115,7 +1127,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       ### Ignore dirs ###
       for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
         if rx.match(os.path.basename(path)):                      # if folder match rx
-          Log.info("# Folder: '{}' match '{}' pattern: '{}'".format(path, 'IGNORE_DIRS_RX', rx))
+          Log.info(u"# Folder: '{}' match '{}' pattern: '{}'".format(path, 'IGNORE_DIRS_RX', rx))
           break
       else:  ### Not skipped
         
@@ -1128,9 +1140,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             if rx.search(folder_clean):          # get season number but Skip last entry in seasons (skipped folders)
               reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
               if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
-              Log.info('Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format(SEASON_RX.index(rx),folder_clean, folder))
+              Log.info(u'Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format(SEASON_RX.index(rx),folder_clean, folder))
               break
-          #else:  Log.info('Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format("False", folder_clean, folder))
+          else:  Log.info(u'Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format("False", folder_clean, folder))
               
         ### Process subfolders ###
         subdir_dirs, subdir_files = [], []
@@ -1151,9 +1163,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if subdir_files and len(reverse_path)>1 and not season_folder_first and folder_count[root_folder]>1:  ### Calling Scan for grouping folders only ###
           if grouping_dir in dirs:
             Log.info(''.ljust(157, '-'))
-            Log.info("[{}] Grouping folder (contain {} dirs)".format(root_folder, folder_count[root_folder]))
+            Log.info(u"[{}] Grouping folder (contain {} dirs)".format(root_folder, folder_count[root_folder]))
             dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
-          Log.info("- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
+          Log.info(u"- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
           Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
           set_logging(root=root, filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
           
