@@ -39,6 +39,7 @@ Any information missing or wrong inthere in Plex is an Agent issue, refer to the
 - Use sagas as seasons keeping absolute numbering with TVDB4 and it create even the seasons for you from a database if not specified
 - Versatile file format support. if a logical numbering format isn't supported let me know (no episode number in brackets or parenthesis though, that's moronic)
 - put per-series logs ('xxx.filelist.log' and 'xxx.scanner.log' in /Plex Media Server/Plug-in Support/Data/com.plexapp.agents.hama/DataItems/Logs).
+- Filebot Xattr series id support, uses the scanner files from https://github.com/filebot/plex-agents
 
 ## Requirements
 -  Library libxslt (XML stylesheet transformation library) installed
@@ -220,7 +221,17 @@ Because it doesn't have an XML extension, it won't accept XML tags inside. Forma
     09|085|120|Reincarnation Arc
     10|121|121|Arc 10 (unknown length)
 </CODE></PRE>
-        
+
+##### Filebot Xattr series id support 
+Filebot support metadata in file system extended attributes, and has released a movies, series scanner and secondary agent here: https://github.com/filebot/plex-agents/blob/master/Scanners/Series/FileBot%20Xattr%20Series%20Scanner.py
+
+One can instruct to save metadata in the OS file system metadata (examples attached)
+- "database":"TheTVDB", "type":"TV Series","id":253463 => translate into [tvdb-id]
+- "database":"AniDB", "type":"Anime", "id":578 => translate into [anidb-id
+- "database":"TheMovieDB::TV", "type":"TV Series","id":42009 => translate into [tsdb-id]
+- "database":"TheMovieDB::??????","type":"Movies", "id":????? => translate into [tmdb-id]
+   {"@type":"Movie","year":2016,"imdbId":2513074,"tmdbId":293767,"language":"en","id":293767,"name":"Billy Lynn's Long Halftime Walk","aliasNames":[]}
+
 ##### Advanced modes
 If the season and/or episode numbers of your files don't match up with the AniDB or TVDB episodes, you can manually specify the season and the episode offset in the parent folder name.
 
