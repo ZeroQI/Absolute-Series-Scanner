@@ -183,10 +183,11 @@ def setup():
     library_xml = etree.fromstring(read_url(Request(PLEX_LIBRARY_URL, headers={"X-Plex-Token": os.environ['X_PLEX_TOKEN']})))
     for directory in library_xml.iterchildren('Directory'):
       for location in directory.iterchildren('Location'):
-        PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
-        Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title'), location.get("path")))
-  except:  pass
-
+        PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title').encode('utf-8'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
+        Log.info('id: {:>2}, type: {:<6}, agent: {:<30}, scanner: {:<30}, library: {:<24}, path: {}'.format(directory.get("key"), directory.get('type'), directory.get("agent"), directory.get("scanner"), directory.get('title').encode('utf-8'), location.get("path")))
+  except Exception as e:  Log.error("Exception: '%s', library_xml could not be loaded. X-Plex-Token file created?" % (e))
+  Log.info("".ljust(157, '='))
+  
 ### Read in a local file ################################################################################  
 def read_file(local_file):
   file_content = ""
@@ -296,20 +297,16 @@ def Dict(var, *arg, **kwarg):
 
 ### Set Logging to proper logging file ##################################################################
 def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
-  if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':
-    cache_path = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
-  else:  cache_path = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
+  if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':  cache_path = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
+  else:                                                               cache_path = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
 
-  if not foldername:  foldername = Dict(PLEX_LIBRARY, root, 'title')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
-
+  if not foldername:  foldername = Dict(PLEX_LIBRARY, root, 'title').decode('utf-8')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
   if foldername:  cache_path = os.path.join(cache_path, os_filename_clean_string(foldername))
-
   if not os.path.exists(cache_path):  os.makedirs(cache_path)
 
   filename = os_filename_clean_string(filename).decode('utf-8') if filename else '_root_.scanner.log'
   log_file = os.path.join(cache_path, filename)
   if os.sep=="\\":  log_file = winapi_path(log_file, 'utf-8') # Bypass DOS path MAX_PATH limitation
-
   mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
 
   global Handler
@@ -620,7 +617,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   try:                    Log.info("Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id").encode('utf-8'), root, path, len(files or []), len(dirs or [])))
   except Exception as e:  Log.info('exception: {} repr: {}'.format(e, repr(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id")) ))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
-  Log.info("2".ljust(157, '='))
+  Log.info("".ljust(157, '='))
   
   #### Folders, Forced ids, grouping folders ###
   folder_show                                = filter_chars(reverse_path[0]) if reverse_path else ""
@@ -1073,7 +1070,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
                   index=0
                   if title_.startswith('Opening '):  epno, index = title_.lstrip('Opening '), 1
                   if title_.startswith('Ending ' ):  epno, index = title_.lstrip('Ending  '), 2
-                  #Log.info('type: {}, epno: {}, title: {}, ANIDB_RX.index(rx): {}'.format(type, epno, title_, ANIDB_RX.index(rx)))
+                  Log.info('type: {}, epno: {}, title: {}, ANIDB_RX.index(rx): {}'.format(type, epno, title_, ANIDB_RX.index(rx)))
                   if epno and not epno.isdigit() and len(epno)>1 and epno[:-1].isdigit():                                                                                    ### OP/ED with letter version Example: op2a
                     epno, offsetno = int(epno[:-1]), ord(epno[-1:])-ord('a')
                     if   not index in AniDB_op:                                          AniDB_op[index]       = {epno: offsetno }
@@ -1133,7 +1130,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
               if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
               Log.info('Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format(SEASON_RX.index(rx),folder_clean, folder))
               break
-          else:  Log.info('Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format("False", folder_clean, folder))
+          #else:  Log.info('Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format("False", folder_clean, folder))
               
         ### Process subfolders ###
         subdir_dirs, subdir_files = [], []
