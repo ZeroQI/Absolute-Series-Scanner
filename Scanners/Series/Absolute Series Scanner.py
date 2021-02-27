@@ -440,12 +440,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   setup()  # Call setup to get core info. If setup is already done, it just returns and does nothing.
   
   # Sanitize all path
-  Log(u"Scan() - before sanitize() - root: {}, path: {}, dirs: {}, files: {}".format(root, path, dirs, files))
-  if path is not None:  path = sanitize_path(path); 
-  if root is not None:  root = sanitize_path(root); Log(u"path: {}".format(path))
-  files = [sanitize_path(p) for p in files];        
-  dirs  = [sanitize_path(p) for p in dirs ];        
-  Log(u"Scan() - after  sanitize() - root: {}, path: {}, dirs: {}, files: {}".format(root, path, dirs, files))
+  before_sanitize = u"Scan() - dirs: {}, files: {}".format(len(dirs or []), len(files or []))
+  if path is not None:  path = sanitize_path(path)
+  if root is not None:  root = sanitize_path(root)
+  files = [sanitize_path(p) for p in files]
+  dirs  = [sanitize_path(p) for p in dirs ]
   
   reverse_path = list(reversed(path.split(os.sep)))
   log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
@@ -500,10 +499,19 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
         reverse_path.remove(folder)                 # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         break
+
+  ### Ignore dirs ###
+  for dir in dirs[:]:
+    for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
+      if rx.match(os.path.basename(dir)):                      # if folder match rx
+        Log.info(u"Removed subdir: '{}' match '{}' pattern: '{}'".format(dir, 'IGNORE_DIRS_RX', rx))
+        dirs.remove(dir)
+        break
+  
     if not kwargs and len(reverse_path)>1 and path.count(os.sep) and "Plex Versions" not in path and "Optimized for " not in path and len(dirs)>1:
       Log.info(u"grouping folder? dirs: {}, reverse_path: {} [return]".format(dirs, reverse_path))
       return       #if not grouping folder scan, skip grouping folder
-  
+
   ### Create *.filelist.log file ###
   set_logging(root=root, filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
   Log.info("".ljust(157, '='))
@@ -517,9 +525,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     for rx in IGNORE_DIRS_RX:
       if rx.match(os.path.basename(subdir)):
         dirs.remove(subdir)
-        Log.info(u"# Folder: '{}' match '{}' pattern: '{}'".format(os.path.relpath(subdir, root), 'IGNORE_DIRS_RX', rx))
+        Log.info(u"- Subdir: '{}' removed, as it matches '{}' pattern: '{}'".format(os.path.relpath(subdir, root), 'IGNORE_DIRS_RX', rx))
         break  #skip dirs to be ignored
-    else:  Log.info("[folder] " + os.path.relpath(subdir, root))
+    else:  Log.info(u"- Subdir {}, Files: {}".format(os.path.relpath(subdir, root), len([sanitize_path(f) for f in os.listdir(subdir)])))
+  else:  Log.info(u"= folders({}): {}, Files({}): {}".format( len(dirs), dirs, len(files), files ))
   
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) ###
   for entry in msg:  Log.info(entry)
@@ -558,17 +567,19 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
       
   if not files:
-    if path and len(dirs)!=1:
-      Log.info("[no files detected] Grouping folder skip as >1 folder [return]")
+    if path and len(dirs)>1:
+      Log.info(u"[no files detected] Grouping folder skip (has to be done while on library root scan) as 2 or more folders {} in a series folder [return], path: {}".format(dirs, path))
       return  #Grouping folders could call subfolders so cannot return if path is empty aka for root call
-    else: Log.info("[no files detected] continuing, single folder")
+    else: Log.info(u"[no files detected] continuing, folder: {}, dirs({}): {}".format(path, len(dirs), dirs))
+  else:  Log.info(u"[{} files detected]".format(len(files)))
   Log.info("".ljust(157, '='))
   Log.info("{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
   ### Logging to *.scanner.log ###
   set_logging(root=root, filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
   Log.info("".ljust(157, '='))
-  Log.info(u"Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
+  Log.info(before_sanitize)
+  Log.info(u"Library: '{}', root: '{}', path: '{}', dirs: '{}', files: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, dirs, files))
   Log.info("{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   Log.info("".ljust(157, '='))
   
@@ -1054,9 +1065,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       run_count, standard_holding, unknown_holding, COUNTER = run_count + 1, [], [], COUNTER - len(unknown_holding)
     else:  break  #Break out and don't try a second run as not all files are unknown or there are no files
   for entry in standard_holding + unknown_holding:  add_episode_into_plex(media, *entry)
-  if not files:  Log.info("[no files detected] #1")
   if files:  Stack.Scan(path, files, media, dirs)
-
+  else:      Log.info("[no files detected] #1")
+  
   ### root level manual call to Grouping folders ###
   if not path:
     Log.info("root level call to potential Grouping folders")
