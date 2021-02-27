@@ -133,15 +133,6 @@ WHACK               = [                                                         
                         "mthd", "thora", 'sickrage', 'brrip', "remastered", "yify", "tsr", "reidy", "gerdhanse", 'remux',                                                             #'limited', 
                         'rikou', 'hom?', "it00nz", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "MVO", "VO"                                         # Release group
                       ]
-CHARACTERS_MAP      = {                                                                                                                                                               #Specials characters to re-map
-                        14844057:"'", 14844051:'-', 14844052:'-', 14844070:'...', 15711386:':', 14846080:'∀', 15711646:'~',                                                           #['’' \xe2\x80\x99] ['–' \xe2\x80\x93] ['…' \xe2\x80\xa6] # '：' # 12770:'', # '∀ Gundam' no need #'´' ['\xc2', '\xb4']
-                        50048:'A' , 50050:'A' , 50052:'Ä' , 50080:'a' , 50082:'a' , 50084:'a' , 50305:'a' , 50308:'A' , 50309:'a' ,  50055:'C' , 50087:'c' , 50310:'C' , 50311:'c' ,  #'à' ['\xc3', '\xa0'] #'â' ['\xc3', '\xa2'] #'Ä' ['\xc3', '\x84'] #'ā' ['\xc4', '\x81'] #'À' ['\xc3', '\x80'] #'Â' ['\xc3', '\x82'] # 'Märchen Awakens Romance', 'Rozen Maiden Träumend' #'Ç' ['\xc3', '\x87'] #'ç' ['\xc3', '\xa7'] 
-                        50057:'E' , 50088:'e' , 50089:'e' , 50090:'e' , 50091:'e' , 50323:'e' , 50328:'E' , 50329:'e' ,                                                               #'É' ['\xc3', '\x89'] #'è' ['\xc3', '\xa8'] #'é' ['\xc3', '\xa9'] #'ē' ['\xc4', '\x93'] #'ê' ['\xc3', '\xaa'] #'ë' ['\xc3', '\xab']
-                        50094:'i' , 50095:'i' , 50347:'i' , 50561:'L' , 50562:'l' , 50563:'N' , 50564:'n' , 50097:'n' ,                                                               #'î' ['\xc3', '\xae'] #'ï' ['\xc3', '\xaf'] #'ī' ['\xc4', '\xab'] #'ñ' ['\xc3', '\xb1']
-                        50067:'O' , 50068:'Ô' , 50072:'O' , 50099:'o' , 50100:'o' , 50102:'o' , 50573:'o' , 50578:'OE', 50579:'oe',                                                   #'Ø' ['', '']         #'Ô' ['\xc3', '\x94'] #'ô' ['\xc3', '\xb4'] #'ō' ['\xc5', '\x8d'] #'Œ' ['\xc5', '\x92'] #'œ' ['\xc5', '\x93']
-                        53423:'Я' , 50586:'S' , 50587:'s' , 50079:'ss', 50105:'u' , 50107:'u' , 50108:'u' , 50071:'x' , 50617:'Z' , 50618:'z' , 50619:'Z' , 50620:'z' ,               #'Я' ['\xd0', '\xaf'] #'ß' []               #'ù' ['\xc3', '\xb9'] #'û' ['\xc3', '\xbb'] #'ü' ['\xc3', '\xbc'] #'²' ['\xc2', '\xb2'] #'³' ['\xc2', '\xb3'] #'×' ['\xc3', '\x97'],
-                        49835:'«' , 49842:'²' , 49843:'³' , 49844:"'" , 49847:' ' , 49848:'¸',  49851:'»' , 49853:'½' , 52352:''  , 52353:''                                          #'«' ['\xc2', '\xab'] #'·' ['\xc2', '\xb7'] #'»' ['\xc2', '\xbb']# 'R/Ranma ½ Nettou Hen'  #'¸' ['\xc2', '\xb8'] #'̀' ['\xcc', '\x80'] #  ['\xcc', '\x81'] 
-                      }
                
 # Word Search Compiled Regex (IGNORECASE is not required as word is lowered at start)
 WS_VERSION          = com(r"v\d$")
@@ -319,66 +310,6 @@ def set_logging(root='', foldername='', filename='', backup_count=0, format='%(m
 
 ### Turn a string into a list of string and number chunks  "z23a" -> ["z", 23, "a"] #####################
 def natural_sort_key(s, _nsre=com(r'(\d+)')):  return [int(text) if text.isdigit() else text.lower() for text in _nsre.split(s)]
-
-### Return number of bytes of Unicode characters ########################################################
-def unicodeCharLen(char):                                       # count consecutive 1 bits since it represents the byte numbers-1, less than 1 consecutive bit (128) is 1 byte , less than 23 bytes is 1
-  for x in range(1,6):                                           # start at 1, 6 times 
-    if ord(char) < 256-pow(2, 7-x)+(2 if x==6 else 0): return x  # 256-2pow(x) with x(7->0) = 128 192 224 240 248 252 254 255 = 1 to 8 bits at 1 from the left, 256-2pow(7-x) starts form left
- 
-### Return correct String length even with Unicode characters ###########################################
-def unicodeLen(string): 
-  length = 0
-  for char in string:  length += unicodeCharLen(char)
-  return length
-  
-### Decode string back to Unicode ###   #Unicodize in utils?? #fixEncoding in unicodehelper #############
-def encodeASCII(string, language=None): #from Unicodize and plex scanner and other sources
-  if string=="": return ""
-  ranges = [ {"from": u"\u3300" , "to": u"\u33ff" }, #
-             {"from": u"\ufe30" , "to": u"\ufe4f" }, #
-             {"from": u"\uf900" , "to": u"\ufaff" }, #compatibility ideographs
-             {"from": u"\u30a0" , "to": u"\u30ff" }, #cjk radicals supplement                 - Japanese Kana    
-             {"from": u"\u2e80" , "to": u"\u2eff" }, #cjk radicals supplement                 - Japanese Kana    
-             {"from": u"\u4e00" , "to": u"\u9fff" }, #CJK Unified Ideographs                  - Chinese Han Ideographs, Common
-             {"from": u"\uF900" , "to": u"\uFAFF" }, #CJK Compatibility Ideographs            - Chinese Han Ideographs, Rare, historic
-             {"from": u"\u3400" , "to": u"\u4DBF" }, #CJK Unified Ideographs Extension A      - Chinese Han Ideographs, Rare
-             {"from": u"\u20000", "to": u"\u2A6DF"}, #CJK Unified Ideographs Extension B      - Chinese Han Ideographs, Rare, historic
-             {"from": u"\u2A700", "to": u"\u2B73F"}, #CJK Unified Ideographs Extension C      - Chinese Han Ideographs, Rare, historic
-             {"from": u"\u2B740", "to": u"\u2B81F"}, #CJK Unified Ideographs Extension D      - Chinese Han Ideographs, Uncommon, some in current use
-             {"from": u"\u2B820", "to": u"\u2CEAF"}, #CJK Unified Ideographs Extension E      - Chinese Han Ideographs, Rare, historic
-             {"from": u"\u2F800", "to": u"\u2FA1F"}] #CJK Compatibility Ideographs Supplement - Chinese Han Ideographs, Duplicates, unifiable variants, corporate characters
-  encodings, encoding = ['iso8859-1', 'utf-16', 'utf-16be', 'utf-8'], ord(string[0])                                                                          #
-  if 0 <= encoding < len(encodings):  string = string[1:].decode('cp949') if encoding == 0 and language == 'ko' else string[1:].decode(encodings[encoding])   # If we're dealing with a particular language, we might want to try another code page.
-  if sys.getdefaultencoding() not in encodings:
-    try:     string = string.decode(sys.getdefaultencoding())
-    except:  pass
-  if not sys.getfilesystemencoding()==sys.getdefaultencoding():
-    try:     string = string.decode(sys.getfilesystemencoding())
-    except:  pass
-  string = string.strip('\0')
-  try:       string = unicodedata.normalize('NFKD', string)    # Unicode  to ascii conversion to corect most characters automatically
-  except:    pass
-  try:       string = re.sub(RE_UNICODE_CONTROL, '', string)   # Strip control characters.
-  except:    pass
-  try:       string = string.encode('ascii', 'replace')        # Encode into Ascii
-  except:    pass
-  original_string, string, i = string, list(string), 0
-  asian_language = False
-  while i < len(string):                                       ### loop through unicode and replace special chars with spaces then map if found ###
-    if ord(string[i])<128:  i = i+1
-    else: #non ascii char
-      char, char2, char_list, char_len = 0, "", [], unicodeCharLen(string[i])
-      for x in range(0, char_len):
-        char = 256*char + ord(string[i+x]); char2 += string[i+x]; char_list.append(string[i+x])
-        if x:   string[i] += string[i+x]; string[i+x]=''
-      try:
-        asian_language = any([mapping["from"] <= x <= mapping["to"] for mapping in ranges for x in char_list])
-        Log.info("str: '%s'" % str([mapping["from"] <= x <= mapping["to"] for mapping in ranges for x in char_list]))
-      except: asian_language = False
-      if char in CHARACTERS_MAP:  string[i]=CHARACTERS_MAP.get( char ); Log.info("*Character remapped in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char_list, original_string))
-      elif not asian_language:    Log.warning("*Character missing in CHARACTERS_MAP: %d:'%s'  , #'%s' %s, string: '%s'" % (char, char2, char2, char_list, original_string))
-      i += char_len
-  return original_string if asian_language else ''.join(string)
 
 def filter_chars(string):
   for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]):
@@ -962,7 +893,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       else:
         filename = os.path.splitext(os.path.basename(file))[0]
         if not path:  root_filename = filename
-        filename = encodeASCII(filename)
+        filename = sanitize_path(filename)
       
       ### remove cleansed folder name from cleansed filename or keywords otherwise ###
       if path and run_count == 1:
