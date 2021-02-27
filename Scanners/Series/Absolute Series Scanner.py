@@ -88,7 +88,7 @@ COUNTER         = 500
 
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDouble', r'\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder',   ###### Ignored folders
-                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr']                        # source: Filters.py  removed '\..*',
+                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr', 'audio', 'sub']        # source: Filters.py  removed '\..*',
 IGNORE_DIRS_RX      = [cic(entry) for entry in IGNORE_DIRS_RX_RAW]
 # Uses re.match() so forces a '^'
 IGNORE_FILES_RX_RAW = [ r'[ _\.\-]?sample', r'-Recap\.', r'\._', 'OST', 'soundtrack']                                                                                            # Skipped files (samples, trailers)
@@ -438,12 +438,14 @@ def romanToInt(s):
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
   setup()  # Call setup to get core info. If setup is already done, it just returns and does nothing.
+  
   # Sanitize all path
-  path = sanitize_path(path)
-  if root is not None:
-    root = sanitize_path(root)
-  files = [sanitize_path(p) for p in files]
-  dirs = [sanitize_path(p) for p in dirs]
+  Log(u"Scan() - before sanitize() - root: {}, path: {}, dirs: {}, files: {}".format(root, path, dirs, files))
+  if path is not None:  path = sanitize_path(path); 
+  if root is not None:  root = sanitize_path(root); Log(u"path: {}".format(path))
+  files = [sanitize_path(p) for p in files];        
+  dirs  = [sanitize_path(p) for p in dirs ];        
+  Log(u"Scan() - after  sanitize() - root: {}, path: {}, dirs: {}, files: {}".format(root, path, dirs, files))
   
   reverse_path = list(reversed(path.split(os.sep)))
   log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
