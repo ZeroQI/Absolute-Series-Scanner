@@ -61,7 +61,7 @@ FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                            
 SEASON_RX       = [                                                                                                                                                              ### Seasons Folders
                     cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
                     #cic(r'^(Season|Series|Book|Saison|Livre|Temporada|S)[ _\-\.]*(?P<season>\d{1,4})(.*)?'),                                                                    # Season / Series / Book / Saison / Livre / S
-                    cic(r'^(?P<show>.*)?[\._\-\— ]*?(Season|Series|Book|Saison|Livre|Temporada|[Ss])[\._\—\- ]*?(?P<season>\d{1,4}).*?'),                                        # (title) S01
+                    cic(r'^((?P<show>.*)[\._\-\— ]+)?(Season|Series|Book|Saison|Livre|Temporada|[Ss])[\._\—\- ]*?(?P<season>\d{1,4}).*?'),                                        # (title) S01
                     cic(r'^(?P<show>.*)?[\._\-\— ]*?Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                  # (title) S01
                     #cic(r'^(?P<season>\d{1,2})$'),                                                                                                                              # ##
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
@@ -487,6 +487,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
   ### Extract season folder to reduce complexity and use folder as serie name ###
   folder_season, season_folder_first = None, False
+  removed = []
   for folder in reverse_path[:-1]:                  # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
     for rx in SEASON_RX:                            # in anime, more specials folders than season folders, so doing it first
       folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True)
@@ -497,6 +498,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if rx==SEASON_RX[-2]: folder_season = romanToInt(match.group('season'))
           else:                 folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
+        removed.append(u'Removed season folder: "{}", SEASON_RX index: {}, Season: {}'.format(folder_clean, SEASON_RX.index(rx), folder_season))
         reverse_path.remove(folder)                 # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         break
 
@@ -575,19 +577,21 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   Log.info(u"".ljust(157, '='))
   Log.info(u"{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
-  ### Logging to *.scanner.log ###
-  set_logging(root=root, filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
-  Log.info(u"".ljust(157, '='))
-  Log.info(u"".format(before_sanitize))
-  Log.info(u"Library: '{}', root: '{}', path: '{}', dirs: '{}', files: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, dirs, files))
-  Log.info(u"{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
-  Log.info(u"".ljust(157, '='))
-  
   #### Folders, Forced ids, grouping folders ###
   folder_show                                = filter_chars(reverse_path[0]) if reverse_path else ""
   array, misc_words, misc_count, mappingList = (), [], {}, {}
   tvdb_mapping, unknown_series_length        = {}, False
   offset_match, offset_season, offset_episode = None, 0, 0
+
+  ### Logging to *.scanner.log ###
+  set_logging(root=root, filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
+  Log.info(u"".ljust(157, '='))
+  Log.info(u"".format(before_sanitize))
+  Log.info(u"Library: '{}', root: '{}', path: '{}', dirs: '{}', files: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, dirs, files))
+  Log.info(u"reverse_path: {}, original value: {}, folder_show: {}".format(reverse_path, list(reversed(path.split(os.sep))), folder_show))
+  for line in removed:  Log.info(line)
+  Log.info(u"{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
+  Log.info(u"".ljust(157, '='))
   
   if path:
     ### Grouping folders skip , unless single series folder ###
@@ -834,7 +838,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       try:
         xml = etree.fromstring(read_file(os.path.join(PLEX_ROOT, 'Plug-in Support', 'Preferences', 'com.plexapp.agents.youtube.xml')))
         API_KEY = xml.xpath("/PluginPreferences/YouTube-Agent_youtube_api_key")[0].text.strip()
-        Log.info(u"API_KEY: '{}'".format(API_KEY))
+        #Log.info(u"API_KEY: '{}'".format(API_KEY))
       except Exception as e:  Log.info(u'exception: {}'.format(e)); API_KEY='AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass'
       
       YOUTUBE_PLAYLIST_ITEMS = 'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId={}&key='+API_KEY
