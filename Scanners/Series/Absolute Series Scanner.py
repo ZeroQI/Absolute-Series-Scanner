@@ -389,7 +389,10 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:
-      tv_show = Media.Episode(show.encode('utf-8'), season, epn, title.encode('utf-8'), year)
+      # Media.Episode expects show in utf-8 encoded byte string, but title in unicode
+      if not isinstance(title, unicode):
+        title = title.decode('utf-8')
+      tv_show = Media.Episode(show.encode('utf-8'), season, epn, title, year)
       tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
       if filename.upper()=="VIDEO_TS.IFO":  
         for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
