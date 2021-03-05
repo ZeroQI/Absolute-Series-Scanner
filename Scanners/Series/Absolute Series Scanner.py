@@ -9,9 +9,6 @@ import datetime                                                      # datetime
 import re                                                            # match, compilef, sub
 import fnmatch                                                       # translate
 import logging, logging.handlers                                     # FileHandler, Formatter, getLogger, DEBUG | RotatingFileHandler
-import Media                                                         # Episode
-import VideoFiles                                                    # Scan
-import Stack                                                         # Scan
 import inspect                                                       # getfile, currentframe
 import ssl                                                           # SSLContext
 import zipfile                                                       # ZipFile, namelist
@@ -21,6 +18,11 @@ try:                 from ssl import PROTOCOL_TLS    as SSL_PROTOCOL # Python >=
 except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python <  2.7.13
 try:                 from urllib.request import urlopen, Request     # Python >= 3.0
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
+
+#Plex Libraries
+import Media                                                         # Episode
+import VideoFiles                                                    # Scan
+import Stack                                                         # Scan
 
 try:     import filebot #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
 except:  FileBot = {}
@@ -66,8 +68,8 @@ SEASON_RX       = [                                                             
                     #cic(r'^(?P<season>\d{1,2})$'),                                                                                                                              # ##
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
-  cic(r'(^|(?P<show>.*?)[ _\.\-]+)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                    #  0 # 1x01
-  cic(r'(^|(?P<show>.*?)[ _\.\-]+)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,3})(([ _\.\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,3}))?[ _\.]*(?P<title>.*?)$'),                        #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,3})[ _\.\-]?of[ _\.\-]?\d{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
+  cic(r'(^|(?P<show>.*?)[ _\.\-]*)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                    #  0 # 1x01
+  cic(r'(^|(?P<show>.*?)[ _\.\-]*)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,3})(([ _\.\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,3}))?[ _\.]*(?P<title>.*?)$'),                        #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,3})[ _\.\-]?of[ _\.\-]?\d{1,3}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   cic(r'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'),                                                                      #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   cic(r'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,3})\][ _\.](?P<title>.*)$'),
   cic(r'^\[.*\]\[(?P<show>.*)\]\[(?P<ep>\d{1,3})\].*$'),
@@ -287,23 +289,21 @@ def Dict(var, *arg, **kwarg):
   return kwarg['default'] if var in (None, '', 'N/A', 'null') and kwarg and 'default' in kwarg else "" if var in (None, '', 'N/A', 'null') else var
 
 ### Set Logging to proper logging file ##################################################################
-def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode='w'):#%(asctime)-15s %(levelname)s - 
+def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode=''):#%(asctime)-15s %(levelname)s - 
   if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':  cache_path = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
   else:                                                               cache_path = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
 
-  if not foldername:  foldername = Dict(PLEX_LIBRARY, root, 'title')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
-  if foldername:  cache_path = os.path.join(cache_path, os_filename_clean_string(foldername))
-
+  if not foldername:                  foldername = Dict(PLEX_LIBRARY, root, 'title')  # If foldername is not defined, try and pull the library title from PLEX_LIBRARY
+  if foldername:                      cache_path = os.path.join(cache_path, os_filename_clean_string(foldername))
   if not os.path.exists(cache_path):  os.makedirs(cache_path)
-
+  
   filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
   log_file = os.path.join(cache_path, filename)
   if os.sep=="\\":  log_file = winapi_path(log_file, 'utf-8') # Bypass DOS path MAX_PATH limitation
-
-  mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else mode # Override mode for repeat manual scans or immediate rescans
+  if not mode:  mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else 'w' # Override mode for repeat manual scans or immediate rescans
 
   global Handler
-  if Handler: Log.removeHandler(Handler)
+  if Handler:       Log.removeHandler(Handler)
   if backup_count:  Handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=backup_count, encoding='utf-8')
   else:             Handler = logging.FileHandler                 (log_file, mode=mode, encoding='utf-8')
   Handler.setFormatter(logging.Formatter(format))
@@ -388,11 +388,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   filename=os.path.basename(file)
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
-    else:
-      # Media.Episode expects show in utf-8 encoded byte string, but title in unicode
-      if not isinstance(title, unicode):
-        title = title.decode('utf-8')
-      tv_show = Media.Episode(show.encode('utf-8'), season, epn, title, year)
+    else:# Media.Episode expects show and title in utf-8 encoded byte string (unicode title in Plex Media Scanner/log': WARN - Warning, Unicode passed in, should be UTF-8 string for attribute 'name')
+      tv_show = Media.Episode(show.encode('utf-8') if isinstance(show, unicode) else show, season, epn, title.encode('utf-8') if isinstance(title, unicode) else title, year)  #tv_show = Media.Episode(show.encode('utf-8'), season, epn, title.encode('utf-8'), year)
       tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
       if filename.upper()=="VIDEO_TS.IFO":  
         for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
@@ -400,7 +397,7 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
       else:  tv_show.parts.append(file.encode(sys.getfilesystemencoding()))
       media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   index = "SERIES_RX-"+str(SERIES_RX.index(rx)) if rx in SERIES_RX else "ANIDB_RX-"+str(ANIDB_RX.index(rx)) if rx in ANIDB_RX else rx  # rank of the regex used from 0
-  Log.info(u'"{show}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or '__', title=title if clean_string(title).replace('_', '') else "", file=filename))
+  Log.info(u'"{show:<80}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or '__', title=title if clean_string(title).replace('_', '') else "", file=filename))
 
 ### Get the tvdbId from the AnimeId #####################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -443,22 +440,21 @@ def romanToInt(s):
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
   setup()  # Call setup to get core info. If setup is already done, it just returns and does nothing.
+  #if not files:  return  #Residual grouping folder subfolders clear
   
   # Sanitize all path
-  before_sanitize = u"Scan() - dirs: {}, files: {}".format(len(dirs or []), len(files or []))
-  if path is not None:  path = sanitize_path(path)
-  if root is not None:  root = sanitize_path(root)
-  files = [sanitize_path(p) for p in files]
-  dirs  = [sanitize_path(p) for p in dirs ]
-  
+  msg          = [u"Scan() - dirs: {}, files: {}".format(len(dirs or []), len(files or []))]
+  files        = [sanitize_path(p) for p in files] #unicode
+  dirs         = [sanitize_path(p) for p in dirs ] #unicode
+  root         = sanitize_path(root)
+  path         = sanitize_path(path)
+  path_split   = path.split(os.sep)
   reverse_path = list(reversed(path.split(os.sep)))
-  log_filename = path.split(os.sep)[0] if path else '_root_' + root.replace(os.sep, '-')
-  anidb_xml    = None
+  log_filename = path.split(os.sep)[0] if path else '_root_'
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
     
   ### .plexignore file ###
   plexignore_dirs, plexignore_files, msg, source, id = [], [], [], '', ''
-  path_split = [""]+path.split(os.sep) if path else [""]
   for index, dir in enumerate(path_split):                                                   #enumerate to have index, which goes from 0 to n-1 for n items
     
     # Process Subdirectory pattern from previous folder(s)
@@ -490,9 +486,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     if len(reverse_path)>1:  reverse_path.pop(0)  #Log.info(u"BluRay/DVD folder detected - using as equivalent to filename ep: '%s', show: '%s'" % (ep, reverse_path[0]))
   else: disc = False
   
-  ### Extract season folder to reduce complexity and use folder as serie name ###
+  ### Remove season folder to reduce complexity and use folder as serie name ###
   folder_season, season_folder_first = None, False
-  removed = []
   for folder in reverse_path[:-1]:                  # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
     for rx in SEASON_RX:                            # in anime, more specials folders than season folders, so doing it first
       folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True)
@@ -503,58 +498,34 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if rx==SEASON_RX[-2]: folder_season = romanToInt(match.group('season'))
           else:                 folder_season = int( match.group('season')) if match.groupdict().has_key('season') and match.group('season') else 0 #break
           if len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
-        removed.append(u'Removed season folder: "{}", SEASON_RX index: {}, Season: {}'.format(folder_clean, SEASON_RX.index(rx), folder_season))
+        #msg.append(u'Removed season folder: "{}", SEASON_RX index: {}, Season: {}'.format(folder_clean, SEASON_RX.index(rx), folder_season))
         reverse_path.remove(folder)                 # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
         break
-
-  ### Ignore dirs ###
+  folder_show = filter_chars(reverse_path[0]) if reverse_path else ""
+  
+  ### Remove un-needed sub-directories (mathing IGNORE_DIRS_RX) ###
   for dir in dirs[:]:
     for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
       if rx.match(os.path.basename(dir)):                      # if folder match rx
-        Log.info(u"Removed subdir: '{}' match '{}' pattern: '{}'".format(dir, 'IGNORE_DIRS_RX', rx))
+        msg.append(u"Removed subdir: '{}' match '{}' pattern: '{}'".format(dir, 'IGNORE_DIRS_RX', IGNORE_DIRS_RX.index(rx)))
         dirs.remove(dir)
         break
-  
-    if not kwargs and len(reverse_path)>1 and path.count(os.sep) and "Plex Versions" not in path and "Optimized for " not in path and len(dirs)>1:
-      Log.info(u"grouping folder? dirs: {}, reverse_path: {} [return]".format(dirs, reverse_path))
-      return       #if not grouping folder scan, skip grouping folder
-
-  ### Create *.filelist.log file ###
-  set_logging(root=root, filename=log_filename+'.filelist.log', mode='w') #add grouping folders filelist
-  Log.info(u"".ljust(157, '='))
-  Log.info(u"Library: '{}', root: '{}', path: '{}', files: '{}', dirs: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, len(files or []), len(dirs or [])))
-  Log.info(u"{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
-  Log.info(u"plexignore_files: '{}', plexignore_dirs: '{}'".format(plexignore_files, plexignore_dirs))
-  Log.info(u"".ljust(157, '='))
-
-  ### Remove directories un-needed (mathing IGNORE_DIRS_RX) ###
-  for subdir in dirs[:]:
-    for rx in IGNORE_DIRS_RX:
-      if rx.match(os.path.basename(subdir)):
-        dirs.remove(subdir)
-        Log.info(u"- Subdir: '{}' removed, as it matches '{}' pattern: '{}'".format(os.path.relpath(subdir, root), 'IGNORE_DIRS_RX', rx))
-        break  #skip dirs to be ignored
-    else:  Log.info(u"- Subdir {}, Files: {}".format(os.path.relpath(subdir, root), len([sanitize_path(f) for f in os.listdir(subdir)])))
-  else:  Log.info(u"= folders({}): {}, Files({}): {}".format( len(dirs), dirs, len(files), files ))
+  #msg.append(u'dirs ({}): {}, Files({}): {}'.format( len(dirs), dirs, len(files), files ))
   
   ### Remove files un-needed (ext not in VIDEO_EXTS, mathing IGNORE_FILES_RX or .plexignore pattern) ###
-  for entry in msg:  Log.info(entry)
   for file in sorted(files or [], key=natural_sort_key):  #sorted create list copy allowing deleting in place
     ext = file[1:] if file.count('.')==1 and file.startswith('.') else os.path.splitext(file)[1].lstrip('.').lower()  # Otherwise ".plexignore" file is splitted into ".plexignore" and ""
     if ext in VIDEO_EXTS:
       for rx in IGNORE_FILES_RX + [cic(entry) for entry in plexignore_files]:  # Filter trailers and sample files
         if rx.match(os.path.basename(file)):
-          Log.info(u"# File: '{}' match '{}' pattern: '{}'".format(os.path.relpath(file, root), 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore', rx))
+          msg.append(u"# File: '{}' match '{}' pattern: '{}'".format(os.path.relpath(file, root), 'IGNORE_FILES_RX' if rx in IGNORE_FILES_RX else '.plexignore', rx))
           files.remove(file)
-
           break
-      else:
-        try:                    Log.info(u"[file] " + os.path.relpath(file, root))
-        except Exception as e:  Log.info(u'exception: {}, file: {}, root: {}'.format(e, file, root))
+      #msg.append(u'{}'.format(os.path.relpath(file, root)))
     else:
       files.remove(file)
-      Log.info(u"# File: '{}' not in '{}'".format(os.path.relpath(file, root), 'VIDEO_EXTS'))
-      
+      msg.append(u"File: '{}' not in '{}'".format(os.path.relpath(file, root), 'VIDEO_EXTS'))
+  
       ### ZIP ###
       if ext == 'zip':
         Log.info(file)
@@ -563,7 +534,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           zext = os.path.splitext(zip_archive_filename)[1][1:]  #zname, zext = ...  #zext = zext[1:]
           if zext in VIDEO_EXTS:
             files.append( zip_archive_filename)  #filecontents = zip_archive.read(zip_archive_filename)
-            Log.info(u'- '+zip_archive_filename) 
+            #Log.info(u'{}'.format(zip_archive_filename)) 
       
       ### 7zip ###
       ### RAR ###
@@ -572,39 +543,40 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       #for rar_archive_filename in rar_archive.infolist():
       #  zname, zext = os.path.splitext(rar_archive_filename.filename); zext = zext[1:]
       #  if zext in VIDEO_EXTS:  files.append(rar_archive_filename.filenamee)  #filecontents = rar_archive.read(rar_archive_filename)
-      
-  if not files:
-    if path and len(dirs)>1:
-      Log.info(u"[no files detected] Grouping folder skip (has to be done while on library root scan) as 2 or more folders {} in a series folder [return], path: {}".format(dirs, path))
-      return  #Grouping folders could call subfolders so cannot return if path is empty aka for root call
-    else: Log.info(u"[no files detected] continuing, folder: {}, dirs({}): {}".format(path, len(dirs), dirs))
-  else:  Log.info(u"[{} files detected]".format(len(files)))
-  Log.info(u"".ljust(157, '='))
-  Log.info(u"{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
 
-  #### Folders, Forced ids, grouping folders ###
-  folder_show                                = filter_chars(reverse_path[0]) if reverse_path else ""
-  array, misc_words, misc_count, mappingList = (), [], {}, {}
-  tvdb_mapping, unknown_series_length        = {}, False
-  offset_match, offset_season, offset_episode = None, 0, 0
-
-  ### Logging to *.scanner.log ###
-  set_logging(root=root, filename=log_filename+'.scanner.log', mode='w') #if recent or kwargs else 'w'
-  Log.info(u"".ljust(157, '='))
-  Log.info(u"".format(before_sanitize))
-  Log.info(u"Library: '{}', root: '{}', path: '{}', dirs: '{}', files: '{}'".format(Dict(PLEX_LIBRARY, root, 'title', default="no valid X-Plex-Token.id"), root, path, dirs, files))
-  Log.info(u"reverse_path: {}, original value: {}, folder_show: {}".format(reverse_path, list(reversed(path.split(os.sep))), folder_show))
-  for line in removed:  Log.info(line)
-  Log.info(u"{} scan start: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
-  Log.info(u"".ljust(157, '='))
+  #Plex folder call skip for Grouping folders with 2+ subfolders
+  set_logging(root=root, filename=log_filename+'.filelist.log', mode='a' if path else 'w')  #Logging to *.filelist.log
+  #Log.info(u'#1# Call: "{}", path: "{}"'.format('Root' if kwargs else 'Plex', path)) 
+  for file in files:  Log.info(u'{}'.format(os.path.relpath(file, root)))                                 #Create filelist
   
+  ### Logging ###
+  if not kwargs:
+    set_logging(root=root, filename='_root_.scanner.log',  mode='a')  #Logging to *.scanner.log
+    Log.info(u'Call: "Plex", dirs({:>2}), files({:>3}), path: "{}"'.format(len(dirs), len(files), path))
+  
+  set_logging(root=root, filename=log_filename+'.scanner.log',  mode='a' if path else 'w')  #Logging to *.scanner.log
+  Log.info(u"".ljust(157, '='))
+  Log.info(u'Call: "{}", path: "{}", folder_show: "{}", dirs ({}), files ({})'.format('Root' if kwargs else 'Plex', path, folder_show, len(dirs), len(files)))
+  #Log.info(u"reverse_path: {}, original value: {}, folder_show: {}".format(reverse_path, list(reversed(path.split(os.sep)))))
+  #Log.info(u"{} scan start: {}".format("Grouping folder" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
+  if path and not files:  return
+  Log.info(u"".ljust(157, '='))
+  if msg:
+    for entry in msg:  Log.info(entry)
+    Log.info(u"".ljust(157, '='))
+  
+  array, misc_words, misc_count, mappingList  = (), [], {}, {}
+  tvdb_mapping, unknown_series_length         = {}, False
+  offset_match, offset_season, offset_episode = None, 0, 0
   if path:
     ### Grouping folders skip , unless single series folder ###
     if not kwargs and len(reverse_path)>1 and not season_folder_first:  
       parent_dir    = os.path.join(root, reverse_path[-1])  # folder at root fullpath
       parent_dir_nb = len([file for dir in os.listdir(parent_dir) if os.path.isdir(os.path.join(parent_dir, dir))]) #How many folders in folder at root
       if len(reverse_path)>1 and parent_dir_nb>1 and "Plex Versions" not in parent_dir and "Optimized for " not in parent_dir: 
-        Log.info(u"### Grouping folders skipped, will be handled by root level scan ### [return]")
+        Log.info(u'### Grouping folders skipped, will be handled by root level scan ### [return]')
+        Log.info(u"".ljust(157, '='))
+        Log.info(u'')
         return  #Grouping folders Plex call, but mess after one season folder is ok
       else: Log.info(u"### Grouping folders, not skipped as single series folder ###")
 	  
@@ -638,7 +610,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             Log.info(u'No forced id found in series folder name nor id file')
             source, id = "", ""
             folder_show = folder_show.replace(" - ", " ").split(" ", 2)[2] if folder_show.lower().startswith(("saison","season","series","Book","Livre")) and len(folder_show.split(" ", 2))==3 else clean_string(folder_show) # Dragon Ball/Saison 2 - Dragon Ball Z/Saison 8 => folder_show = "Dragon Ball Z"
-    Log.info(u"".ljust(157, '-'))
+    #Log.info(u"".ljust(157, '-'))
     
     ### Calculate offset for season or episode (tvdb 2/3/4 mode's offset_episode adjustment is done after tvdb_mapping is populated) ###
     if source.startswith('tvdb') or source.startswith('anidb'):  # 
@@ -896,13 +868,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) and max(misc_count.values())>3 ):  misc_words.append(item)
         #misc = misc.replace("|%s|" % item, '|')  #Log.info(u"misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
       misc_words.sort(key=len, reverse=True)  # Sort by string length so largest words are taken out first so smaller words that are in the larger words are not an issue
-      Log.info(u'misc_count: {}'.format(misc_count))
-      Log.info(u'misc_words: {}'.format(misc_words))
-      Log.info(u''.ljust(157, '-'))
+      #Log.info(u'misc_count: {}'.format(misc_count))
+      #Log.info(u'misc_words: {}'.format(misc_words))
+      #Log.info(u''.ljust(157, '-'))
   
   ### File main loop ###
   global COUNTER
-  COUNTER, movie_list, AniDB_op, standard_holding, unknown_holding, run_count = 500, {}, {}, [], [], 1
+  COUNTER, movie_list, AniDB_op, standard_holding, unknown_holding, run_count, anidb_xml = 500, {}, {}, [], [], 1, None
   while True:
     for file in files:
       show, season, ep2, title, year = folder_show, folder_season if folder_season is not None else 1, None, "", ""
@@ -1075,64 +1047,69 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     else:  break  #Break out and don't try a second run as not all files are unknown or there are no files
   for entry in standard_holding + unknown_holding:  add_episode_into_plex(media, *entry)
   if files:  Stack.Scan(path, files, media, dirs)
-  else:      Log.info(u"[no files detected] #1")
   
-  ### root level manual call to Grouping folders ###
+  ### Library root level manual call to Grouping folders ###
   if not path:
-    Log.info(u"root level call to potential Grouping folders")
+    Log.info(u"Library root - Folder types ([G] Grouping folder Root (uncached) call, [_] Normal (chached) Plex call, [S][s] Season folders)")
     folder_count, subfolders = {}, dirs[:]
     while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
       full_path = subfolders.pop(0)
       path      = os.path.relpath(full_path, root)
       
-      ### Ignore dirs ###
-      for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
-        if rx.match(os.path.basename(path)):                      # if folder match rx
-          Log.info(u"# Folder: '{}' match '{}' pattern: '{}'".format(path, 'IGNORE_DIRS_RX', rx))
+      ### Skip path if matching Ignore dirs ###
+      for rx in IGNORE_DIRS_RX:               # loop rx for folders to ignore
+        if rx.match(os.path.basename(path)):  # if folder match rx
+          Log.info(u'{}[!] {} match IGNORE_DIRS_RX pattern [{}]'.format(''.ljust(path.count(os.sep)*4, ' '), os.path.basename(path), IGNORE_DIRS_RX.index(rx)))
+          if full_path in dirs:  dirs.remove(full_path)  # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
           break
-      else:  ### Not skipped
-        
-        ### Extract season and transparent folder to reduce complexity and use folder as serie name ###
-        reverse_path, season_folder_first = list(reversed(path.split(os.sep))), False
-        for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-          folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True)
-          folder_clean = folder_clean.replace(os.path.dirname(path), "") 
-          for rx in SEASON_RX:                           # in anime, more specials folders than season folders, so doing it first
-            if rx.search(folder_clean):          # get season number but Skip last entry in seasons (skipped folders)
-              reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
-              if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
-              Log.info(u'Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format(SEASON_RX.index(rx),folder_clean, folder))
-              break
-          else:  Log.info(u'Season Folder: {}, clean_string(folder): "{}", Folder: "{}"'.format("False", folder_clean, folder))
-              
+      else:
+      
         ### Process subfolders ###
-        subdir_dirs, subdir_files = [], []
-        folder_count[path]        = 0
+        subdir_dirs, subdir_files, folder_count[path] = [], [], 0
         for file in os.listdir(full_path):
           path_item = os.path.join(full_path, file) 
-          if os.path.isdir(path_item):                 subdir_dirs.append(path_item);  folder_count[path] +=1  #Fullpath
-          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)                          #Fullpath
-        if not subdir_files and subdir_dirs:  # Only add in subfolders if no valid video files in the folder
-          #Log.info(u''.ljust(157, '-'))
-          for x in subdir_dirs:  subfolders.append(x)  #Log.info(u"[Added] " + x);  
-          
+          if os.path.isdir(path_item):
+            subdir_dirs.append(path_item)
+            subfolders.insert(0, path_item) #subfolders.append(path_item)
+            folder_count[path] +=1
+          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)
+        subfolders   = sorted(subfolders, key=natural_sort_key)
+        
+        ### Extract season and transparent folder from reverse_path ###
+        reverse_path, season_folder_first = list(reversed(path.split(os.sep))), False
+        season_folder=[]
+        for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
+          folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True).replace(os.path.dirname(path), "") 
+          for rx in SEASON_RX:                           # in anime, more specials folders than season folders, so doing it first
+            if rx.search(folder_clean):                  # get season number but Skip last entry in seasons (skipped folders)
+              season_folder.append(folder)
+              reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
+              if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
+              break
+        
         ### Call Grouping folders series ###
-        #if subdir_files:                                                           ### Calling Scan for every folder with files ###
-        #if subdir_files and not(len(reverse_path)>1 and not season_folder_first):  ### Calling Scan normal    subfolders only ###
         grouping_dir = full_path.rsplit(os.sep, full_path.count(os.sep)-1-root.count(os.sep))[0]
         root_folder  = os.path.relpath(grouping_dir, root).split(os.sep, 1)[0]
-        if subdir_files and len(reverse_path)>1 and not season_folder_first and folder_count[root_folder]>1:  ### Calling Scan for grouping folders only ###
-          if grouping_dir in dirs:
-            Log.info(u''.ljust(157, '-'))
-            Log.info(u"[{}] Grouping folder (contain {} dirs)".format(root_folder, folder_count[root_folder]))
-            dirs.remove(grouping_dir)  #Prevent grouping folders from being called by Plex normal call to Scan() 
-          Log.info(u"- {:<60}, subdir_files: {:>3}, reverse_path: {:<40}".format(path, len(subdir_files), reverse_path))
-          Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
-          set_logging(root=root, filename='_root_'+root.replace(os.sep, '-')+'.scanner.log', mode='a')
-          
-  Log.info(u"".ljust(157, '='))
-  Log.info(u"{} scan end: {}".format("Manual" if kwargs else "Plex", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
+        current_dir  = os.path.basename(full_path)
+        indent       = path.count(os.sep)*4
+        if root_folder==path:
+            set_logging(root=root, filename=path.split(os.sep)[0]+'.scanner.log' , mode='w')  #Empty serie folder log
+            set_logging(root=root, filename=path.split(os.sep)[0]+'.filelist.log', mode='w')  #Empty filelist     log
+            set_logging(root=root, filename=log_filename         +'.scanner.log' , mode='a')  #Set back 
+        if len(reverse_path)>1 and not season_folder_first and folder_count[root_folder]>1:  ### Calling Scan for grouping folders only ###
+          Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(path.count(os.sep)*4, ' '), 'S' if current_dir in season_folder else 'G', current_dir, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
+          if subdir_files:
+            Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
+            set_logging(root=root, filename=log_filename+'.scanner.log', mode='a')  #due to concurrent calls, wouldn't log propertly without setting it back, just in case
+        else:  Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 's' if current_dir in season_folder else '_', current_dir, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
+      
+    Log.info(u"".ljust(157, '='))
+    Log.info(u"Dirs left for normal Plex calls:")
+    for dir in dirs:  Log.info(u"[_] {}".format(os.path.relpath(dir, root)))
 
+  Log.info(u"".ljust(157, '='))
+  Log.info(u"")
+  
 ### Command line scanner call ###
 if __name__ == '__main__':  #command line
   print("Absolute Series Scanner by ZeroQI")
