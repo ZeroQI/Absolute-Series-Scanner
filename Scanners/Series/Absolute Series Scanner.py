@@ -265,13 +265,6 @@ def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6da
     Log.error("Error downloading '{}', Exception: '{}'".format(url, e))
     raise e
 
-#########################################################################################################
-def winapi_path(dos_path, encoding=None): # https://stackoverflow.com/questions/36219317/pathname-too-long-to-open/36219497
-    if (not isinstance(dos_path, unicode) and encoding is not None):  dos_path = dos_path.decode(encoding)
-    path = os.path.abspath(dos_path)
-    if path.startswith(u"\\\\"):  return u"\\\\?\\UNC\\" + path[2:]
-    return u"\\\\?\\" + path
-                                
 ### Sanitize string #####################################################################################
 def os_filename_clean_string(string):
   for char, subst in zip(list(FILTER_CHARS), [" " for x in range(len(FILTER_CHARS))]) + [("`", "'"), ('"', "'")]:    # remove leftover parenthesis (work with code a bit above)
@@ -289,7 +282,7 @@ def Dict(var, *arg, **kwarg):
   return kwarg['default'] if var in (None, '', 'N/A', 'null') and kwarg and 'default' in kwarg else "" if var in (None, '', 'N/A', 'null') else var
 
 ### Set Logging to proper logging file ##################################################################
-def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode=''):#%(asctime)-15s %(levelname)s - 
+def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode='a'):#%(asctime)-15s %(levelname)s - 
   if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':  cache_path = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
   else:                                                               cache_path = os.path.join(PLEX_ROOT, 'Logs', 'ASS Scanner Logs')
 
@@ -299,8 +292,13 @@ def set_logging(root='', foldername='', filename='', backup_count=0, format='%(m
   
   filename = os_filename_clean_string(filename) if filename else '_root_.scanner.log'
   log_file = os.path.join(cache_path, filename)
-  if os.sep=="\\":  log_file = winapi_path(log_file, 'utf-8') # Bypass DOS path MAX_PATH limitation
-  if not mode:  mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else 'w' # Override mode for repeat manual scans or immediate rescans
+  
+  # Bypass DOS path MAX_PATH limitation (260 Bytes=> 32760 Bytes, 255 Bytes per folder unless UDF 127B ytes max)
+  if os.sep=="\\":
+    dos_path = os.path.abspath(log_file) if isinstance(log_file, unicode) else os.path.abspath(log_file.decode('utf-8'))
+    log_file = u"\\\\?\\UNC\\" + dos_path[2:] if dos_path.startswith(u"\\\\") else u"\\\\?\\" + dos_path
+
+  #if not mode:  mode = 'a' if os.path.exists(log_file) and os.stat(log_file).st_mtime + 3600 > time.time() else 'w' # Override mode for repeat manual scans or immediate rescans
 
   global Handler
   if Handler:       Log.removeHandler(Handler)
@@ -357,9 +355,21 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
-  global COUNTER
+  global COUNTER 
+  if isinstance(show,  unicode):  ushow = show;  show  =  show.encode('utf-8')  #Plex expect Show in UTF-8
+  else:                           ushow =  show.decode('utf-8')
+  
+  if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
+  if isinstance(title, unicode):  utitle= title; title = title.encode('utf-8')  #Plex expect Title in UTF-8
+  else:                           utitle= title.decode('utf-8')
+  
+  if not os.path.exists(file):  file = os.path.join(root, path, file)
+  if isinstance(file,  unicode):  ufile = os.path.basename(file);   file = file.encode(sys.getfilesystemencoding())
+  else:                           ufile = os.path.basename(file.decode('utf-8'))
+  
   # Season/Episode Offset
   if season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
+  
   # Mapping List 
   ep_orig        = "s{}e{}{}".format(season, ep, "" if not ep2 or ep==ep2 else "-{}".format(ep2))
   ep_orig_single = "s{}e{}".format  (season, ep)
@@ -372,8 +382,6 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   elif season > 0:
     if Dict(mappingList, 'episodeoffset'):  ep, ep2 = ep+int(Dict(mappingList, 'episodeoffset')), ep2+int(Dict(mappingList, 'episodeoffset')) if ep2 else None 
     if Dict(mappingList, 'defaulttvdbseason') and not Dict(mappingList, 'defaulttvdbseason_a', default=False):  season = int(Dict(mappingList, 'defaulttvdbseason'))
-
-  if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
   if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
   if ep<=0 and season > 0:                                                season, ep, ep2 = 0, 1, 1              # s[1-0]e00 => s00e01
   if not ep2 or ep > ep2:                                                 ep2             = ep                   #  make ep2 same as ep for loop and tests
@@ -384,20 +392,21 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
     elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
   ep_final = "s%de%d" % (season, ep)
-  if not os.path.exists(file):  file = os.path.join(root, path, file)
-  filename=os.path.basename(file)
+  
   for epn in range(ep, ep2+1):
     if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
     else:# Media.Episode expects show and title in utf-8 encoded byte string (unicode title in Plex Media Scanner/log': WARN - Warning, Unicode passed in, should be UTF-8 string for attribute 'name')
-      tv_show = Media.Episode(show.encode('utf-8') if isinstance(show, unicode) else show, season, epn, title.encode('utf-8') if isinstance(title, unicode) else title, year)  #tv_show = Media.Episode(show.encode('utf-8'), season, epn, title.encode('utf-8'), year)
+      tv_show = Media.Episode(show, season, epn, title, year)  #tv_show = Media.Episode(show.encode('utf-8'), season, epn, title.encode('utf-8'), year)
       tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
-      if filename.upper()=="VIDEO_TS.IFO":  
+      if ufile.upper()==u"VIDEO_TS.IFO":  
         for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
           if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item).encode(sys.getfilesystemencoding()))
-      else:  tv_show.parts.append(file.encode(sys.getfilesystemencoding()))
+      else:  tv_show.parts.append(file)  #.encode(sys.getfilesystemencoding()) gives UnicodeDecodeError: 'ascii' codec can't decode byte 0xe2 in position 101: ordinal not in range(128)
       media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
-  index = "SERIES_RX-"+str(SERIES_RX.index(rx)) if rx in SERIES_RX else "ANIDB_RX-"+str(ANIDB_RX.index(rx)) if rx in ANIDB_RX else rx  # rank of the regex used from 0
-  Log.info(u'"{show:<80}" s{season:>02d}e{episode:>03d}{range:s}{before} "{regex}" "{title}" "{file}"'.format(show=show, season=season, episode=ep, range='    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2), before=" (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' '), regex=index or '__', title=title if clean_string(title).replace('_', '') else "", file=filename))
+  index  = "SERIES_RX-"+str(SERIES_RX.index(rx)) if rx in SERIES_RX else "ANIDB_RX-"+str(ANIDB_RX.index(rx)) if rx in ANIDB_RX else rx  # rank of the regex used from 0
+  multi  = '    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2)
+  before = " (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' ')
+  Log.info(u'"{show}" s{season:>02d}e{episode:>03d}{multi:s}{before} "{regex}" "{title}" "{file}"'.format(show=ushow, season=season, episode=ep, multi=multi, before=before, regex=index or '__', title=utitle, file=ufile))
 
 ### Get the tvdbId from the AnimeId #####################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -837,8 +846,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             continue  #files only with video extensions
           for rank, video in enumerate(Dict(json_full, 'items') or {}, start=1):
             VideoID = video['snippet']['resourceId']['videoId']
-            if VideoID and VideoID in file.decode('utf-8'):
-              Log.info(u'[{}] rank: {:>3} in file: {}'.format(VideoID, rank, file))
+            if VideoID and VideoID in file:
+              #Log.info(u'[{}] rank: {:>3} in file: "{}"'.format(VideoID, rank, file))
               add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, video['snippet']['title'].encode('utf8'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
               break
           else:  Log.info(u'None of video IDs found in filename: {}'.format(file))
@@ -1050,7 +1059,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   
   ### Library root level manual call to Grouping folders ###
   if not path:
-    Log.info(u"Library root - Folder types ([G] Grouping folder Root (uncached) call, [_] Normal (chached) Plex call, [S][s] Season folders)")
+    Log.info(u"Library root ([R] Series in Grouping folder Root call (uncached), [_] Normal (cached) Plex call, include grouping folder itself, [S][s] Season folders (uppercase for Root call, lowercase for Plex standard Call)")
     folder_count, subfolders = {}, dirs[:]
     while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
       full_path = subfolders.pop(0)
