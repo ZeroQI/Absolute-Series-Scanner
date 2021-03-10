@@ -1,7 +1,7 @@
 ## Plex scanner responsibilities
 A Plex Series Scanner makes the video files showing in Plex and populate the following for the video files:
-- Series name
-- Series year
+- Series name (including forced id passed to agent search() function)
+- Series year (optional)
 - Season number
 - Episode number
 - Episode title (not filled by plex default series scanner, but ASS fills it, but this will be overwritten by the metadata agent)
@@ -142,13 +142,14 @@ Movie libraries can have "Extra" in a specifically named folders or with the fol
 Note: "Extras" folder is skipped by the absolute series scanner, put unsorted files in there, it won't show up in Plex
 
 ### Grouping folder
-- If you use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will work but be scanned every time.
+- If you use "Grouping folder / Show Name / Season 1 / Show Name e01.ext" convention from the root, it will work but be scanned every time you scan.
+- For YouTube, it it create too many API requests, unless you create 'Playlist.info.json' in library folder with YouTube-dl -J --dump-single-json <playlist-url> > Playlist.info.json
 
 ### Forcing the movie/series ID
 Hama supports the following guid_type:
 - anidb for AniDB.net (and and the behaviour changing mode anidb2)
 - tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
-- [deprecated] tmdb  For TheMovieDB.net (and the series part of TheMovieDB: tsdb)
+- tmdb  For TheMovieDB.net (and the series part of TheMovieDB: tsdb)
 - [deprecated] imdb  For the International Movie DataBase (ids starts with "tt...")
 
 You can specify the guid to use the following way:
@@ -202,7 +203,9 @@ You can specify the guid to use the following way:
         <TR> <TD> tvdb5     </TD> <TD> TVDB                    </TD> <TD>Absolute             </TD> <TD>Absolute          </TD> <TD>TheTVDB Absolute numbering order (most useful for Star Wars: The Clone Wars, First ep is s02e15...) will remove seasons present and use the 'absolute_number' tvdb field order to re-sort the episodes. Allow to insert specials in between episodes too (prequel)
 <UL><LI>Star Wars: The Clone Wars [tvdb5-83268] </LI></UL>
 </TD> </TR>
-        <TR> <TD> youtube     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) on series folder or season folder to have the youtube files downloaded with youtube-dl numbered as per the playlist order</LI></UL>
+        <TR> <TD> youtube     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) on series folder or season folder to have the youtube files downloaded with youtube-dl numbered as per the playlist order
+        <TR> <TD> youtube2    </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Channel id (UC/HC... 2+16/32 chars long) on series folder to have the publishing year used as season number
+        <TR> <TD> youtube3    </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) to have the items sorted by publishing date
 </TD> </TR>
 </TBODY>
 </TABLE>
