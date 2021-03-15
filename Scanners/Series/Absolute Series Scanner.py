@@ -407,8 +407,9 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   index  = "SERIES_RX-"+str(SERIES_RX.index(rx)) if rx in SERIES_RX else "ANIDB_RX-"+str(ANIDB_RX.index(rx)) if rx in ANIDB_RX else rx  # rank of the regex used from 0
   multi  = '    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2)
   before = " (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' ')
-  Log.info(u'"{show}" s{season:>02d}e{episode:>03d}{multi:s}{before} "{regex}" "{title}" "{file}"'.format(show=ushow, season=season, episode=ep, multi=multi, before=before, regex=index or '__', title=utitle, file=ufile))
-
+  Log.info(u'"{ushow}" s{season:>02d}e{episode:>03d}{multi:s}{before} "{regex}" "{title}" "{file}"'.format(ushow=ushow, season=season, episode=ep, multi=multi, before=before, regex=index or '__', title=utitle, file=ufile))
+  Log.info(show)
+  
 ### Get the tvdbId from the AnimeId #####################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
   mappingList = {}
@@ -499,6 +500,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   ### Remove season folder to reduce complexity and use folder as serie name ###
   folder_season, season_folder_first = None, False
   for folder in reverse_path[:-1]:                  # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
+    if SOURCE_IDS.search(folder):  continue         #if it has a forced id, not a season folder
     for rx in SEASON_RX:                            # in anime, more specials folders than season folders, so doing it first
       folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True)
       folder_clean = folder_clean.replace(reverse_path[-1], "") 
@@ -1097,6 +1099,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         season_folder=[]
         for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
           folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True).replace(os.path.dirname(path), "") 
+          if SOURCE_IDS.search(folder):  break        #if it has a forced id, not a season folder
           for rx in SEASON_RX:                           # in anime, more specials folders than season folders, so doing it first
             if rx.search(folder_clean):                  # get season number but Skip last entry in seasons (skipped folders)
               season_folder.append(folder)
@@ -1114,8 +1117,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             set_logging(root=root, filename=path.split(os.sep)[0]+'.filelist.log', mode='w')  #Empty filelist     log
             set_logging(root=root, filename=log_filename         +'.scanner.log' , mode='a')  #Set back 
         if len(reverse_path)>1 and not season_folder_first and folder_count[root_folder]>1:  ### Calling Scan for grouping folders only ###
-          Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(path.count(os.sep)*4, ' '), 'S' if current_dir in season_folder else 'G', current_dir, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
           if subdir_files:
+            Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(path.count(os.sep)*4, ' '), 'S' if current_dir in season_folder else 'G', current_dir, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
             Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
             set_logging(root=root, filename=log_filename+'.scanner.log', mode='a')  #due to concurrent calls, wouldn't log propertly without setting it back, just in case
         else:  Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 's' if current_dir in season_folder else '_', current_dir, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
