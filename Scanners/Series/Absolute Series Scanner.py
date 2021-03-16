@@ -19,16 +19,15 @@ try:                 from ssl import PROTOCOL_TLS    as SSL_PROTOCOL # Python >=
 except ImportError:  from ssl import PROTOCOL_SSLv23 as SSL_PROTOCOL # Python <  2.7.13
 try:                 from urllib.request import urlopen, Request     # Python >= 3.0
 except ImportError:  from urllib2        import urlopen, Request     # Python == 2.x
+try:     import filebot #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
+except:  FileBot = {}
+else:    FileBot = {'TheTVDB': 'tvdb', 'AniDB': 'anidb', 'TheMovieDB::TV': 'tsdb', 'movie': 'tmdb'}
 
 #Plex Libraries
 import Media                                                         # Episode
 import VideoFiles                                                    # Scan
 import Stack                                                         # Scan
 
-try:     import filebot #from https://github.com/filebot/plex-agents, needs the scanner from FileBot installed
-except:  FileBot = {}
-else:    FileBot = {'TheTVDB': 'tvdb', 'AniDB': 'anidb', 'TheMovieDB::TV': 'tsdb', 'movie': 'tmdb'}
-	
 ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 def com(string):  return re.compile(string)                 #RE Compile
 def cic(string):  return re.compile(string, re.IGNORECASE)  #RE Compile Ignore Case
@@ -61,12 +60,9 @@ TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
 
 FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
-SEASON_RX       = [                                                                                                                                                              ### Seasons Folders
-                    cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
-                    #cic(r'^(Season|Series|Book|Saison|Livre|Temporada|S)[ _\-\.]*(?P<season>\d{1,4})(.*)?'),                                                                    # Season / Series / Book / Saison / Livre / S
+SEASON_RX       = [ cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
                     cic(r'^((?P<show>.*)[\._\-\— ]+)?(Season|Series|Book|Saison|Livre|Temporada|[Ss])[\._\—\- ]*?(?P<season>\d{1,4}).*?'),                                        # (title) S01
                     cic(r'^(?P<show>.*)?[\._\-\— ]*?Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                  # (title) S01
-                    #cic(r'^(?P<season>\d{1,2})$'),                                                                                                                              # ##
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
   cic(r'(^|(?P<show>.*?)[ _\.\-]*)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                    #  0 # 1x01
@@ -78,8 +74,8 @@ SERIES_RX       = [                                                             
   ]
 MOVIE_RX        = cic(r'(?P<show>.*) \((?P<year>\d{4})\)$')
 DATE_RX         = [ #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
-                    cic(r'(?P<year>\d{4})\W+(?P<month>\d{2})\W+(?P<day>\d{2})(\D|$)'),   # 2009-02-10
-                    cic(r'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]       # 02-10-2009
+                    cic(r'(?P<year>\d{4})\W+(?P<month>\d{2})\W+(?P<day>\d{2})(\D|$)'),  # 2009-02-10
+                    cic(r'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]  # 02-10-2009
 ANIDB_RX        = [                                                                                                                                                              ###### AniDB Specials episode offset regex array
                     cic(r'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                         #  0 # 001-099 Specials
                     cic(r'(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                     #  1 # 100-149 Openings
@@ -146,7 +142,6 @@ WS_MULTI_EP_SIMPLE  = com(r"^(?P<ep>\d{1,3})-(?P<ep2>\d{1,3})$")
 WS_MULTI_EP_COMPLEX = com(r"^(ep?[ -]?)?(?P<ep>\d{1,3})(-|ep?|-ep?)(?P<ep2>\d{1,3})")
 WS_SPECIALS         = com(r"^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)(\d{1,3})?$)")
 # Switch to turn on youtube date scanning
-SW_YOUTUBE_DATE     = False
 
 ### Setup core variables ################################################################################
 def setup():
@@ -369,46 +364,54 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   else:                           ufile = os.path.basename(file.decode('utf-8'))
   
   # Season/Episode Offset
-  if season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, ep+offset_episode, ep2+offset_episode if ep2 else None
-  
-  # Mapping List 
-  ep_orig        = "s{}e{}{}".format(season, ep, "" if not ep2 or ep==ep2 else "-{}".format(ep2))
-  ep_orig_single = "s{}e{}".format  (season, ep)
-  ep_orig_padded = "s{:>02d}e{:>03d}{}".format(int(season), int(ep), "    " if not ep2 or ep==ep2 else "-{:>03d}".format(int(ep2)))
-  if ep_orig_single in mappingList:
-    multi_ep   = 0 if ep_orig == ep_orig_single else ep2-ep
-    season, ep = mappingList[ep_orig_single][1:].split("e"); season = int(season)
-    if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep, ep2 = int(ep), int(ep2) if ep2 and ep2.isdigit() else None
-    else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
-  elif season > 0:
-    if Dict(mappingList, 'episodeoffset'):  ep, ep2 = ep+int(Dict(mappingList, 'episodeoffset')), ep2+int(Dict(mappingList, 'episodeoffset')) if ep2 else None 
-    if Dict(mappingList, 'defaulttvdbseason') and not Dict(mappingList, 'defaulttvdbseason_a', default=False):  season = int(Dict(mappingList, 'defaulttvdbseason'))
-  if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
-  if ep<=0 and season > 0:                                                season, ep, ep2 = 0, 1, 1              # s[1-0]e00 => s00e01
-  if not ep2 or ep > ep2:                                                 ep2             = ep                   #  make ep2 same as ep for loop and tests
-  if tvdb_mapping and season > 0 :
-    max_ep_num, season_buffer = max(tvdb_mapping.keys()), 0 if unknown_series_length else 1
-    if   ep  in tvdb_mapping:               season, ep  = tvdb_mapping[ep ]
-    elif ep  > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
-    if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
-    elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
-  ep_final = "s%de%d" % (season, ep)
-  
-  for epn in range(ep, ep2+1):
-    if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
-    else:# Media.Episode expects show and title in utf-8 encoded byte string (unicode title in Plex Media Scanner/log': WARN - Warning, Unicode passed in, should be UTF-8 string for attribute 'name')
-      tv_show = Media.Episode(show, season, epn, title, year)  #tv_show = Media.Episode(show.encode('utf-8'), season, epn, title.encode('utf-8'), year)
-      tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
-      if ufile.upper()==u"VIDEO_TS.IFO":  
-        for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
-          if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item).encode(sys.getfilesystemencoding()))
-      else:  tv_show.parts.append(file)  #.encode(sys.getfilesystemencoding()) gives UnicodeDecodeError: 'ascii' codec can't decode byte 0xe2 in position 101: ordinal not in range(128)
-      media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
+  if isinstance(ep, int) or isinstance(ep, str) and ep.isdigit():  #date-based
+    if season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, int(ep)+offset_episode, int(ep2)+offset_episode if ep2 else None
+    
+    # Mapping List 
+    ep_orig        = "s{}e{}{}".format(season, ep, "" if not ep2 or ep==ep2 else "-{}".format(ep2))
+    ep_orig_single = "s{}e{}".format  (season, ep)
+    ep_orig_padded = "s{:>02d}e{:>03d}{}".format(int(season), int(ep), "    " if not ep2 or ep==ep2 else "-{:>03d}".format(int(ep2)))
+    if ep_orig_single in mappingList:
+      multi_ep   = 0 if ep_orig == ep_orig_single else ep2-ep
+      season, ep = mappingList[ep_orig_single][1:].split("e"); season = int(season)
+      if '-' in ep or  '+' in ep:  ep, ep2 = re.split("[-+]", ep, 1); ep, ep2 = int(ep), int(ep2) if ep2 and ep2.isdigit() else None
+      else:                        ep, ep2 = int(ep), int(ep)+multi_ep if multi_ep else None
+    elif season > 0:
+      if Dict(mappingList, 'episodeoffset'):  ep, ep2 = ep+int(Dict(mappingList, 'episodeoffset')), ep2+int(Dict(mappingList, 'episodeoffset')) if ep2 else None 
+      if Dict(mappingList, 'defaulttvdbseason') and not Dict(mappingList, 'defaulttvdbseason_a', default=False):  season = int(Dict(mappingList, 'defaulttvdbseason'))
+    if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
+    if ep<=0 and season > 0:                                                season, ep, ep2 = 0, 1, 1              # s[1-0]e00 => s00e01
+    if not ep2 or ep > ep2:                                                 ep2             = ep                   #  make ep2 same as ep for loop and tests
+    if tvdb_mapping and season > 0 :
+      max_ep_num, season_buffer = max(tvdb_mapping.keys()), 0 if unknown_series_length else 1
+      if   ep  in tvdb_mapping:               season, ep  = tvdb_mapping[ep ]
+      elif ep  > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
+      if   ep2 in tvdb_mapping:               season, ep2 = tvdb_mapping[ep2]
+      elif ep2 > max_ep_num and season == 1:  season      = tvdb_mapping[max_ep_num][0]+season_buffer
+    ep_final = "s%de%d" % (season, ep)
+    
+    for epn in range(ep, ep2+1):
+      if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
+      else:# Media.Episode expects show and title in utf-8 encoded byte string (unicode title in Plex Media Scanner/log': WARN - Warning, Unicode passed in, should be UTF-8 string for attribute 'name')
+        tv_show = Media.Episode(show, season, epn, title, year)  #tv_show = Media.Episode(show.encode('utf-8'), season, epn, title.encode('utf-8'), year)
+        tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
+        if ufile.upper()==u"VIDEO_TS.IFO":  
+          for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
+            if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item).encode(sys.getfilesystemencoding()))
+        else:  tv_show.parts.append(file)  #.encode(sys.getfilesystemencoding()) gives UnicodeDecodeError: 'ascii' codec can't decode byte 0xe2 in position 101: ordinal not in range(128)
+        media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
+  else:
+    ep_orig, ep_final   = 'date', 'date'
+    tv_show             = Media.Episode(show, season, None, title, None)
+    tv_show.released_at = ep
+    tv_show.parts.append(file)
+    media.append(tv_show)
+    
   index  = "SERIES_RX-"+str(SERIES_RX.index(rx)) if rx in SERIES_RX else "ANIDB_RX-"+str(ANIDB_RX.index(rx)) if rx in ANIDB_RX else rx  # rank of the regex used from 0
   multi  = '    ' if not ep2 or ep==ep2 else '-{:>03d}'.format(ep2)
   before = " (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' ')
-  Log.info(u'"{ushow}" s{season:>02d}e{episode:>03d}{multi:s}{before} "{regex}" "{title}" "{file}"'.format(ushow=ushow, season=season, episode=ep, multi=multi, before=before, regex=index or '__', title=utitle, file=ufile))
-  Log.info(show)
+  Log.info(u'"{ushow}" s{season:>02d}e{episode:>10}{multi:s}{before} "{regex}" "{title}" "{file}"'.format(ushow=ushow, season=season, episode=ep, multi=multi, before=before, regex=index or '__', title=utitle, file=ufile))
+  #Log.info(show)
   
 ### Get the tvdbId from the AnimeId #####################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -822,7 +825,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       Log.info(u"".ljust(157, '-'))
 
     ### Youtube ##################################################################################################################################
-    def getmtime(name):  return os.path.getmtime(os.path.join(root, path, name))
     if source.startswith('youtube') and len(id)>2 and id[0:2] in ('PL', 'UU', 'FL', 'LP', 'RD'):
       try:                    API_KEY = etree.fromstring(read_file(os.path.join(PLEX_ROOT, 'Plug-in Support', 'Preferences', 'com.plexapp.agents.youtube.xml'))).xpath("/PluginPreferences/YouTube-Agent_youtube_api_key")[0].text.strip()
       except Exception as e:  API_KEY='AIzaSyC2q8yjciNdlYRNdvwbb7NEcDxBkv1Cass';  Log.info(u'exception: {}'.format(e))
@@ -866,22 +868,20 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         else:  Log.info(u'json_full is empty')
     
     ### YouTube Channel ###
-    files_per_date = []
     if source.startswith('youtube') and id.startswith('UC') or id.startswith('HC'):  # or not json_playlist and not json_full and source.startswith('youtube') and len(id)>2 and id[0:2] in ('PL', 'UU', 'FL', 'LP', 'RD')
-      files_per_date = sorted([os.path.basename(file) for file in files], key=natural_sort_key if SW_YOUTUBE_DATE else getmtime) #to have latest ep first, add: ", reverse=True"
-      for file in files_per_date:
-        if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #only files with video extensions
-        filename, folder_season = os.path.basename(file), 1  # sometime youtube-dl gets bad upload date and sets date to NA, mark these as season 0 (specials) so user notices and can fix if wanted
-        if SW_YOUTUBE_DATE:
-          match = re.match(r"([12]\d{3}[-. ]?(0[1-9]|1[0-2])[-. ]?(0[1-9]|[12]\d|3[01]))",filename)
-          if match:  folder_season = int(filename[0:4])  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd", so take first four digits as the season year
-          Log.info(u'Youtube folder season date {}, season: {}, file: {}'.format("regex" if match else "error set season 0", folder_season, filename))
+      for file in files or []:  #to have latest ep first, add: ", reverse=True"
+        filename = os.path.join(root, path, file)  #filename full path
+        if extension(file) not in VIDEO_EXTS or os.path.isdir(filename):  continue  #only files with video extensions
+        for rx in DATE_RX:
+          match = rx.search(file)  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd"
+          if match:
+            season, ep = int(match.group('year')), '{}-{}-{}'.format(match.group('year'), match.group('month'), match.group('day'))
+            break  
         else:
-          folder_season = time.gmtime(os.path.getmtime(os.path.join(root, path, filename)))[0] if source=='youtube2' else folder_season or 1 # no info from file or flag not set, revert to original way of reading the file date
-          Log.info(u'Youtube folder season gmtime,  season: {}, file: {}'.format(folder_season, filename))
-        ep = files_per_date.index(filename)+1 if filename in files_per_date else 0
-        add_episode_into_plex(media, file, root, path, folder_show if id in folder_show else folder_show+'['+id+']', int(folder_season if folder_season is not None else 1), ep, filename, folder_season, ep, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
-        continue
+          mtime      = os.path.getmtime(filename)
+          season, ep = time.gmtime(mtime)[0], '{}-{}-{}'.format(time.gmtime(mtime)[0], time.gmtime(mtime)[1], time.gmtime(mtime)[2])
+        #Log.info(u'Youtube folder date: {}, season: {}, episode: {}'.format("regex date" if match else "file date", folder_season, ep))
+        add_episode_into_plex(media, file, root, path, folder_show if id in folder_show else folder_show+'['+id+']', season, ep, filename, season, "", "Youtube Date Rx" if match else "YouTube file date", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
       return
       
     ### Build misc variable to check numbers in titles ###
@@ -954,7 +954,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           Log.info(u'year: {}, mont: {}, day: {}, ep: {}, file: {}'.format(year, month, day, ep, file))
           continue
           # Use the year as the season.
-          #tv_show = Media.Episode(show, year, None, None, None)
+          #tv_show = Media.Episode(show, year, None, None, None)  #show, season, epn, title, year
           #tv_show.released_at = '%d-%02d-%02d' % (year, month, day)
           #tv_show.parts.append(i)
           #mediaList.append(tv_show)
