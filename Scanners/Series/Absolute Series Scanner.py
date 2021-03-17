@@ -61,7 +61,7 @@ TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
 
 FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
 SEASON_RX       = [ cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
-                    cic(r'^((?P<show>.*)[\._\-\— ]+)?(Season|Series|Book|Saison|Livre|Temporada|[Ss])[\._\—\- ]*?(?P<season>\d{1,4}).*?'),                                        # (title) S01
+                    cic(r'^((?P<show>.*)[\._\-\— ]+)?(Season|Series|Book|Saison|Livre|Temporada|[Ss]|se)[\._\—\- ]*?(?P<season>\d{1,4})([\._\-\— ]+.*|$)'),                                        # (title) S01
                     cic(r'^(?P<show>.*)?[\._\-\— ]*?Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                  # (title) S01
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
