@@ -74,7 +74,7 @@ SERIES_RX       = [                                                             
   ]
 MOVIE_RX        = cic(r'(?P<show>.*) \((?P<year>\d{4})\)$')
 DATE_RX         = [ #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
-                    cic(r'(?P<year>\d{4})\W+(?P<month>\d{2})\W+(?P<day>\d{2})(\D|$)'),  # 2009-02-10
+                    cic(r'(?P<year>\d{4})[ \-\.]?(?P<month>\d{2})[ \-\.]?(?P<day>\d{2})'),  # 2009-02-10
                     cic(r'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]  # 02-10-2009
 ANIDB_RX        = [                                                                                                                                                              ###### AniDB Specials episode offset regex array
                     cic(r'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                         #  0 # 001-099 Specials
@@ -107,15 +107,15 @@ WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKO
                         "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
                         "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
                         "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", "CasStudio",
-                        "(BD 1920x1080 Hi10P, JPN+ENG)", "(BD 1280x720 Hi10P)", "(DVD_480p)", "(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", "x264-RedBlade",
+                        "BDRemux", "(BD 1920x1080 Hi10P, JPN+ENG)", "(BD 1280x720 Hi10P)", "(DVD_480p)", "(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", "x264-RedBlade",
                         "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p.BluRay", "FLAC5.1", "x264-CTR", "1080p-Hi10p", "FLAC2.0",
                         "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)", "[720p]", "WEBDL", "NewStudio",
                         "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV", "SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", "BDRip",
                         "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0", "AAC", "1080p", 'DD2.1', 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
                         "(Exiled_Destiny)", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en", "Rus", "Eng", "UNCENSORED", "THD", "H264", "2xDVO", "Subs", "Sub",
-                        "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5",
-                        "%28", "%29", " (1)", "(Clean)", "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits", 
-                        "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP"
+                        "(S01-02)", "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "NTSC",
+                        "%28", "%29", " (1)", "(Clean)", "(DVDRemux)", "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits", 
+                        "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "(Remastered HQ)", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP"
                       ]                                                                                                                                                               #include spaces, hyphens, dots, underscore, case insensitive
 WHACK_PRE_CLEAN     = [cic(re.escape(entry)) for entry in WHACK_PRE_CLEAN_RAW]
 WHACK               = [                                                                                                                                                               ### Tags to remove (lowercase) ###
@@ -126,12 +126,12 @@ WHACK               = [                                                         
                         'dc', 'se', 'extended', 'unrated', 'multi', 'multisubs', 'dubbed', 'dub', 'subbed', 'sub', 'engsub', 'eng', 'french', 'fr', 'jap', "JPN+ENG",                 # edition (dc = directors cut, se = special edition), subs and dubs
                         'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored", 'unc', 'cen',                                                           # format
                         'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix', 'fragment', 'fs', 'ws', "- copy", "reenc", "hom",      # misc
-                        'retail', 'webrip', 'web-dl', 'wp', 'workprint', "mkv",  "v1", "v2", "v3", "v4", "v5"                                                                         # release type: retail, web, work print
-                        'bdrc', 'bdrip', 'bluray', 'bd', 'brrip', 'hdrip', 'hddvd', 'hddvdrip', 'wsrip',                                                                              # Source: bluray
+                        'retail', 'webrip', 'web-dl', 'wp', 'workprint', "mkv",  "v1", "v2", "v3", "v4", "v5",                                                                        # release type: retail, web, work print
+                        's01', 'bdrc', 'bdrip', 'bluray', 'bd', 'brrip', 'hdrip', 'hddvd', 'hddvdrip', 'wsrip',                                                                              # Source: bluray
                         'ddc', 'dvdrip', 'dvd', 'r1', 'r3', 'r5', "dvd", 'svcd', 'vcd', 'sd', 'hd', 'dvb', "release", 'ps3avchd',                                                     # Source: DVD, VCD, S-VCD
                         'dsr', 'dsrip', 'hdtv', 'pdtv', 'ppv', 'stv', 'tvrip', 'complete movie', "hiei", "metis", "norar",                                                            # Source: dtv, stv
                         'cam', 'bdscr', 'dvdscr', 'dvdscreener', 'scr', 'screener', 'tc', 'telecine', 'ts', 'telesync', 'mp4',                                                        # Source: screener
-                        "mthd", "thora", 'sickrage', 'brrip', "remastered", "yify", "tsr", "reidy", "gerdhanse", 'remux',                                                             #'limited', 
+                        "mthd", "thora", 'NewStudio', 'sickrage', 'brrip', "remastered", "yify", "tsr", "reidy", "gerdhanse", 'remux',                                                             #'limited', 
                         'rikou', 'hom?', "it00nz", "nn92", "mthd", "elysium", "encodebyjosh", "krissy", "reidy", "it00nz", "s4a", "MVO", "VO"                                         # Release group
                       ]
                
@@ -334,17 +334,16 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   string = filter_chars(string)
   for char, subst in [("`", "'"), ("(", " ( "), (")", " ) ")]:                                                                       # remove leftover parenthesis (work with code a bit above)
     if char in string:                              string = string.replace(char, subst)                                             # translate anidb apostrophes into normal ones #s = s.replace('&', 'and')
-  string = string.replace("DoNoTfIlTeR", '.')                                                                                        # Replace 13DoNoTfIlTeR5 into 13.5 back
-  string = CS_CRC_HEX.sub(' ', string)                                                                                               # CRCs removal
+  string =    string.replace("DoNoTfIlTeR", '.')                                                                                        # Replace 13DoNoTfIlTeR5 into 13.5 back
+  string =    CS_CRC_HEX.sub(' ', string)                                                                                               # CRCs removal
   string = CS_VIDEO_SIZE.sub(' ', string)                                                                                            # Video size ratio removal
-  if string.rstrip().endswith(", The"):             string = "The " + ''.join( string.split(", The", 1) )                            # ", The" is rellocated in front
-  if string.rstrip().endswith(", A"  ):             string = "A "   + ''.join( string.split(", A"  , 1) )                            # ", A"   is rellocated in front
-  if not no_whack:                                  string = " ".join([word for word in filter(None, string.split()) if word.lower() not in WHACK]).strip()  # remove double spaces + words present in "WHACK" list #filter(None, string.split())
   if no_dash:                                       string = string.replace("-", " ")                                                # replace the dash '-'
   if no_dot:                                        string = string.replace(".", " ")                                                # replace the dash '-'
   if no_underscore:                                 string = string.replace("_", " ")                                                # replace the underscore '_'
+  if string.rstrip().endswith(", The"):             string = "The " + ''.join( string.split(", The", 1) )                            # ", The" is rellocated in front
+  if string.rstrip().endswith(", A"  ):             string = "A "   + ''.join( string.split(", A"  , 1) )                            # ", A"   is rellocated in front
   string = CS_PAREN_EMPTY.sub('', CS_PAREN_SPACE_PAT.sub(CS_PAREN_SPACE_REP, string))                                                # Remove internal spaces in parenthesis then remove empty parenthesis
-  string = " ".join([word for word in filter(None, string.split())]).strip(" _.-")                                                   # remove multiple spaces and cleanup the ends
+  if not no_whack:                                  string = " ".join([word for word in string.split() if word.lower() not in WHACK]).strip(" _.-")# remove double spaces + words present in "WHACK" list #filter(None, string.split())
   for rx in ("-"):                                  string = string[len(rx):   ].strip() if string.startswith(rx)       else string  # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
   for rx in ("-", "- copy"):                        string = string[ :-len(rx) ].strip() if string.lower().endswith(rx) else string  # In python 2.2.3: string = string.strip(string, " -_")
   return string
@@ -352,8 +351,10 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   global COUNTER 
+  show=clean_string(show, no_dot=True)
   if isinstance(show,  unicode):  ushow = show;  show  =  show.encode('utf-8')  #Plex expect Show in UTF-8
   else:                           ushow =  show.decode('utf-8')
+  Log.info(u"{}".format(ushow))
   
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
   if isinstance(title, unicode):  utitle= title; title = title.encode('utf-8')  #Plex expect Title in UTF-8
@@ -402,8 +403,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
         media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   else:
     ep_orig, ep_final   = 'date', 'date'
-    tv_show             = Media.Episode(show, season, None, title, None)
-    tv_show.released_at = ep
+    tv_show             = Media.Episode(show, season, None, title, year)
+    tv_show.released_at = ep.encode('utf-8') if isinstance(ep, unicode) else ep
     tv_show.parts.append(file)
     media.append(tv_show)
     
@@ -876,11 +877,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           match = rx.search(file)  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd"
           if match:
             season, ep = int(match.group('year')), '{}-{}-{}'.format(match.group('year'), match.group('month'), match.group('day'))
+            Log.info(u'season: {}, ep: {}'.format(season, ep))
             break  
         else:
           mtime      = os.path.getmtime(filename)
           season, ep = time.gmtime(mtime)[0], '{}-{}-{}'.format(time.gmtime(mtime)[0], time.gmtime(mtime)[1], time.gmtime(mtime)[2])
-        #Log.info(u'Youtube folder date: {}, season: {}, episode: {}'.format("regex date" if match else "file date", folder_season, ep))
         add_episode_into_plex(media, file, root, path, folder_show if id in folder_show else folder_show+'['+id+']', season, ep, filename, season, "", "Youtube Date Rx" if match else "YouTube file date", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
       return
       
