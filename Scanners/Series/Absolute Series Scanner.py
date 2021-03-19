@@ -61,8 +61,9 @@ TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
 
 FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
 SEASON_RX       = [ cic(r'^Specials'),                                                                                                                                           # Specials (season 0)
-                    cic(r'^((?P<show>.*)[\._\-\— ]+)?(Season|Series|Book|Saison|Livre|Temporada|[Ss]|se)[\._\—\- ]*?(?P<season>\d{1,4})([\._\-\— ]+.*|$)'),                                        # (title) S01
-                    cic(r'^(?P<show>.*)?[\._\-\— ]*?Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                  # (title) S01
+                    cic(r'(^|(?P<show>.*)[\._\-\— ]+)(Season|Series|Book|Saison|Livre|Temporada|[Ss]|se)[\._\—\- ]*?(?P<season>\d{1,4})([\._\-\— ]*.*|$)'),                      # (title) S01
+                    cic(u'(?P<show>.*)(?P<season>\d{1,4}).*сезон.*'),                                                                    # (title) S01
+                    cic(r'(^|(?P<show>.*)[\._\-\— ]*)Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                 # (title) S01
                     cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
   cic(r'(^|(?P<show>.*?)[ _\.\-]*)(?P<season>\d{1,2})XE?(?P<ep>\d{1,3})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,3}))?([ _\.\-]+(?P<title>.*))?$'),                                    #  0 # 1x01
@@ -73,11 +74,10 @@ SERIES_RX       = [                                                             
   cic(r'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.]+(?P<title>.*)|$)') #20th Television production format (Futurama)
   ]
 MOVIE_RX        = cic(r'(?P<show>.*) \((?P<year>\d{4})\)$')
-DATE_RX         = [ #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
-                    cic(r'(?P<year>\d{4})[ \-\.]?(?P<month>\d{2})[ \-\.]?(?P<day>\d{2})'),  # 2009-02-10
+DATE_RX         = [ cic(r'(?P<year>\d{4})[ \-\.]?(?P<month>\d{2})[ \-\.]?(?P<day>\d{2})'),  # 2009-02-10  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
                     cic(r'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]  # 02-10-2009
 ANIDB_RX        = [                                                                                                                                                              ###### AniDB Specials episode offset regex array
-                    cic(r'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                         #  0 # 001-099 Specials
+                    cic(r'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                       #  0 # 001-099 Specials
                     cic(r'(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                     #  1 # 100-149 Openings
                     cic(r'(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                      #  2 # 150-199 Endings
                     cic(r'(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T)[ _\.]?(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                         #  3 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
@@ -89,46 +89,45 @@ COUNTER         = 500
 
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDouble', r'\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder',   ###### Ignored folders
-                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr', 'audio', 'sub']        # source: Filters.py  removed '\..*',
+                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr', 'audio', 'sub', '.*Special Features']        # source: Filters.py  removed '\..*',
 IGNORE_DIRS_RX      = [cic(entry) for entry in IGNORE_DIRS_RX_RAW]
 # Uses re.match() so forces a '^'
-IGNORE_FILES_RX_RAW = [ r'[ _\.\-]?sample', r'-Recap\.', r'\._', 'OST', 'soundtrack']                                                                                            # Skipped files (samples, trailers)
-IGNORE_FILES_RX     = [cic(entry) for entry in IGNORE_FILES_RX_RAW]
+IGNORE_FILES_RX     = [cic(r'[ _\.\-]?sample'), cic(r'-Recap\.'), cic(r'\._'), cic(r'OST'), cic(r'soundtrack')]
 
 VIDEO_EXTS          = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',         #
                         'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm',      #
                         'ts', 'ty', 'vdr', 'viv', 'vp3', 'wmv', 'wpl', 'wtv', 'xsp', 'xvid', 'webm', 'ifo', 'disc']                                                              # DVD: 'ifo', 'bup', 'vob'
 
-WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC", 
+WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "EniaHD (HEVC, WEB-DL 2160p)", "x264-h65", "x264-mSD", "x264-BAJSKORV", "x264-MgB", "x264-SYS", "x264-FQM", "x264-ASAP", "x264-QCF", "x264-W4F", 'x264-w4f', "x264-AAC", 
                         'x264-2hd', "x264-ASAP", 'x264-bajskorv', 'x264-batv', "x264-BATV", "x264-EXCELLENCE", "x264-KILLERS", "x264-LOL", 'x264-MgB', 'x264-qcf', 'x264-SnowDoN', 'x264-xRed', 
                         "H.264-iT00NZ", "H.264.iT00NZ", 'H264-PublicHD', "H.264-BS", 'REAL.HDTV', "WEB.DL", "H_264_iT00NZ", "www.crazy-torrent.com", "ReourceRG Kids Release", "Paramount",
                         "By UniversalFreedom", "XviD-2HD", "XviD-AFG", "xvid-aldi", 'xvid-asap', "XviD-AXED", "XviD-BiA-mOt", 'xvid-fqm', "xvid-futv", 'xvid-killer', "XviD-LMAO", 'xvid-pfa',
                         'xvid-saints', "XviD-T00NG0D", "XViD-ViCKY", "XviD-BiA", "XVID-FHW", "PROPER-LOL", "5Banime-koi_5d", "%5banime-koi%5d", "minitheatre.org", "mthd bd dual", "WEB_DL",
-                        "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   'web-dl', "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
-                        "Anxious-He", "Coalgirls", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
-                        "joseole99", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", "CasStudio",
+                        "HDTV-AFG", "HDTV-LMAO", "ResourceRG Kids", "kris1986k_vs_htt91",   "-Pikanet128", "hdtv-lol", "REPACK-LOL", " - DDZ", "OAR XviD-BiA-mOt", "3xR", "(-Anf-)",
+                        "Anxious-He", "Coalgirls", "2xDVO.MVO", "VO.ENG.Subs", "NF.WEBRip.by.AKTEP", "(HappyLee Remastered HQ)", "Commie", "DarkDream", "Doremi", "ExiledDestiny", "Exiled-Destiny", "Exiled Destiny", "FFF", "FFFpeeps", "Hatsuyuki", "HorribleSubs", 
+                        "joseole99", "DCU.WEB-DL", 'web-dl', "DDP5.1", "x265-NTb", "(II Subs)", "OAR HDTV-BiA-mOt", "Shimeji", "(BD)", "(RS)", "Rizlim", "Subtidal", "Seto-Otaku", "OCZ", "_dn92__Coalgirls__", "CasStudio",
                         "BDRemux", "(BD 1920x1080 Hi10P, JPN+ENG)", "(BD 1280x720 Hi10P)", "(DVD_480p)", "(1080p_10bit)", "(1080p_10bit_DualAudio)", "(Tri.Audio)", "(Dual.Audio)", "(BD_720p_AAC)", "x264-RedBlade",
                         "BD 1080p", "BD 960p", "BD 720p", "BD_720p", "TV 720p", "DVD 480p", "DVD 476p", "DVD 432p", "DVD 336p", "1080p.BluRay", "FLAC5.1", "x264-CTR", "1080p-Hi10p", "FLAC2.0",
-                        "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)", "[720p]", "WEBDL", "NewStudio",
+                        "2160p", "(final)", "2xRus.Eng", "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)", "[720p]", "WEBDL", "NewStudio",
                         "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV", "SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", "BDRip",
                         "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0", "AAC", "1080p", 'DD2.1', 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
                         "(Exiled_Destiny)", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en", "Rus", "Eng", "UNCENSORED", "THD", "H264", "2xDVO", "Subs", "Sub",
-                        "(S01-02)", "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "NTSC",
+                        'ExKinoRay', "NTb", "(S01-02)", "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "NTSC",
                         "%28", "%29", " (1)", "(Clean)", "(DVDRemux)", "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits", 
                         "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "(Remastered HQ)", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP"
                       ]                                                                                                                                                               #include spaces, hyphens, dots, underscore, case insensitive
 WHACK_PRE_CLEAN     = [cic(re.escape(entry)) for entry in WHACK_PRE_CLEAN_RAW]
 WHACK               = [                                                                                                                                                               ### Tags to remove (lowercase) ###
                         'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi", '8bit', '8-bit', 'hi10', 'hi10p', '10bit', '10-bit', 'crf24', 'crf 24', 'hevc',               # Video Codecs (color depth and encoding)
-                        '480p', '576p', '720p', '1080p', '1080i',                                                                                                                     # Resolution
-                        '24fps', '25fps', 'ntsc', 'pal', 'ntsc-u', 'ntsc-j',                                                                                                          # Refresh rate, Format
+                        '480p', '576p', '720p', '1080p', '1080i', 'HappyLee', 'HQ',                                                                                                               # Resolution
+                        '24fps', '25fps', 'ntsc', 'pal', 'ntsc-u', 'ntsc-j', 'BY AKTEP',                                                                                                         # Refresh rate, Format
                         'mp3', 'ogg', 'ogm', 'vorbis', 'aac', 'dts', 'ac3', 'ac-3', '5.1ch', '5.1', '7.1ch',  'qaac',                                                                 # Audio Codecs, channels
                         'dc', 'se', 'extended', 'unrated', 'multi', 'multisubs', 'dubbed', 'dub', 'subbed', 'sub', 'engsub', 'eng', 'french', 'fr', 'jap', "JPN+ENG",                 # edition (dc = directors cut, se = special edition), subs and dubs
                         'custom', 'internal', 'repack', 'proper', 'rerip', "raw", "remastered", "uncensored", 'unc', 'cen',                                                           # format
                         'cd1', 'cd2', 'cd3', 'cd4', '1cd', '2cd', '3cd', '4cd', 'xxx', 'nfo', 'read.nfo', 'readnfo', 'nfofix', 'fragment', 'fs', 'ws', "- copy", "reenc", "hom",      # misc
                         'retail', 'webrip', 'web-dl', 'wp', 'workprint', "mkv",  "v1", "v2", "v3", "v4", "v5",                                                                        # release type: retail, web, work print
-                        's01', 'bdrc', 'bdrip', 'bluray', 'bd', 'brrip', 'hdrip', 'hddvd', 'hddvdrip', 'wsrip',                                                                              # Source: bluray
-                        'ddc', 'dvdrip', 'dvd', 'r1', 'r3', 'r5', "dvd", 'svcd', 'vcd', 'sd', 'hd', 'dvb', "release", 'ps3avchd',                                                     # Source: DVD, VCD, S-VCD
+                        'bdrc', 'bdrip', 'bluray', 'bd', 'brrip', 'hdrip', 'hddvd', 'hddvdrip', 'wsrip',                                                                              # Source: bluray
+                        "eniahd", 'ddc', 'dvdrip', 'dvd', 'r1', 'r3', 'r5', "dvd", 'svcd', 'vcd', 'sd', 'hd', 'dvb', "release", 'ps3avchd',                                                     # Source: DVD, VCD, S-VCD
                         'dsr', 'dsrip', 'hdtv', 'pdtv', 'ppv', 'stv', 'tvrip', 'complete movie', "hiei", "metis", "norar",                                                            # Source: dtv, stv
                         'cam', 'bdscr', 'dvdscr', 'dvdscreener', 'scr', 'screener', 'tc', 'telecine', 'ts', 'telesync', 'mp4',                                                        # Source: screener
                         "mthd", "thora", 'NewStudio', 'sickrage', 'brrip', "remastered", "yify", "tsr", "reidy", "gerdhanse", 'remux',                                                             #'limited', 
@@ -337,16 +336,16 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   string =    string.replace("DoNoTfIlTeR", '.')                                                                                        # Replace 13DoNoTfIlTeR5 into 13.5 back
   string =    CS_CRC_HEX.sub(' ', string)                                                                                               # CRCs removal
   string = CS_VIDEO_SIZE.sub(' ', string)                                                                                            # Video size ratio removal
-  if no_dash:                                       string = string.replace("-", " ")                                                # replace the dash '-'
+  if no_dash:                                       string = string.replace("-", " ").replace(u"—", " ")
   if no_dot:                                        string = string.replace(".", " ")                                                # replace the dash '-'
   if no_underscore:                                 string = string.replace("_", " ")                                                # replace the underscore '_'
   if string.rstrip().endswith(", The"):             string = "The " + ''.join( string.split(", The", 1) )                            # ", The" is rellocated in front
   if string.rstrip().endswith(", A"  ):             string = "A "   + ''.join( string.split(", A"  , 1) )                            # ", A"   is rellocated in front
   string = CS_PAREN_EMPTY.sub('', CS_PAREN_SPACE_PAT.sub(CS_PAREN_SPACE_REP, string))                                                # Remove internal spaces in parenthesis then remove empty parenthesis
   if not no_whack:                                  string = " ".join([word for word in string.split() if word.lower() not in WHACK]).strip(" _.-")# remove double spaces + words present in "WHACK" list #filter(None, string.split())
-  for rx in ("-"):                                  string = string[len(rx):   ].strip() if string.startswith(rx)       else string  # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
-  for rx in ("-", "- copy"):                        string = string[ :-len(rx) ].strip() if string.lower().endswith(rx) else string  # In python 2.2.3: string = string.strip(string, " -_")
-  return string
+  for rx in ("-"):                                  string = string[len(rx):   ] if string.startswith(rx)       else string  # In python 2.2.3: string = string.strip(string, " -_") #if string.startswith(("-")): string=string[1:]
+  for rx in ("-", "- copy"):                        string = string[ :-len(rx) ] if string.lower().endswith(rx) else string  # In python 2.2.3: string = string.strip(string, " -_")
+  return string.strip()
 
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
@@ -540,7 +539,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       #msg.append(u'{}'.format(os.path.relpath(file, root)))
     else:
       files.remove(file)
-      msg.append(u"File: '{}' not in '{}'".format(os.path.relpath(file, root), 'VIDEO_EXTS'))
+      if os.path.splitext(file)[1] not in ('.log', '.plexignore'):
+        msg.append(u"Unknown extension File: '{}'".format(os.path.relpath(file, root)))
   
       ### ZIP ###
       if ext == 'zip':
@@ -1073,12 +1073,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     Log.info(u"Library root ([R] Series in Grouping folder Root call (uncached), [_] Normal (cached) Plex call, include grouping folder itself, [S][s] Season folders (uppercase for Root call, lowercase for Plex standard Call)")
     folder_count, subfolders = {}, dirs[:]
     while subfolders:  #Allow to add to the list while looping, any other method failed ([:], enumerate)
-      full_path = subfolders.pop(0)
-      path      = os.path.relpath(full_path, root)
-      
+      full_path    = subfolders.pop(0)
+      path         = os.path.relpath(full_path, root)
+      folder       = os.path.basename(path)
+      folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True)  #no clean until season loop searched for source id
+          
       ### Skip path if matching Ignore dirs ###
       for rx in IGNORE_DIRS_RX:               # loop rx for folders to ignore
-        if rx.match(os.path.basename(path)):  # if folder match rx
+        if rx.match(folder_clean):  # if folder match rx
           Log.info(u'{}[!] {} match IGNORE_DIRS_RX pattern [{}]'.format(''.ljust(path.count(os.sep)*4, ' '), os.path.basename(path), IGNORE_DIRS_RX.index(rx)))
           if full_path in dirs:  dirs.remove(full_path)  # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
           break
@@ -1086,43 +1088,43 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       
         ### Process subfolders ###
         subdir_dirs, subdir_files, folder_count[path] = [], [], 0
-        for file in os.listdir(full_path):
-          path_item = os.path.join(full_path, file) 
+        for item in os.listdir(full_path):  #sorted(os.listdir(full_path),  key=natural_sort_key, reverse=True) :
+          path_item = os.path.join(full_path, item) 
           if os.path.isdir(path_item):
+            subfolders.insert(folder_count[path], path_item)
             subdir_dirs.append(path_item)
-            subfolders.insert(0, path_item) #subfolders.append(path_item)
             folder_count[path] +=1
-          elif extension(file) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)
-        subfolders   = sorted(subfolders, key=natural_sort_key)
+          elif extension(item) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)
         
         ### Extract season and transparent folder from reverse_path ###
-        reverse_path, season_folder_first = list(reversed(path.split(os.sep))), False
-        season_folder=[]
-        for folder in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-          folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True).replace(os.path.dirname(path), "") 
-          if SOURCE_IDS.search(folder):  break        #if it has a forced id, not a season folder
-          for rx in SEASON_RX:                           # in anime, more specials folders than season folders, so doing it first
-            if rx.search(folder_clean):                  # get season number but Skip last entry in seasons (skipped folders)
-              season_folder.append(folder)
-              reverse_path.remove(folder)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
-              if rx!=SEASON_RX[-1] and len(reverse_path)>=2 and folder==reverse_path[-2]:  season_folder_first = True
+        reverse_path  = list(reversed(path.split(os.sep)))
+        season_folder = []
+        #season_folder_first = False
+        for dir in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
+          if SOURCE_IDS.search(dir):  Log.info(u'Source id detected: {}'.format(match.group('yt') if match.group('yt') else match.group('id'))); continue        #if it has a forced id, not a season folder
+          dir_clean = clean_string(dir, no_dash=True, no_underscore=True, no_dot=True)
+          for rx in SEASON_RX:                        # in anime, more specials folders than season folders, so doing it first
+            if rx.search(dir_clean):                  # get season number but Skip last entry in seasons (skipped folders)
+              if rx!=SEASON_RX[-1]:  season_folder.append(dir)  # and len(reverse_path)>=2:  # and folder==reverse_path[-2]:
+                #season_folder_first = True
+              reverse_path.remove(dir)                # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
               break
-        
+              
         ### Call Grouping folders series ###
         grouping_dir = full_path.rsplit(os.sep, full_path.count(os.sep)-1-root.count(os.sep))[0]
         root_folder  = os.path.relpath(grouping_dir, root).split(os.sep, 1)[0]
-        current_dir  = os.path.basename(full_path)
         indent       = path.count(os.sep)*4
+        if folder!=root_folder and folder_clean!=root_folder:  folder_clean = folder_clean.replace(root_folder, "").strip()
         if root_folder==path:
             set_logging(root=root, filename=path.split(os.sep)[0]+'.scanner.log' , mode='w')  #Empty serie folder log
             set_logging(root=root, filename=path.split(os.sep)[0]+'.filelist.log', mode='w')  #Empty filelist     log
             set_logging(root=root, filename=log_filename         +'.scanner.log' , mode='a')  #Set back 
-        if len(reverse_path)>1 and not season_folder_first and folder_count[root_folder]>1:  ### Calling Scan for grouping folders only ###
+        if len(reverse_path)>1  and folder_count[root_folder]>1:  # and not season_folder_first ### Calling Scan for grouping folders only ###
+          Log.info(u'{}[{}] {:<{x}} {}'.format(''.ljust(path.count(os.sep)*4, ' '), 'S' if folder in season_folder else 'G', folder_clean, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
           if subdir_files:
-            Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(path.count(os.sep)*4, ' '), 'S' if current_dir in season_folder else 'G', current_dir, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
             Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
             set_logging(root=root, filename=log_filename+'.scanner.log', mode='a')  #due to concurrent calls, wouldn't log propertly without setting it back, just in case
-        else:  Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 's' if current_dir in season_folder else '_', current_dir, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
+        else:  Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 's' if folder in season_folder else '_', folder_clean, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
       
     Log.info(u"".ljust(157, '='))
     Log.info(u"Dirs left for normal Plex calls:")
