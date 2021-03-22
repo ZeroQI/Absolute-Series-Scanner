@@ -25,7 +25,7 @@ Any information missing or wrong inthere in Plex is an Agent issue, refer to the
 
 ## Absolute series scanner functions that differes from Plex Series Scanner
 - .plexignore' fully working including subfolders
-- YouTube playlist with id in series or season folder get added without numbering/renaming needed
+- YouTube playlist with id in series or season folder get added without numbering/renaming needed, or channel id in Sereis folder
 - Video files inside zip file gets displayed (not playable)
 - Seamless 'Grouping folder': For example 'Dragon Ball/[01] Dragon Ball/ep xxx.ext'
 - Season folder advance support: 'Season xxx title_for season'
@@ -150,7 +150,8 @@ Hama supports the following guid_type:
 - anidb for AniDB.net (and and the behaviour changing mode anidb2)
 - tvdb  for TheTVDB.com (and the behaviour changing modes: tvdb2, tvdb3, tvdb4)
 - tmdb  For TheMovieDB.net (and the series part of TheMovieDB: tsdb)
-- [deprecated] imdb  For the International Movie DataBase (ids starts with "tt...")
+- imdb  For the International Movie DataBase (ids starts with "tt...")
+- youtube for youtube channel and playlist id (and video id on filenames)
 
 You can specify the guid to use the following way:
 - In Series folder name by adding " [guid_type-id_number]" at the end (like "Oruchuban Ebichu [anidb-150]")
@@ -203,10 +204,7 @@ You can specify the guid to use the following way:
         <TR> <TD> tvdb5     </TD> <TD> TVDB                    </TD> <TD>Absolute             </TD> <TD>Absolute          </TD> <TD>TheTVDB Absolute numbering order (most useful for Star Wars: The Clone Wars, First ep is s02e15...) will remove seasons present and use the 'absolute_number' tvdb field order to re-sort the episodes. Allow to insert specials in between episodes too (prequel)
 <UL><LI>Star Wars: The Clone Wars [tvdb5-83268] </LI></UL>
 </TD> </TR>
-        <TR> <TD> youtube     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) on series folder or season folder to have the youtube files downloaded with youtube-dl numbered as per the playlist order
-        <TR> <TD> youtube2    </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Channel id (UC/HC... 2+16/32 chars long) on series folder to have the publishing year used as season number
-        <TR> <TD> youtube3    </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) to have the items sorted by publishing date
-</TD> </TR>
+        <TR> <TD> youtube     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) on series folder or season folder (auto-reversing) or channel id on series folder (year used as season, added as date-based unless there are duplicates for the date in which case it choose ep number MMDDxx with XX being incremental)</TD> </TR>
 </TBODY>
 </TABLE>
 
