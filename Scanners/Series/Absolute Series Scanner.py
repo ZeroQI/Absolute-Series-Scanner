@@ -276,6 +276,30 @@ def Dict(var, *arg, **kwarg):
     else:  return kwarg['default'] if kwarg and 'default' in kwarg else ""   # Allow Dict(var, tvdbid).isdigit() for example
   return kwarg['default'] if var in (None, '', 'N/A', 'null') and kwarg and 'default' in kwarg else "" if var in (None, '', 'N/A', 'null') else var
 
+#########################################################################################################  
+def SaveDict(value, var, *arg):
+  """ Save non empty value to a (nested) Dictionary fields unless value is a list or dict for which it will extend it instead
+      # ex: SaveDict(GetXml(ep, 'Rating'), TheTVDB_dict, 'seasons', season, 'episodes', episode, 'rating')
+      # ex: SaveDict(Dict(TheTVDB_dict, 'title'), TheTVDB_dict, 'title_sort')
+      # ex: SaveDict(genre1,                      TheTVDB_dict, genre) to add    to current list
+      # ex: SaveDict([genre1, genre2],            TheTVDB_dict, genre) to extend to current list
+  """
+  if not value and value!=0:  return ""  # update dict only as string would revert to pre call value being immutable
+  if not arg and (isinstance(var, list) or isinstance(var, dict)):
+    if not (isinstance(var, list) or isinstance(var, dict)):  var = value
+    elif isinstance(value, list) or isinstance(value, dict):  var.extend (value)
+    else:                                                     var.append (value)
+    return value
+    
+  for key in arg[:-1]:
+    if not isinstance(var, dict):  return ""
+    if not key in var:  var[key] = {}
+    var = var[key]
+  if not arg[-1] in var or not isinstance(var[arg[-1]], list):  var[arg[-1]] = value
+  elif isinstance(value, list) or isinstance(value, dict):      var[arg[-1]].extend (value)
+  else:                                                         var[arg[-1]].append (value)
+  return value
+
 ### Set Logging to proper logging file ##################################################################
 def set_logging(root='', foldername='', filename='', backup_count=0, format='%(message)s', mode='a'):#%(asctime)-15s %(levelname)s - 
   if Dict(PLEX_LIBRARY, root, 'agent') == 'com.plexapp.agents.hama':  cache_path = os.path.join(PLEX_ROOT, 'Plug-in Support', 'Data', 'com.plexapp.agents.hama', 'DataItems', '_Logs')
@@ -350,7 +374,15 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   global COUNTER 
-  #show=clean_string(show, no_dot=True)
+  
+  match = SOURCE_IDS.search(show)
+  if match:
+    if match.group('yt'):  source, id = 'youtube',             match.group('yt')
+    else:                  source, id = match.group('source'), match.group('id') 
+  else:  source, id="", ""
+  show=clean_string(show, no_dot=True)
+  if source: show = show + ' [{}-{}]'.format(source, id)
+  
   if isinstance(show,  unicode):  ushow = show;  show  =  show.encode('utf-8')  #Plex expect Show in UTF-8
   else:                           ushow =  show.decode('utf-8')
   
@@ -869,23 +901,43 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     
     ### YouTube Channel ###
     if source.startswith('youtube') and id.startswith('UC') or id.startswith('HC'):  # or not json_playlist and not json_full and source.startswith('youtube') and len(id)>2 and id[0:2] in ('PL', 'UU', 'FL', 'LP', 'RD')
-      for file in files or []:  #to have latest ep first, add: ", reverse=True"
-        filename = os.path.join(root, path, file)  #filename full path
+      Log.info('reached here')
+      mapping = {} #mapping[season][ep]=filename  if dupe #mapping[season][ep]=index count, mapping[season][epxx] = filename, 
+      for file in files:  #to have latest ep first, add: ", reverse=True"
+        filename = os.path.join(root, path, file)
         if extension(file) not in VIDEO_EXTS or os.path.isdir(filename):  continue  #only files with video extensions
-        if source=='youtube2':
-          filedate   = time.gmtime(os.path.getmtime(os.path.join(root, path, filename)))
-          season, ep = filedate[0], filedate[1] * 1000000 + filedate[2] * 10000 + filedate[3] * 100 + filedate[4]  #month, day, hour, minute, second
+        for rx in DATE_RX:
+          match = rx.search(file)  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd"
+          if match:
+            season, episode = match.group('year'), '{}-{:>02}-{:>02}'.format(match.group('year'), match.group('month'), match.group('day'))
+            Log.info('Date in filename, season: {}, episode: {}'.format(season, episode))
+            break  
         else:
-          for rx in DATE_RX:
-            match = rx.search(file)  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd"
-            if match:
-              season, ep = int(match.group('year')), '{}-{}-{}'.format(match.group('year'), match.group('month'), match.group('day'))
-              Log.info(u'season: {}, ep: {}'.format(season, ep))
-              break  
-          else:
-            filedate   = time.gmtime(os.path.getmtime(filename))
-            season, ep = filedate[0], '{}-{}-{}'.format(filedate[0], filedate[1], filedate[2])
-        add_episode_into_plex(media, file, root, path, folder_show if id in folder_show else folder_show+'['+id+']', season, ep, filename, season, "", "Youtube Date Rx" if match else "YouTube file date", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+          filedate        = time.gmtime(os.path.getmtime(filename))
+          season, episode = str(filedate[0]), '{}-{:>02}-{:>02}'.format(filedate[0], filedate[1], filedate[2])
+        
+        Log.info('filename: {}'.format(filename))
+        if not Dict(mapping, season, episode):
+          SaveDict(filename, mapping, season, episode)
+          Log.info('- Adding, filename: {}, season: {}, episode: {}'.format(filename, season, episode))
+          Log.info('- mapping: {}'.format(mapping))
+          
+        else:
+          if isinstance(Dict(mapping, season, episode), int):  index = Dict(mapping, season, episode) + 1
+          else:  
+            index = 1
+            SaveDict(Dict(mapping, season, episode), mapping, season, episode+'01')  #save filename under duplicate episode naming convention            
+            Log.info('- Moving 1st duplicate season: {}, episode: {}'.format(season, episode))
+          SaveDict(index,    mapping, season, episode)
+          SaveDict(filename, mapping, season, episode + '{:02d}'.format(index))
+          Log.info('- Adding season: {}, episode: {}'.format(season, episode))
+          
+      Log.info('mapping: {}'.format(mapping))
+      for season in mapping or []:  #to have latest ep first, add: ", reverse=True"
+        for episode in mapping[season] or []:
+          filename = Dict(mapping, season, episode)
+          if not isinstance(filename, int):
+            add_episode_into_plex(media, filename, root, path, folder_show if not id or id in folder_show else folder_show+'['+id+']', int(season), episode, os.path.basename(filename), season, "", "Youtube Date", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
       return
       
     ### Build misc variable to check numbers in titles ###
