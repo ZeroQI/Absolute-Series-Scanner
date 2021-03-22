@@ -901,7 +901,6 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
     
     ### YouTube Channel ###
     if source.startswith('youtube') and id.startswith('UC') or id.startswith('HC'):  # or not json_playlist and not json_full and source.startswith('youtube') and len(id)>2 and id[0:2] in ('PL', 'UU', 'FL', 'LP', 'RD')
-      Log.info('reached here')
       mapping = {} #mapping[season][ep]=filename  if dupe #mapping[season][ep]=index count, mapping[season][epxx] = filename, 
       for file in files:  #to have latest ep first, add: ", reverse=True"
         filename = os.path.join(root, path, file)
@@ -910,30 +909,23 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           match = rx.search(file)  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd"
           if match:
             season, episode = match.group('year'), '{}-{:>02}-{:>02}'.format(match.group('year'), match.group('month'), match.group('day'))
-            Log.info('Date in filename, season: {}, episode: {}'.format(season, episode))
             break  
         else:
           filedate        = time.gmtime(os.path.getmtime(filename))
           season, episode = str(filedate[0]), '{}-{:>02}-{:>02}'.format(filedate[0], filedate[1], filedate[2])
+        if isinstance(season,  unicode):  season  =  season.encode('utf-8')
         
-        Log.info('filename: {}'.format(filename))
-        if not Dict(mapping, season, episode):
-          SaveDict(filename, mapping, season, episode)
-          Log.info('- Adding, filename: {}, season: {}, episode: {}'.format(filename, season, episode))
-          Log.info('- mapping: {}'.format(mapping))
-          
+        if not Dict(mapping, season, episode):  SaveDict(filename, mapping, season, episode)
         else:
           if isinstance(Dict(mapping, season, episode), int):  index = Dict(mapping, season, episode) + 1
-          else:  
-            index = 1
-            SaveDict(Dict(mapping, season, episode), mapping, season, episode+'01')  #save filename under duplicate episode naming convention            
-            Log.info('- Moving 1st duplicate season: {}, episode: {}'.format(season, episode))
+          else:                                                index = 2;  SaveDict(Dict(mapping, season, episode), mapping, season, episode+'01')  #save filename under duplicate episode naming convention            
           SaveDict(index,    mapping, season, episode)
           SaveDict(filename, mapping, season, episode + '{:02d}'.format(index))
-          Log.info('- Adding season: {}, episode: {}'.format(season, episode))
-          
-      Log.info('mapping: {}'.format(mapping))
+          episode = episode + '{:02d}'.format(index)
+        Log.info('season: {}, episode: {}, filename: {},'.format(season, episode, filename))
+        
       for season in mapping or []:  #to have latest ep first, add: ", reverse=True"
+        Log.info('season: {}, keys({}): {}'.format(season, len(mapping[season]), mapping[season].keys()))
         for episode in mapping[season] or []:
           filename = Dict(mapping, season, episode)
           if not isinstance(filename, int):
