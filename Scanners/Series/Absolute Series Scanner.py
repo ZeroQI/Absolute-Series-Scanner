@@ -71,7 +71,7 @@ SERIES_RX       = [                                                             
   cic(r'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'),                                                                      #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   cic(r'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,3})\][ _\.](?P<title>.*)$'),
   cic(r'^\[.*\]\[(?P<show>.*)\]\[(?P<ep>\d{1,3})\].*$'),
-  cic(r'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.]+(?P<title>.*)|$)') #20th Television production format (Futurama)
+  cic(r'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.\-]+(?P<title>.*)|$)') #20th Television production format (Futurama)
   ]
 MOVIE_RX        = cic(r'(?P<show>.*) \((?P<year>\d{4})\)$')
 DATE_RX         = [ cic(r'(?P<year>\d{4})[ \-\.]?(?P<month>\d{2})[ \-\.]?(?P<day>\d{2})'),  # 2009-02-10  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
@@ -350,10 +350,9 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
 ### Add files into Plex database ########################################################################
 def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="", year=None, ep2="", rx="", tvdb_mapping={}, unknown_series_length=False, offset_season=0, offset_episode=0, mappingList={}):
   global COUNTER 
-  show=clean_string(show, no_dot=True)
+  #show=clean_string(show, no_dot=True)
   if isinstance(show,  unicode):  ushow = show;  show  =  show.encode('utf-8')  #Plex expect Show in UTF-8
   else:                           ushow =  show.decode('utf-8')
-  Log.info(u"{}".format(ushow))
   
   if title==title.lower() or title==title.upper() and title.count(" ")>0: title           = title.title()        # capitalise if all caps or all lowercase and one space at least
   if isinstance(title, unicode):  utitle= title; title = title.encode('utf-8')  #Plex expect Title in UTF-8
@@ -873,15 +872,19 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       for file in files or []:  #to have latest ep first, add: ", reverse=True"
         filename = os.path.join(root, path, file)  #filename full path
         if extension(file) not in VIDEO_EXTS or os.path.isdir(filename):  continue  #only files with video extensions
-        for rx in DATE_RX:
-          match = rx.search(file)  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd"
-          if match:
-            season, ep = int(match.group('year')), '{}-{}-{}'.format(match.group('year'), match.group('month'), match.group('day'))
-            Log.info(u'season: {}, ep: {}'.format(season, ep))
-            break  
+        if source=='youtube2':
+          filedate   = time.gmtime(os.path.getmtime(os.path.join(root, path, filename)))
+          season, ep = filedate[0], filedate[1] * 1000000 + filedate[2] * 10000 + filedate[3] * 100 + filedate[4]  #month, day, hour, minute, second
         else:
-          mtime      = os.path.getmtime(filename)
-          season, ep = time.gmtime(mtime)[0], '{}-{}-{}'.format(time.gmtime(mtime)[0], time.gmtime(mtime)[1], time.gmtime(mtime)[2])
+          for rx in DATE_RX:
+            match = rx.search(file)  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd"
+            if match:
+              season, ep = int(match.group('year')), '{}-{}-{}'.format(match.group('year'), match.group('month'), match.group('day'))
+              Log.info(u'season: {}, ep: {}'.format(season, ep))
+              break  
+          else:
+            filedate   = time.gmtime(os.path.getmtime(filename))
+            season, ep = filedate[0], '{}-{}-{}'.format(filedate[0], filedate[1], filedate[2])
         add_episode_into_plex(media, file, root, path, folder_show if id in folder_show else folder_show+'['+id+']', season, ep, filename, season, "", "Youtube Date Rx" if match else "YouTube file date", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
       return
       
@@ -951,14 +954,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       for rx in DATE_RX:
         match = rx.search(ep)
         if match:
-          year, month, day = int(match.group('year')), int(match.group('month')), int(match.group('day'))
-          Log.info(u'year: {}, mont: {}, day: {}, ep: {}, file: {}'.format(year, month, day, ep, file))
-          continue
-          # Use the year as the season.
-          #tv_show = Media.Episode(show, year, None, None, None)  #show, season, epn, title, year
-          #tv_show.released_at = '%d-%02d-%02d' % (year, month, day)
-          #tv_show.parts.append(i)
-          #mediaList.append(tv_show)
+          season, ep = int(match.group('year')), '{}-{}-{}'.format(match.group('year'), match.group('month'), match.group('day'))
+          Log.info(u'season: {}, ep: {}'.format(season, ep))
+          add_episode_into_plex(media, file, root, path, folder_show if id in folder_show else folder_show+'['+id+']', season, ep, filename, season, "", "Youtube Date Rx" if match else "YouTube file date", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+          break_out_flag = True
+          break  
+      else: break_out_flag = False
+      if break_out_flag :  continue
             
       ### Word search for ep number in scrubbed title ###
       words, loop_completed, rx, is_special = list(filter(None, clean_string(ep, False, no_underscore=True).split())), False, "Word Search", False                    #
