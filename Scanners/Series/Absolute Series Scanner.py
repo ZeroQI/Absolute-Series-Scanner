@@ -1147,7 +1147,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         season_folder = []
         #season_folder_first = False
         for dir in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-          if SOURCE_IDS.search(dir):  Log.info(u'Source id detected: {}'.format(match.group('yt') if match.group('yt') else match.group('id'))); continue        #if it has a forced id, not a season folder
+          match = SOURCE_IDS.search(dir)
+          if match:  Log.info(u'Source id detected: {}'.format(match.group('yt') if match.group('yt') else match.group('id'))); continue        #if it has a forced id, not a season folder
           dir_clean = clean_string(dir, no_dash=True, no_underscore=True, no_dot=True)
           for rx in SEASON_RX:                        # in anime, more specials folders than season folders, so doing it first
             if rx.search(dir_clean):                  # get season number but Skip last entry in seasons (skipped folders)
