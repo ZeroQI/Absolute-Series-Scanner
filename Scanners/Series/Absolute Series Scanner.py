@@ -111,7 +111,7 @@ WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "EniaHD (HEVC, WEB-DL 2160p)", "x264
                         "2160p", "(final)", "2xRus.Eng", "1920x1080", "1280x720", "848x480", "952x720", "(DVD 720x480 h264 AC3)", "(720p_10bit)", "(1080p_10bit)", "(1080p_10bit", "(BD.1080p.AAC)", "[720p]", "WEBDL", "NewStudio",
                         "H.264_AAC", "Hi10P", "Hi10", "x264", "BD 10-bit", "DXVA", "H.264", "(BD, 720p, FLAC)", "Blu-Ray", "Blu-ray",  "SD TV", "SD DVD", "HD TV",  "-dvdrip", "dvd-jap", "(DVD)", "BDRip",
                         "FLAC", "Dual Audio", "AC3", "AC3.5.1", "AC3-5.1", "AAC2.0", "AAC.2.0", "AAC2_0", "AAC", "1080p", 'DD2.1', 'DD5.1', "5.1",'divx5.1', "DD5_1", "TV-1", "TV-2", "TV-3", "TV-4", "TV-5",
-                        "(Exiled_Destiny)", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en", "Rus", "Eng", "UNCENSORED", "THD", "H264", "2xDVO", "Subs", "Sub",
+                        "(Exiled_Destiny)", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en", "UNCENSORED", "THD", "H264", "2xDVO", "Subs", "Sub",
                         'ExKinoRay', "NTb", "(S01-02)", "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "NTSC",
                         "%28", "%29", " (1)", "(Clean)", "(DVDRemux)", "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits", 
                         "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "(Remastered HQ)", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP"
@@ -119,7 +119,7 @@ WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "EniaHD (HEVC, WEB-DL 2160p)", "x264
 WHACK_PRE_CLEAN     = [cic(re.escape(entry)) for entry in WHACK_PRE_CLEAN_RAW]
 WHACK               = [                                                                                                                                                               ### Tags to remove (lowercase) ###
                         'x264', 'h264', 'dvxa', 'divx', 'xvid', 'divx51', 'mp4', "avi", '8bit', '8-bit', 'hi10', 'hi10p', '10bit', '10-bit', 'crf24', 'crf 24', 'hevc',               # Video Codecs (color depth and encoding)
-                        '480p', '576p', '720p', '1080p', '1080i', 'HappyLee', 'HQ',                                                                                                               # Resolution
+                        '480p', '576p', '720p', '1080p', '1080i', 'HappyLee', 'HQ', "rus", "eng",                                                                                                           # Resolution
                         '24fps', '25fps', 'ntsc', 'pal', 'ntsc-u', 'ntsc-j', 'BY AKTEP',                                                                                                         # Refresh rate, Format
                         'mp3', 'ogg', 'ogm', 'vorbis', 'aac', 'dts', 'ac3', 'ac-3', '5.1ch', '5.1', '7.1ch',  'qaac',                                                                 # Audio Codecs, channels
                         'dc', 'se', 'extended', 'unrated', 'multi', 'multisubs', 'dubbed', 'dub', 'subbed', 'sub', 'engsub', 'eng', 'french', 'fr', 'jap', "JPN+ENG",                 # edition (dc = directors cut, se = special edition), subs and dubs
@@ -391,7 +391,7 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   else:                           utitle= title.decode('utf-8')
   
   if not os.path.exists(file):  file = os.path.join(root, path, file)
-  if isinstance(file,  unicode):  ufile = os.path.basename(file);   file = file.encode(sys.getfilesystemencoding())
+  if isinstance(file,  unicode):  ufile = os.path.basename(file);   file = file.encode(sys.getfilesystemencoding() or 'utf-8')
   else:                           ufile = os.path.basename(file.decode('utf-8'))
   
   # Season/Episode Offset
@@ -428,7 +428,7 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
         tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
         if ufile.upper()==u"VIDEO_TS.IFO":  
           for item in os.listdir(os.path.dirname(file)) if os.path.dirname(file) else []:
-            if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item).encode(sys.getfilesystemencoding()))
+            if item.upper().startswith("VTS_01_") and not item.upper()=="VTS_01_2.VOB":  tv_show.parts.append(os.path.join(os.path.dirname(file), item).encode(sys.getfilesystemencoding() or 'utf-8'))
         else:  tv_show.parts.append(file)  #.encode(sys.getfilesystemencoding()) gives UnicodeDecodeError: 'ascii' codec can't decode byte 0xe2 in position 101: ordinal not in range(128)
         media.append(tv_show)   # at this level otherwise only one episode per multi-episode is showing despite log below correct
   else:
@@ -471,7 +471,7 @@ def extension(file):  return file[1:] if file.count('.')==1 and file.startswith(
 ### Make sure the path is unicode, if it is not, decode using OS filesystem's encoding ###
 def sanitize_path(p):
   if not isinstance(p, unicode):
-    return p.decode(sys.getfilesystemencoding())
+    return p.decode(sys.getfilesystemencoding() or 'utf-8')
   return p
 
 def romanToInt(s):
