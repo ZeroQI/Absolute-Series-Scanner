@@ -294,7 +294,7 @@ The following suffixes are supported:
 </CODE></PRE>
 
 ### .plexignore files
-https://support.plex.tv/articles/201375253-excluding-new-content-with-plexignore/
+https://support.plex.tv/articles/201381883-special-keyword-file-folder-exclusion/
 - Warning: This is an advanced feature and is not intended for general users.
 - Blank lines and lines starting with #  are ignored.
 - The * character is a wildcard.
