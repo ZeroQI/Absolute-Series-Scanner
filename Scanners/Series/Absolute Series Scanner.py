@@ -1134,14 +1134,16 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       
         ### Process subfolders ###
         subdir_dirs, subdir_files, folder_count[path] = [], [], 0
-        for item in os.listdir(full_path):  #sorted(os.listdir(full_path),  key=natural_sort_key, reverse=True) :
-          path_item = os.path.join(full_path, item) 
-          if os.path.isdir(path_item):
-            subfolders.insert(folder_count[path], path_item)
-            subdir_dirs.append(path_item)
-            folder_count[path] +=1
-          elif extension(item) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)
-        
+        try:
+          for item in os.listdir(full_path):  #sorted(os.listdir(full_path),  key=natural_sort_key, reverse=True) :
+            path_item = os.path.join(full_path, item) 
+            if os.path.isdir(path_item):
+              subfolders.insert(folder_count[path], path_item)
+              subdir_dirs.append(path_item)
+              folder_count[path] +=1
+            elif extension(item) in VIDEO_EXTS+['zip']:  subdir_files.append(path_item)
+        except Exception as e:  Log.error("Exception: '{}'".format(e))
+  
         ### Extract season and transparent folder from reverse_path ###
         reverse_path  = list(reversed(path.split(os.sep)))
         season_folder = []
