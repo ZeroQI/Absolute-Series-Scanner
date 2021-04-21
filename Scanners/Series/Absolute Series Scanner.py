@@ -168,7 +168,7 @@ def setup():
   Log.info(u"".ljust(157, '='))
   Log.info(u"Plex scan start: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")))
   try:
-    library_xml = etree.fromstring(read_url(Request(PLEX_LIBRARY_URL, headers={"X-Plex-Token": os.environ['X_PLEX_TOKEN']})))
+    library_xml = etree.fromstring(read_url(Request(PLEX_LIBRARY_URL, headers={"X-Plex-Token": os.environ['PLEXTOKEN']})))
     for directory in library_xml.iterchildren('Directory'):
       for location in directory.iterchildren('Location'):
         PLEX_LIBRARY[location.get('path')] = {'title': directory.get('title'), 'scanner': directory.get("scanner"), 'agent': directory.get('agent')}
