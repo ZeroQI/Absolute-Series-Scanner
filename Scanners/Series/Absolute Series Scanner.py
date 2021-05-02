@@ -89,7 +89,7 @@ COUNTER         = 500
 
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDouble', r'\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder',   ###### Ignored folders
-                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr', 'audio', 'sub', '.*Special Features']        # source: Filters.py  removed '\..*',
+                        '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr', 'audio', r'^subs?$', '.*Special Features']        # source: Filters.py  removed '\..*',
 IGNORE_DIRS_RX      = [cic(entry) for entry in IGNORE_DIRS_RX_RAW]
 # Uses re.match() so forces a '^'
 IGNORE_FILES_RX     = [cic(r'[ _\.\-]?sample'), cic(r'-Recap\.'), cic(r'\._'), cic(r'OST'), cic(r'soundtrack')]
@@ -485,7 +485,6 @@ def romanToInt(s):
 ### Look for episodes ###################################################################################
 def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get called for root and each root folder, path relative files are filenames, dirs fullpath
   setup()  # Call setup to get core info. If setup is already done, it just returns and does nothing.
-  #if not files:  return  #Residual grouping folder subfolders clear
   
   # Sanitize all path
   msg          = [u"Scan() - dirs: {}, files: {}".format(len(dirs or []), len(files or []))]
@@ -497,7 +496,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   reverse_path = list(reversed(path.split(os.sep)))
   log_filename = path.split(os.sep)[0] if path else '_root_'
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
-    
+  
+  for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
+    if rx.match(os.path.basename(path)):                      # if folder match rx
+      return
+  
   ### .plexignore file ###
   plexignore_dirs, plexignore_files, msg, source, id = [], [], [], '', ''
   for index, dir in enumerate(path_split):                                                   #enumerate to have index, which goes from 0 to n-1 for n items
