@@ -925,10 +925,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           SaveDict(index,    mapping, season, episode)
           SaveDict(filename, mapping, season, episode + '{:02d}'.format(index))
           episode = episode + '{:02d}'.format(index)
-        Log.info('season: {}, episode: {}, filename: {},'.format(season, episode, filename))
+        Log.info(u'season: {}, episode: {}, filename: {},'.format(season, episode, filename))
         
       for season in mapping or []:  #to have latest ep first, add: ", reverse=True"
-        Log.info('season: {}, keys({}): {}'.format(season, len(mapping[season]), mapping[season].keys()))
+        Log.info(u'season: {}, keys({}): {}'.format(season, len(mapping[season]), mapping[season].keys()))
         for episode in mapping[season] or []:
           filename = Dict(mapping, season, episode)
           if not isinstance(filename, int):
