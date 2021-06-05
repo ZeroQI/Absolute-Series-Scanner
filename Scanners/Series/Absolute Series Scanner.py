@@ -390,9 +390,13 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   if isinstance(title, unicode):  utitle= title; title = title.encode('utf-8')  #Plex expect Title in UTF-8
   else:                           utitle= title.decode('utf-8')
   
-  if not os.path.exists(file):  file = os.path.join(root, path, file)
   if isinstance(file,  unicode):  ufile = os.path.basename(file);   file = file.encode(sys.getfilesystemencoding() or 'utf-8')
   else:                           ufile = os.path.basename(file.decode('utf-8'))
+  
+  try:
+    if not os.path.exists(file):  file = os.path.join(root, path, file)
+  except Exception as e:
+    Log.error("Failed to check path %s, Exception: %s" % (ufile, e))
   
   # Season/Episode Offset
   if isinstance(ep, int) or isinstance(ep, str) and ep.isdigit():  #date-based
