@@ -989,7 +989,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             for item in misc_words:  filename = re.sub(re.escape(item), " ", filename, 1, re.IGNORECASE) ## need to escape names, otherwise words with certain characters (like c++) will make it think its an invalid regex string
       else:  filename = clean_string(filename)
       ep = filename
-      if " - Complete Movie" in ep:  ep = "01"  ### Movies ### If using WebAOM (anidb rename)
+      if "Complete Movie" in ep:  ep = "01"  ### Movies ### If using WebAOM (anidb rename), as clean_string remove leading " - "
       elif len(files)==1 and (not re.search(r"\d+(\.\d+)?", clean_string(filename, True)) or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in ep.lower()+folder_show.lower() or "-m" in folder_show.split()):
         ep, title = "01", folder_show  #if  ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
       if folder_show and folder_season >= 1:                                                                                                                                         # 
