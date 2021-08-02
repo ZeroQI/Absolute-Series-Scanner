@@ -159,6 +159,10 @@ def setup():
     PLEX_ROOT = os.path.expandvars(path_location[Platform.OS.lower()] if Platform.OS.lower() in path_location else '~')  # Platform.OS:  Windows, MacOSX, or Linux
   
   ### Define logging setup ##############################################################################
+  if sys.version[0] == '2':
+    from imp import reload
+    reload(sys)
+    sys.setdefaultencoding("utf-8")
   global Log
   Log = logging.getLogger('main')
   Log.setLevel(logging.DEBUG)
@@ -426,7 +430,8 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     ep_final = "s%de%d" % (season, ep)
     
     for epn in range(ep, ep2+1):
-      if len(show) == 0: Log.warning("show: '%s', s%02de%03d-%03d, file: '%s' has show empty, report logs to dev ASAP" % (show, season, ep, ep2, file))
+      if len(show) == 0:
+        Log.warning(u"show: '{}', s{:02d}e{:03d}-{:03d}, file: '{}' has show empty, report logs to dev ASAP".format(show, season, ep, ep2, file))
       else:# Media.Episode expects show and title in utf-8 encoded byte string (unicode title in Plex Media Scanner/log': WARN - Warning, Unicode passed in, should be UTF-8 string for attribute 'name')
         tv_show = Media.Episode(show, season, epn, title, year)  #tv_show = Media.Episode(show.encode('utf-8'), season, epn, title.encode('utf-8'), year)
         tv_show.display_offset = (epn-ep)*100/(ep2-ep+1)
