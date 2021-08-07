@@ -350,7 +350,7 @@ chmod -R 775 '/var/lib/plexmediaserver/Library/Application Support/Plex Media Se
 - If the scanner not listed in scanner list
   - Make sure you did create a "Series" library, as a "Movie" library will not show a "Series" scanner like ASS
   - Make sure it is saved in [...]/Plex/Library/Application Support/Plex Media Server/Scanners/Series/Absolute Series Scanner.py
-  - Check scanner file size and open the scanner file to check if it does have html/xml tags.
+  - Check scanner file size and open the scanner file to check if it does have html/xml tags (if html or xml tags are present, you downloaded the wrong file).
 - [Optional] Recreate a Series library to the same folder, using Hama agent, this way all logs will start afresh
 - if no files are showing, the scanner is crashing, probably a code error, check Plex Media Scanner.log for crash errors
 - If Episodes are missing, wrong seasons or episode numbers, or series missing, check all "(custom ASS)" logs
