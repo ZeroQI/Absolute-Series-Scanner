@@ -897,7 +897,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           except Exception as e:  json_page = {};  Log.info(u'exception: {}, url: {}'.format(e, url))
           else:                   json_full.extend( Dict(json_page, 'items', default=[]) )
           totalResults = Dict(json_page, "pageInfo", "totalResults")  #iteration   +=1
-          reverse      = False if source=='youtube3' else Dict(json_full[0], "snippet", "publishedAt") > Dict(json_full[-1], "snippet", "publishedAt")  #Dict(video, 'contentDetails', 'videoPublishedAt')
+          reverse      = False if source=='youtube3' else Dict(json_full, 0, "snippet", "publishedAt") > Dict(json_full, -1, "snippet", "publishedAt") #Dict(video, 'contentDetails', 'videoPublishedAt')
         if json_full:
           Log.info(u'---- totalResults: {}, reverse: {}, os.listdir(os.path.join(root, path): {}'.format(totalResults, reverse, os.listdir(os.path.join(root, path))))
           for filename in os.listdir(os.path.join(root, path)):
