@@ -87,6 +87,13 @@ ANIDB_OFFSET    = [        0,       100,      150,       200,     400,         0
 ANIDB_TYPE      = ['Special', 'Opening', 'Ending', 'Trailer', 'Other', 'Episode', 'Episode']                                                                                     ###### AniDB titles
 COUNTER         = 500
 
+IGNORE_DIRS  = [ '*/@Recycle/*', '*/.@__thumb/*', '*/@eaDir/*', '*/lost+found/*', '*/.DS_Store/*', '*/.AppleDouble/*', # OS cache-trash folders
+                 '*/$Recycle.Bin/*', '*/System Volume Information/*', '*/Temporary Items/*', '*/Network Trash Folder/*',
+                 '*extras*', '*samples*', '*bonus*', '*/VIDEO_TS/*', '*/BDMV/*',   # Plex special keyword file/folder exclusion (https://support.plex.tv/articles/201381883-special-keyword-file-folder-exclusion/)
+                 '*/.git/*', '*/.xattr/*', '*_UNPACK_*', '*_FAILED_*',             # Additional software created folders
+                 '*/_*' ]                                                          # Folders that start with underscore
+IGNORE_FILES = [ '*[ _.-]sample.*', '*[ _.-]recap.*', '_*', '*/_*' ]               # Samples, recaps, files that start with underscore
+
 # Uses re.match() so forces a '^'
 IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDouble', r'\$Recycle.Bin', 'System Volume Information', 'Temporary Items', 'Network Trash Folder',   ###### Ignored folders
                         '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr', 'audio', r'^subs?$', '.*Special Features']        # source: Filters.py  removed '\..*',
@@ -505,35 +512,105 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   reverse_path = list(reversed(path.split(os.sep)))
   log_filename = path.split(os.sep)[0] if path else '_root_'
   #VideoFiles.Scan(path, files, media, dirs, root)  # If enabled does not allow zero size files
+  msg, source, id = [], '', ''
 
-  for rx in IGNORE_DIRS_RX:                                   # loop rx for folders to ignore
-    if rx.match(os.path.basename(path)):                      # if folder match rx
+  # Warsen: In theory, the way that Plex's special keyword file/folder
+  # exclusion rules and subsequent rules from .plexignore files are supposed
+  # to work is that the relative path of all files from root will be
+  # checked against every rule using fnmatch. Doing that would result in
+  # a perfectly accurate, but very slow algorithm. We can speed up the
+  # algorithm by seperating directory rules from file rules and seperating
+  # hardcoded rules from user-defined .plexignore rules.
+  # Files should be tested using their relative path from root against
+  # hardcoded file rules and all rules defined in .plexignore files.
+  # Predefined directory rules should be surrounded by forward-slashes;
+  # it is the only way to prevent an accident where you ignore a directory
+  # which has part of its name simlar to a rule you want to ignore.
+  # For example, if I had a theoretical directory "/I Was Lost+Found/",
+  # it would get caught in patterns "*lost+found*" and "*lost+found/*".
+  # The only way to avoid that is to use pattern "*/lost+found/*".
+
+  # The problem with using path is that the seperators are defined by the
+  # operating system. Joining path_split can make them forward-slashes
+  # just for the purposes of testing against patterns.
+  path2 = '/'.join(path_split)
+
+  # Check if current path is matched in IGNORE_DIRS
+  # The incoming path parameter does not have leading or trailing
+  # forward-slashes. We have to both for the sake of testing against
+  # predefined directory rules.
+  for pattern in IGNORE_DIRS:
+    if fnmatch.fnmatch('/'+path2+'/', pattern):
+      Log.info(u"Ignoring path call: '/{}/' matches IGNORE_DIRS pattern index {}".format(path2, IGNORE_DIRS.index(pattern)))
       return
 
-  ### .plexignore file ###
-  plexignore_dirs, plexignore_files, msg, source, id = [], [], [], '', ''
-  for index, dir in enumerate(path_split):                                                   #enumerate to have index, which goes from 0 to n-1 for n items
+  ### .plexignore file handling ###
 
-    # Process Subdirectory pattern from previous folder(s)
-    for entry in plexignore_dirs[:] if index>0 else []:                                      #
-      plexignore_dirs.remove(entry)                                                          #
-      if entry.startswith(dir+'/'):                                                          #
-        pattern = entry.replace(dir+'/', '')                                                 # msg.append("bazinga, pattern.count('/'): '{}', index+1: '{}', len(path_split): '{}', entry: '{}', dir: '{}', pattern: '{}'".format(pattern.count('/'), index+1, len(path_split), entry, dir, pattern))
-        if pattern.count('/')>0:        plexignore_dirs.append(pattern)                      # subfolder match so remove subfolder name and carry on
-        elif index+1==len(path_split):  plexignore_files.append(fnmatch.translate(pattern));  msg.append("# - pattern: '{}'".format(pattern)) #Only keep pattern for named folder, not subfolders
+  # The problem with using path_split is that it doesn't work for an
+  # algorithm where first iteration needs to be root. Use an alternative.
+  path_split2 = path_split[:]
+  if path: path_split2.insert(0, '')
 
-    # Process file patterns
-    file = os.path.join(root, os.sep.join(path_split[1:index+1]), '.plexignore')             #
-    if os.path.isfile(file):                                                                 #
-      msg.append("# " + file)
-      msg.append("".ljust(len(file)+ 2, '-'))
-      for pattern in filter(None, read_file(file).splitlines()):                             # loop through each line
-        pattern = pattern.strip()                                                            # remove useless spaces at both ends
-        if pattern == '' or pattern.startswith('#'):  continue                               # skip comment and emopy lines, go to next for iteration
-        msg.append("# - " + pattern)
-        if '/' not in pattern:  plexignore_files.append(fnmatch.translate(pattern))          # patterns for this folder and subfolders gets converted and added to files.
-        elif pattern[0]!='/':   plexignore_dirs.append (pattern)                             # patterns for subfolders added to folders
-      msg.append(''.ljust(157, '-'))
+  # Warsen: Iterate through path directories to obtain a full list of
+  # .plexignore rules which would apply directly to the current path.
+  # In theory, we do this by inserting the path of the current working
+  # directory into every rule found the .plexignore file of that directory.
+  # If we have a file "foo/.plexignore" which contains a single line
+  # "bar.mp4", we'll set the pattern "foo/bar.mp4".
+  # Later when we get to check file bar.mp4, we'll test its path relative
+  # to the root which is "foo/bar.mp4". It's very important that this
+  # algorithm prevents a "foo/2/bar.mp4" match in that example.
+
+  plexignore_patterns = []
+  for index, dir in enumerate(path_split2):
+    file = os.path.join(root, os.sep.join(path_split2[1:index+1]), '.plexignore')  # Get a possible absolute path to a .plexignore file
+    if os.path.isfile(file):
+      msg.append(file)
+      msg.append(''.ljust(len(file), '-'))
+      for pattern in filter(None, read_file(file).splitlines()):
+        pattern = pattern.strip()
+        if pattern == '' or pattern.startswith('#'): continue             # Skip empty and commented out lines
+        cwd = '/'.join(path_split2[1:index+1])                            # Get current working directory relative to root
+        plexignore_patterns.append(cwd+'/'+pattern if cwd else pattern)   # Append the pattern to list, if cwd is something other than root (empty), insert it into the beggining of the pattern
+        msg.append('# - ' + plexignore_patterns[-1])
+  msg.append(''.ljust(157, '-'))
+
+  # Check if current path is matched in plexignore_patterns
+  # We give the path a trailing forward-slash because user-defined rules
+  # are expecting that for directories. See the article where they put
+  # an example rule to ignore directories called "Modified"
+  # https://support.plex.tv/articles/201381883-special-keyword-file-folder-exclusion/
+  for pattern in plexignore_patterns:
+    if fnmatch.fnmatch(path2+'/', pattern):
+      Log.info(u"Ignoring path call: '{}/' matches .plexignore pattern index {}".format(path2, plexignore_patterns.index(pattern)))
+      return
+
+  ### Filter files based on hardcoded and .plexignore rules ###
+  for file in sorted(files, key=natural_sort_key):        # Only sorted for logging purposes
+    filename = os.path.basename(file)                     # Get the filename in isolation for a few lines of code
+    if filename == '.plexignore':                         # Silent removal of a possible .plexignore file
+      files.remove(file)
+      continue
+    filepath = path2+'/'+filename if path else filename   # Get a path to the file relative to root
+    for pattern in IGNORE_FILES:
+      if fnmatch.fnmatch(filepath, pattern):
+        msg.append(u"Removed file: '{}' matches IGNORE_FILES pattern index {}".format(filepath, IGNORE_FILES.index(pattern)))
+        files.remove(file)
+        break
+    else:
+      for pattern in plexignore_patterns:
+        if fnmatch.fnmatch(filepath, pattern):
+          msg.append(u"Removed file: '{}' matches .plexignore pattern index {}".format(filepath, plexignore_patterns.index(pattern)))
+          files.remove(file)
+          break
+      else:
+        ext = os.path.splitext(file)[1].lstrip('.').lower()
+        if ext not in VIDEO_EXTS:
+          msg.append(u"Removed file: '{}' has an unsupported extension".format(filepath))
+          files.remove(file)
+
+  ### Old .plexignore file handling ###
+  plexignore_dirs, plexignore_files = [], []
 
   ### bluray/DVD folder management ### # source: https://github.com/doublerebel/plex-series-scanner-bdmv/blob/master/Plex%20Series%20Scanner%20(with%20disc%20image%20support).py
   if len(reverse_path) >= 3 and reverse_path[0].lower() == 'stream' and reverse_path[1].lower() == 'bdmv' or "VIDEO_TS.IFO" in str(files).upper():
