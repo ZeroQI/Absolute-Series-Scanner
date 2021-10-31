@@ -99,15 +99,22 @@
     09|123|153|Piccolo Jr. Saga
   </anime>
   <anime tvdbid="81472" name="Dragon Ball Z">
-    01|001|039|Saiyan Saga
-    02|040|074|Namek And Captian Ginyu Sagas
-    03|075|107|Frieza Saga
-    04|108|139|Garlic Jr., Trunks and Androids Sagas
-    05|140|165|Imperfect Cell and Perfect Cell Sagas
-    06|166|194|Cell Games Saga
-    07|195|219|Great Saiyaman and World Tournament Sagas
-    08|220|253|Babidi and Majin Buu Sagas
-    09|254|291|Fusion and Kid Buu Sagas
+    01|001|035|Saiyan Saga
+    02|036|067|Namek Saga
+    03|068|074|Ginyu Saga
+    04|075|107|Frieza Saga
+    05|108|117|Garlic Jr. Saga
+    06|118|125|Trunks Saga
+    07|126|139|Android Saga
+    08|140|152|Imperfect Cell Saga
+    09|153|165|Perfect Cell Saga
+    10|166|194|Cell Games Saga
+    11|195|209|Great Saiyaman Saga
+    12|210|219|World Tournament Saga
+    13|220|231|Babidi Saga
+    14|232|253|Majin Buu Saga
+    15|254|275|Fusion Saga
+    16|276|291|Kid Buu Saga
   </anime>
   <anime tvdbid="88031" name="Dragon Ball Kai">
     01|001|016|Saiyan Saga
