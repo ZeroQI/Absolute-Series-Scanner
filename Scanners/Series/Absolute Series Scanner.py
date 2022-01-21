@@ -568,9 +568,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       msg.append(file)
       msg.append(''.ljust(len(file), '-'))
       for pattern in filter(None, read_file(file).splitlines()):
-        pattern = pattern.strip()
+        pattern = u'' + pattern.strip()
         if pattern == '' or pattern.startswith('#'): continue             # Skip empty and commented out lines
-        cwd = '/'.join(path_split2[1:index+1])                            # Get current working directory relative to root
+        cwd = u'/'.join(path_split2[1:index+1])                            # Get current working directory relative to root
         plexignore_patterns.append(cwd+'/'+pattern if cwd else pattern)   # Append the pattern to list, if cwd is something other than root (empty), insert it into the beggining of the pattern
         msg.append('# - ' + plexignore_patterns[-1])
   msg.append(''.ljust(157, '-'))
