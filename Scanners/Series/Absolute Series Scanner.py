@@ -1018,7 +1018,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         for episode in mapping[season] or []:
           filename = Dict(mapping, season, episode)
           if not isinstance(filename, int):
-            add_episode_into_plex(media, filename, root, path, folder_show if not id or id in folder_show else folder_show+'['+id+']', int(season), episode, os.path.basename(filename), season, "", "Youtube Date", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
+            add_episode_into_plex(media, filename, root, path, folder_show if not id or id in folder_show else folder_show+'['+id+']', int(season), episode[0:10], os.path.basename(filename), season, "", "Youtube Date", tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList)
       return
 
     ### Build misc variable to check numbers in titles ###
