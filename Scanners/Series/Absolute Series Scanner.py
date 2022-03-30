@@ -349,7 +349,7 @@ def filter_chars(string):
 ### Allow to display ints even if equal to None at times ################################################
 CS_PARENTHESIS     = com(ur'\([^\(\)]*?\)')
 CS_BRACKETS_CHAR   = com(ur'(\[|\]|\{|\})')
-CS_BRACKETS        = com(ur'(\[(?!第?\d{1,3}[话話]?(-\d{1,3}[话話]?)?\])[^\[\]]*?\]|\{(?!\d{1,3}\})[^\{\}]*?\})')
+CS_BRACKETS        = com(ur'(\[(?!第?\d{1,3}[话話]?(-\d{1,3}[话話]?)?([Vv]\d)?\])[^\[\]]*?\]|\{(?!\d{1,3}\})[^\{\}]*?\})')
 CS_SPECIAL_EP_PAT, CS_SPECIAL_EP_REP   = com(ur'(?P<a>[^0-9Ssv]\d{1,3})\.(?P<b>\d{1,2}(\D|$))'), ur'\g<a>DoNoTfIlTeR\g<b>'
 CS_CRC_HEX         = com(ur'[0-9a-fA-F]{8}')
 CS_VIDEO_SIZE      = com(ur'\d{3,4} ?[Xx] ?\d{3,4}')
