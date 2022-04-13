@@ -3,7 +3,7 @@
   <posters tvdbid="[tvdbid]" name="[Series Name]" note="Example Entry">
     [Season Num]|[URL]
   </posters>
-   <posters tvdbid="303730" name="Active Raid">
+  <posters tvdbid="303730" name="Active Raid">
     01|https://thetvdb.com/banners/seasons/303730-1.jpg
     02|https://thetvdb.com/banners/seasons/303730-1-2.jpg
   </posters>
@@ -16,7 +16,7 @@
     06|https://images-na.ssl-images-amazon.com/images/I/51%2Bd42GD70L.jpg
     07|https://images-na.ssl-images-amazon.com/images/I/91VSDZoWxiL.jpg
     08|https://images-na.ssl-images-amazon.com/images/I/916Z8fWGIEL.jpg
-   </posters>   
+  </posters>   
   <posters tvdbid="79604" name="Black Lagoon">
     01|https://cdn.anidb.net/images/main/131090.jpg
     01|https://www.thetvdb.com/banners/seasons/79604-1.jpg
@@ -116,6 +116,10 @@
     06|https://cdn.anidb.net/images/main/226382.jpg
     07|https://cdn.anidb.net/images/main/221093.jpg
   </posters>  
+  <posters tvdbid="389422" name="How a Realist Hero Rebuilt the Kingdom">
+    01|https://assets.fanart.tv/fanart/tv/389422/seasonposter/how-a-realist-hero-rebuilt-the-kingdom-615307810a0fd.jpg
+    02|https://assets.fanart.tv/fanart/tv/389422/seasonposter/how-a-realist-hero-rebuilt-the-kingdom-6153078f729c6.jpg
+  </posters>
   <posters tvdbid="252322" name="Hunter x Hunter (2011)">
     01|https://vignette.wikia.nocookie.net/hunterxhunter/images/8/89/Hunter_Exam_Arc.jpg
     02|https://vignette.wikia.nocookie.net/hunterxhunter/images/2/26/Zoldyck_Family_members.png
@@ -140,6 +144,11 @@
   <posters tvdbid="385542" name="Moriarty the Patriot">
     01|https://static.wikia.nocookie.net/bakerstreet/images/a/a4/7175HUnVL0L.jpg
     02|https://static.wikia.nocookie.net/bakerstreet/images/e/e0/71XeTz5GmLL.jpg
+  </posters>
+  <posters tvdbid="371310" name="Mushoku Tensei: Jobless Reincarnation">
+    00|https://assets.fanart.tv/fanart/tv/371310/tvposter/mushoku-tensei-jobless-reincarnation-604b7a5b4ed1d.jpg
+    01|https://assets.fanart.tv/fanart/tv/371310/tvposter/mushoku-tensei-jobless-reincarnation-5fe3502cb74a6.jpg
+    02|https://thetvdb.plexapp.com/banners/v4/series/371310/posters/614ef8c58b4d5.jpg
   </posters>
   <posters tvdbid="81797" name="One Piece">
     00|https://vignette.wikia.nocookie.net/onepiece/images/2/2f/Volume_2.png
