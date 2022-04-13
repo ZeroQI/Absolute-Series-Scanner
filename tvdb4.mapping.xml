@@ -8,6 +8,10 @@
     [    0Num]|[First Ep Num]|[Last Ep Num]|[    0Name]
     [    0Num]|[First Ep Num]|[First Ep Num]|[    0Name] (unknown length)
   </anime>
+  <anime tvdbid="378609" name="86">
+    01|001|011|Part 1
+    02|012|023|Part 2
+  </anime>
   <anime tvdbid="309530" name="91 Days">
     01|001|013|91 Days with Ep 13
   </anime>
