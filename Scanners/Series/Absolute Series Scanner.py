@@ -60,7 +60,7 @@ TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
 
 FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
-SEASON_RX       = [ cic(ur'^Specials'),                                                                                                                                           # Specials (season 0)
+SEASON_RX       = [ cic(ur'^(Specials|SPs?|映像特典)'),                                                                                                                                           # Specials (season 0)
                     cic(ur'(^|(?P<show>.*)[\._\-\— ]+)(Season|Series|Book|Saison|Livre|Temporada|[Ss]|se)[\._\—\- ]*?(?P<season>\d{1,4})([\._\-\— ]*.*|$)'),                      # (title) S01
                     cic(u'(?P<show>.*)(?P<season>\d{1,4}).*сезон.*'),                                                                    # (title) S01
                     cic(ur'(^|(?P<show>.*)[\._\-\— ]*)Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                 # (title) S01
@@ -121,7 +121,8 @@ WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "EniaHD (HEVC, WEB-DL 2160p)", "x264
                         "(Exiled_Destiny)", "720p", "480p", "_BD", ".XVID", "(xvid)", "dub.sub_ja+.ru+", "dub.sub_en.ja", "dub_en", "UNCENSORED", "THD", "H264", "2xDVO", "Subs", "Sub",
                         'ExKinoRay', "NTb", "(S01-02)", "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "NTSC",
                         "%28", "%29", " (1)", "(Clean)", "(DVDRemux)", "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits",
-                        "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "(Remastered HQ)", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP"
+                        "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "(Remastered HQ)", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP",
+                        "mawen1250", "Creditless", "YUV420P10"
                       ]                                                                                                                                                               #include spaces, hyphens, dots, underscore, case insensitive
 WHACK_PRE_CLEAN     = [cic(re.escape(entry)) for entry in WHACK_PRE_CLEAN_RAW]
 WHACK               = [                                                                                                                                                               ### Tags to remove (lowercase) ###
@@ -349,7 +350,7 @@ def filter_chars(string):
 ### Allow to display ints even if equal to None at times ################################################
 CS_PARENTHESIS     = com(ur'\([^\(\)]*?\)')
 CS_BRACKETS_CHAR   = com(ur'(\[|\]|\{|\})')
-CS_BRACKETS        = com(ur'(\[(?!第?\d{1,3}[话話]?(-\d{1,3}[话話]?)?([Vv]\d)?\])[^\[\]]*?\]|\{(?!\d{1,3}\})[^\{\}]*?\})')
+CS_BRACKETS        = com(ur'(\[(?!(第?\d{1,3}[话話]?(-\d{1,3}[话話]?)?([Vv]\d)?|((OP|NCOP|OPENING|ED|NCED|ENDING|OVA)(\d{1,3})?[ _\.]?(EP?)?(\d{1,3})?))\])[^\[\]]*?\]|\{(?!\d{1,3}\})[^\{\}]*?\})')
 CS_SPECIAL_EP_PAT, CS_SPECIAL_EP_REP   = com(ur'(?P<a>[^0-9Ssv]\d{1,3})\.(?P<b>\d{1,2}(\D|$))'), ur'\g<a>DoNoTfIlTeR\g<b>'
 CS_CRC_HEX         = com(ur'[0-9a-fA-F]{8}')
 CS_VIDEO_SIZE      = com(ur'\d{3,4} ?[Xx] ?\d{3,4}')
