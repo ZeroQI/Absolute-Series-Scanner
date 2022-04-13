@@ -3,7 +3,13 @@
   <posters tvdbid="[tvdbid]" name="[Series Name]" note="Example Entry">
     [Season Num]|[URL]
   </posters>
-   <posters tvdbid="303730" name="Active Raid">
+  <posters tvdbid="378609" name="86">
+    01|https://artworks.thetvdb.com/banners/v4/series/378609/posters/604385fb69275.jpg
+    01|https://artworks.thetvdb.com/banners/v4/series/378609/posters/6078b28f74132.jpg
+    02|https://artworks.thetvdb.com/banners/v4/series/378609/posters/6078b28f74132.jpg
+    02|https://artworks.thetvdb.com/banners/v4/series/378609/posters/61337253b2599.jpg
+  </posters>
+  <posters tvdbid="303730" name="Active Raid">
     01|https://thetvdb.com/banners/seasons/303730-1.jpg
     02|https://thetvdb.com/banners/seasons/303730-1-2.jpg
   </posters>
