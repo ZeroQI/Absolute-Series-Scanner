@@ -18,10 +18,6 @@
   <anime tvdbid="150471" name="Angel Beats!">
     01|001|016|Active Raid 1st Cour
   </anime>
-  <anime tvdbid="389422" name="How a Realist Hero Rebuilt the Kingdom">
-    01|001|013|How a Realist Hero Rebuilt the Kingdom
-    02|014|026|How a Realist Hero Rebuilt the Kingdom (2022)
-  </anime>
   <anime tvdbid="293996" name="The Asterisk War: The Academy City on the Water">
     01|001|012|Asterisk War 1
     02|013|024|Asterisk War 2
@@ -168,6 +164,10 @@
     05|317|328|Gintama. (2017)
     06|329|353|Gintama. (2017-2018)
     07|354|367|Gintama (2018)
+  </anime>
+  <anime tvdbid="389422" name="How a Realist Hero Rebuilt the Kingdom">
+    01|001|013|How a Realist Hero Rebuilt the Kingdom
+    02|014|026|How a Realist Hero Rebuilt the Kingdom (2022)
   </anime>
   <anime tvdbid="252322" name="Hunter x Hunter (2011)">
     01|001|021|Hunter Exam Arc
