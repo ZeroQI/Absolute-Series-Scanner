@@ -89,7 +89,7 @@ COUNTER         = 500
 
 IGNORE_DIRS  = [ '*/@Recycle/*', '*/.@__thumb/*', '*/@eaDir/*', '*/lost+found/*', '*/.DS_Store/*', '*/.AppleDouble/*', # OS cache-trash folders
                  '*/$Recycle.Bin/*', '*/System Volume Information/*', '*/Temporary Items/*', '*/Network Trash Folder/*',
-                 '*extras*', '*samples*', '*bonus*', '*/VIDEO_TS/*', '*/BDMV/*',   # Plex special keyword file/folder exclusion (https://support.plex.tv/articles/201381883-special-keyword-file-folder-exclusion/)
+                 '*extras*', '*samples*', '*bonus*',                               # Plex special keyword file/folder exclusion (https://support.plex.tv/articles/201381883-special-keyword-file-folder-exclusion/)
                  '*/.git/*', '*/.xattr/*', '*_UNPACK_*', '*_FAILED_*',             # Additional software created folders
                  '*/_*' ]                                                          # Folders that start with underscore
 IGNORE_FILES = [ '*[ _.-]sample.*', '*[ _.-]recap.*', '_*', '*/_*' ]               # Samples, recaps, files that start with underscore
