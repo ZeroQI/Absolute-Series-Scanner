@@ -122,7 +122,7 @@ WHACK_PRE_CLEAN_RAW = [ "x264-FMD Release", "EniaHD (HEVC, WEB-DL 2160p)", "x264
                         'ExKinoRay', "NTb", "(S01-02)", "-Cd 1", "-Cd 2", "Vol 1", "Vol 2", "Vol 3", "Vol 4", "Vol 5", "Vol.1", "Vol.2", "Vol.3", "Vol.4", "Vol.5", "NTSC",
                         "%28", "%29", " (1)", "(Clean)", "(DVDRemux)", "vostfr", "HEVC", "(Bonus inclus)", "(BD 1920x1080)", "10Bits-WKN", "WKN", "(Complet)", "Despair-Paradise", "Shanks@", "[720p]", "10Bits",
                         "(TV)", "[DragonMax]", "INTEGRALE", "MKV", "(Remastered HQ)", "MULTI", "DragonMax", "Zone-Telechargement.Ws", "Zone-Telechargement", "AniLibria.TV", "HDTV-RIP",
-                        "mawen1250", "Creditless", "YUV420P10"
+                        "mawen1250", "Creditless", "YUV420P10", "AI-Raws", "philosophy-raws", "VCB-S"
                       ]                                                                                                                                                               #include spaces, hyphens, dots, underscore, case insensitive
 WHACK_PRE_CLEAN     = [cic(re.escape(entry)) for entry in WHACK_PRE_CLEAN_RAW]
 WHACK               = [                                                                                                                                                               ### Tags to remove (lowercase) ###
@@ -361,6 +361,10 @@ def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no
   if not string: return ""                                                                                                           # if empty return empty string
   if no_parenthesis:                                                                                                                 # delete parts between parenthesis if needed
     while CS_PARENTHESIS.search(string):            string = CS_PARENTHESIS.sub(' ', string)                                         # support imbricated parrenthesis like: "Cyborg 009 - The Cyborg Soldier ((Cyborg) 009 (2001))"
+  
+  if string.count(']') > 1 and string.count(']') == string.count('][') + 1:                                                         # remove the first two pairs of '[]' if the file name is full of brackets (Ex: [xxx][xxx][xxx][xxx].mp4)
+    string = string.replace('[', ' ', 2).replace(']', ' ', 2)
+  
   while CS_BRACKETS.search(string):                 string = CS_BRACKETS.sub(' ', string)                                            # remove "[xxx]" groups but ep numbers inside brackets as Plex cleanup keep inside () but not inside [] #look behind: (?<=S) < position < look forward: (?!S)
   string = CS_BRACKETS_CHAR.sub(" ", string)                                                                                          # remove any remaining '{}[]' characters
   if not no_whack:
