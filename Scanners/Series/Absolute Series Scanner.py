@@ -42,8 +42,8 @@ PLEX_LIBRARY_URL       = "http://localhost:32400/library/sections/"  # Allow to 
 SSL_CONTEXT            = ssl.SSLContext(SSL_PROTOCOL)
 HEADERS                = {'Content-type': 'application/json'}
 
-SOURCE_IDS             = cic(ur'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-6])|tmdb|tsdb|imdb|youtube(|[2-3])))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
-SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "youtube.id", "youtube2.id", "youtube3.id"]
+SOURCE_IDS             = cic(ur'\[((?P<source>(anidb(|[2-4])|tvdb(|[2-6])|tmdb|tsdb|imdb|mal|youtube(|[2-3])))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))\]')
+SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "mal.id", "youtube.id", "youtube2.id", "youtube3.id"]
 SOURCE_ID_OFFSET       = cic(ur'(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?')
 ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
 
