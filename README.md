@@ -205,6 +205,7 @@ You can specify the guid to use the following way:
 <UL><LI>Star Wars: The Clone Wars [tvdb5-83268] </LI></UL>
 </TD> </TR>
         <TR> <TD> youtube     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) on series folder or season folder (auto-reversing) or channel id on series folder (year used as season, added as date-based unless there are duplicates for the date in which case it choose ep number MMDDxx with XX being incremental)</TD> </TR>
+        <TR> <TD> youtube2     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Recommended for channels that release multiple episodes per day. Put channel id on series folder (year used as season, episodes added as MMDDhhmm. If date not present in filename, will use the files date for Month, Day, Hour and Minute, but if the date is present in the filename than Month and Day are pulled from it instead)</TD> </TR>
 </TBODY>
 </TABLE>
 

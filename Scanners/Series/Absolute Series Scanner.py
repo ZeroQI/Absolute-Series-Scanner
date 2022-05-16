@@ -1002,11 +1002,18 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         for rx in DATE_RX:
           match = rx.search(file)  # file starts with "yyyy-mm-dd" "yyyy.mm.dd" "yyyy mm dd" or "yyyymmdd"
           if match:
-            season, episode = match.group('year'), '{}-{:>02}-{:>02}'.format(match.group('year'), match.group('month'), match.group('day'))
+            if source=='youtube2': 
+              filedate        = time.gmtime(os.path.getmtime(filename))
+              season, episode = match.group('year'), '{:>02}{:>02}{:>02}{:>02}'.format(match.group('month'), match.group('day'), filedate[3], filedate[4])
+            else:
+              season, episode = match.group('year'), '{}-{:>02}-{:>02}'.format(match.group('year'), match.group('month'), match.group('day'))
             break
         else:
           filedate        = time.gmtime(os.path.getmtime(filename))
-          season, episode = str(filedate[0]), '{}-{:>02}-{:>02}'.format(filedate[0], filedate[1], filedate[2])
+          if  source=='youtube2':
+            season, episode = str(filedate[0]), '{:>02}{:>02}{:>02}{:>02}'.format(filedate[1], filedate[2], filedate[3], filedate[4])
+          else:
+            season, episode = str(filedate[0]), '{}-{:>02}-{:>02}'.format(filedate[0], filedate[1], filedate[2])
         if isinstance(season,  unicode):  season  =  season.encode('utf-8')
 
         if not Dict(mapping, season, episode):  SaveDict(filename, mapping, season, episode)
