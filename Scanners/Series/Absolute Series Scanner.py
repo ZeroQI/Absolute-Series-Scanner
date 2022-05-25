@@ -985,7 +985,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           for filename in os.listdir(os.path.join(root, path)):
             file = os.path.join(root, path, filename)
             if extension(filename) not in VIDEO_EXTS or os.path.isdir(file):  continue  #only files with video extensions
-            for rank, video in enumerate(sorted(json_full, key = lambda i: (i['contentDetails']['videoPublishedAt'])) if source=='youtube3' else json_full, start=0):
+            for rank, video in enumerate(sorted(json_full, key = lambda i: (i['snippet']['publishedAt'])) if source=='youtube3' else json_full, start=0):
               epNumber = totalResults - rank if reverse else rank+1
               VideoID  = Dict(video, 'snippet', 'resourceId', 'videoId') or Dict(video, 'contentDetails', 'videoId')
               if VideoID and VideoID in filename:  add_episode_into_plex(media, file, root, path, folder_show, int(folder_season or 1), epNumber, video['snippet']['title'].encode('utf8'), "", "", 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  break
