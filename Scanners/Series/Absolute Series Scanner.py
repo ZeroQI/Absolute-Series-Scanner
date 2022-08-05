@@ -70,7 +70,7 @@ SERIES_RX       = [                                                             
   cic(ur'(^|(?P<show>.*?)[ _\.\-]*)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,4})(([ _\.\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,4}))?[ _\.]*(?P<title>.*?)$'),                        #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,4})[ _\.\-]?of[ _\.\-]?\d{1,4}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   cic(ur'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,4})(-(?P<ep2>\d{1,4}))?(V\d)?[ _\.]*?(?P<title>.*)$'),                                                                      #  2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   cic(ur'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,4})\][ _\.](?P<title>.*)$'),
-  cic(ur'^\[.*\]\[(?P<show>.*)\]\[第?(?P<ep>\d{1,4})[话話]?(-(?P<ep2>\d{1,4})[话話]?)?\].*$'),
+  cic(ur'^\[.*\]\[(?P<show>.*)\]\[第?(?P<ep>\d{1,4})[话話集]?(-(?P<ep2>\d{1,4})[话話集]?)?\].*$'),
   cic(ur'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.\-]+(?P<title>.*)|$)') #20th Television production format (Futurama)
   ]
 MOVIE_RX        = cic(ur'(?P<show>.*) \((?P<year>\d{4})\)$')
@@ -82,7 +82,7 @@ ANIDB_RX        = [                                                             
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                      #  2 # 150-199 Endings
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T)[ _\.]?(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                         #  3 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                                         #  4 # 400-499 Others
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(EP?[ _\.\-]?)?第?(?P<ep>\d{1,4})[话話]?((-|-?EP?)(?P<ep2>\d{1,4})[话話]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$')]        #  5 # E01 | E01-02| E01-E02 | E01E02
+                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(EP?[ _\.\-]?)?第?(?P<ep>\d{1,4})[话話集]?((-|-?EP?)(?P<ep2>\d{1,4})[话話集]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$')]        #  5 # E01 | E01-02| E01-E02 | E01E02
 ANIDB_OFFSET    = [        0,       100,      150,       200,     400,         0,         0]                                                                                     ###### AniDB Specials episode offset value array
 ANIDB_TYPE      = ['Special', 'Opening', 'Ending', 'Trailer', 'Other', 'Episode', 'Episode']                                                                                     ###### AniDB titles
 COUNTER         = 500
@@ -350,7 +350,7 @@ def filter_chars(string):
 ### Allow to display ints even if equal to None at times ################################################
 CS_PARENTHESIS     = com(ur'\([^\(\)]*?\)')
 CS_BRACKETS_CHAR   = com(ur'(\[|\]|\{|\})')
-CS_BRACKETS        = com(ur'(\[(?!(第?\d{1,3}[话話]?(-\d{1,3}[话話]?)?([Vv]\d)?|((OP|NCOP|OPENING|ED|NCED|ENDING|OVA)(\d{1,3})?[ _\.]?(EP?)?(\d{1,3})?))\])[^\[\]]*?\]|\{(?!\d{1,3}\})[^\{\}]*?\})')
+CS_BRACKETS        = com(ur'(\[(?!(第?\d{1,3}[话話集]?(-\d{1,3}[话話集]?)?([Vv]\d)?|((OP|NCOP|OPENING|ED|NCED|ENDING|OVA)(\d{1,3})?[ _\.]?(EP?)?(\d{1,3})?))\])[^\[\]]*?\]|\{(?!\d{1,3}\})[^\{\}]*?\})')
 CS_SPECIAL_EP_PAT, CS_SPECIAL_EP_REP   = com(ur'(?P<a>[^0-9Ssv]\d{1,3})\.(?P<b>\d{1,2}(\D|$))'), ur'\g<a>DoNoTfIlTeR\g<b>'
 CS_CRC_HEX         = com(ur'[0-9a-fA-F]{8}')
 CS_VIDEO_SIZE      = com(ur'\d{3,4} ?[Xx] ?\d{3,4}')
