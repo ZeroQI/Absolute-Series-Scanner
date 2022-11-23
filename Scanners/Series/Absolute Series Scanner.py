@@ -8,7 +8,6 @@ import tempfile                                                      # NamedTemp
 import time                                                          # strftime
 import datetime                                                      # datetime
 import re                                                            # match, compilef, sub
-import fnmatch                                                       # translate
 import logging, logging.handlers                                     # FileHandler, Formatter, getLogger, DEBUG | RotatingFileHandler
 import inspect                                                       # getfile, currentframe
 import ssl                                                           # SSLContext
@@ -27,6 +26,48 @@ else:    FileBot = {'TheTVDB': 'tvdb', 'AniDB': 'anidb', 'TheMovieDB::TV': 'tsdb
 import Media                                                         # Episode
 import VideoFiles                                                    # Scan
 import Stack                                                         # Scan
+
+###### fnmatch polyfill  #############################################
+
+_cache = {}
+_MAXCACHE = 100
+
+class fnmatch:
+  @staticmethod
+  def fnmatch(name, pat):
+    name = os.path.normcase(name)
+    pat = os.path.normcase(pat)
+    return fnmatch.fnmatchcase(name, pat)
+
+  @staticmethod
+  def fnmatchcase(name, pat):
+    try:
+      re_pat = _cache[pat]
+    except KeyError:
+      res = fnmatch.translate(pat)
+      if len(_cache) >= _MAXCACHE:
+        _cache.clear()
+      _cache[pat] = re_pat = re.compile(res)
+    return re_pat.match(name) is not None
+
+  @staticmethod
+  def translate(pat):
+    """Translate a shell PATTERN to a regular expression.
+    There is no way to quote meta-characters.
+    """
+
+    i, n = 0, len(pat)
+    res = ''
+    while i < n:
+      c = pat[i]
+      i = i+1
+      if c == '*':
+        res = res + '.*'
+      else:
+        res = res + re.escape(c)
+    return res + '\Z(?ms)'
+
+###### fnmatch polyfill end  #########################################
 
 ### http://www.zytrax.com/tech/web/regex.htm  # http://regex101.com/#python
 def com(string):  return re.compile(string, re.UNICODE)     #RE Compile
