@@ -670,6 +670,13 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
   folder_season, season_folder_first = None, False
   for folder in reverse_path[:-1]:                  # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
     if SOURCE_IDS.search(folder):  continue         #if it has a forced id, not a season folder
+    has_forced_id_file = False
+    for file in SOURCE_ID_FILES:                    # check to see if the folder contains a forced id file
+      file_fullpath = os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)
+      if os.path.isfile(file_fullpath):
+        has_forced_id_file = True
+        break
+    if has_forced_id_file == True: break            #if it has a forced id file, not a season folder
     for rx in SEASON_RX:                            # in anime, more specials folders than season folders, so doing it first
       folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True)
       folder_clean = folder_clean.replace(reverse_path[-1], "")
@@ -1293,6 +1300,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         for dir in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
           match = SOURCE_IDS.search(dir)
           if match:  Log.info(u'Source id detected: {}'.format(match.group('yt') if match.group('yt') else match.group('id'))); continue        #if it has a forced id, not a season folder
+          has_forced_id_file = False
+          for file in SOURCE_ID_FILES:                # check to see if the folder contains a forced id file
+            file_fullpath = os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)
+            if os.path.isfile(file_fullpath):
+              has_forced_id_file = True
+              Log.info(u'Source id detected: {}'.format(read_file(file_fullpath).strip()))
+              break
+          if has_forced_id_file == True: continue     #if it has a forced id file, not a season folder
           dir_clean = clean_string(dir, no_dash=True, no_underscore=True, no_dot=True)
           for rx in SEASON_RX:                        # in anime, more specials folders than season folders, so doing it first
             if rx.search(dir_clean):                  # get season number but Skip last entry in seasons (skipped folders)
