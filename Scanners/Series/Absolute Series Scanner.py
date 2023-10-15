@@ -1156,6 +1156,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         if not ep:                                                                                                 continue                                           #
         for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
           if ep.startswith(prefix) and len(ep)>len(prefix) and WS_DIGIT.search(ep[len(prefix):]):
+            if prefix == "s" and words.index(word) + 1 < len(words) and '-' in words[words.index(word) + 1:]:      continue                                           # don't take special if it is followed by the separator
             #Log.info(u'misc_count[word]: {}, filename.count(word)>=2: {}'.format(misc_count[word] if word in misc_count else 0, filename.count(word)))
             ep, season = ep[len(prefix):], 0 if prefix=="s" and (word not in misc_count or filename.count(word)==1 and misc_count[word]==1 or filename.count(word)>=2 and misc_count[word]==2) else season  # E/EP/act before ep number ex: Trust and Betrayal OVA-act1 # to solve s00e002 "Code Geass Hangyaku no Lelouch S5 Picture Drama 02 'Stage 3.25'.mkv" "'Stage 3 25'"
             break
