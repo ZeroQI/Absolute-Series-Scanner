@@ -1327,11 +1327,11 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             set_logging(root=root, filename=path.split(os.sep)[0]+'.filelist.log', mode='w')  #Empty filelist     log
             set_logging(root=root, filename=log_filename         +'.scanner.log' , mode='a')  #Set back
         if len(reverse_path)>1  and folder_count[root_folder]>1:  # and not season_folder_first ### Calling Scan for grouping folders only ###
-          Log.info(u'{}[{}] {:<{x}} {}'.format(''.ljust(path.count(os.sep)*4, ' '), 'S' if folder in season_folder else 'G', folder_clean, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
+          Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 'S' if folder in season_folder else 'G', folder, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
           if subdir_files:
             Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
             set_logging(root=root, filename=log_filename+'.scanner.log', mode='a')  #due to concurrent calls, wouldn't log propertly without setting it back, just in case
-        else:  Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 's' if folder in season_folder else '_', folder_clean, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
+        else:  Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 's' if folder in season_folder else '_', folder, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
 
     Log.info(u"".ljust(157, '='))
     Log.info(u"Dirs left for normal Plex calls:")
