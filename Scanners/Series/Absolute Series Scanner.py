@@ -1276,7 +1276,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
       ### Skip path if matching Ignore dirs ###
       for rx in IGNORE_DIRS_RX:               # loop rx for folders to ignore
-        if rx.match(folder_clean):  # if folder match rx
+        if rx.match(folder):  # if folder match rx
           Log.info(u'{}[!] {} match IGNORE_DIRS_RX pattern [{}]'.format(''.ljust(path.count(os.sep)*4, ' '), os.path.basename(path), IGNORE_DIRS_RX.index(rx)))
           if full_path in dirs:  dirs.remove(full_path)  # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
           break
