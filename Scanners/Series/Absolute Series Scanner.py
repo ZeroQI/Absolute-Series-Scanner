@@ -668,15 +668,17 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
   ### Remove season folder to reduce complexity and use folder as serie name ###
   folder_season, season_folder_first = None, False
+  has_forced_id = False
   for folder in reverse_path[:-1]:                  # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
-    if SOURCE_IDS.search(folder):  continue         #if it has a forced id, not a season folder
-    has_forced_id_file = False
+    if SOURCE_IDS.search(folder):                   #if it has a forced id, not a season folder
+      has_forced_id = True
+      continue
     for file in SOURCE_ID_FILES:                    # check to see if the folder contains a forced id file
       file_fullpath = os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)
       if os.path.isfile(file_fullpath):
-        has_forced_id_file = True
+        has_forced_id = True
         break
-    if has_forced_id_file == True: break            #if it has a forced id file, not a season folder
+    if has_forced_id == True: break                 # if it has a forced id file, not a season folder
     for rx in SEASON_RX:                            # in anime, more specials folders than season folders, so doing it first
       folder_clean = clean_string(folder, no_dash=True, no_underscore=True, no_dot=True)
       folder_clean = folder_clean.replace(reverse_path[-1], "")
@@ -1282,6 +1284,19 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           break
       else:
 
+        ### Allow match of the top level folder as a show
+        if has_forced_id == False:
+          match = SOURCE_IDS.search(folder)
+          if match:  
+            Log.info(u'Source id detected: {}'.format(match.group('yt') if match.group('yt') else match.group('id'))); has_forced_id = True       #if it has a forced id
+          else:
+            for file in SOURCE_ID_FILES:              # check to see if the folder contains a forced id file
+              file_fullpath = os.path.join(full_path, file)
+              if os.path.isfile(file_fullpath):
+                has_forced_id = True
+                Log.info(u'Source id detected: {}'.format(read_file(file_fullpath).strip()))
+                break
+
         ### Process subfolders ###
         subdir_dirs, subdir_files, folder_count[path] = [], [], 0
         try:
@@ -1300,15 +1315,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         #season_folder_first = False
         for dir in reverse_path[:-1]:                 # remove root folder from test, [:-1] Doesn't thow errors but gives an empty list if items don't exist, might not be what you want in other cases
           match = SOURCE_IDS.search(dir)
-          if match:  Log.info(u'Source id detected: {}'.format(match.group('yt') if match.group('yt') else match.group('id'))); continue        #if it has a forced id, not a season folder
-          has_forced_id_file = False
+          if match:  Log.info(u'Source id detected: {}'.format(match.group('yt') if match.group('yt') else match.group('id'))); break           #if it has a forced id, not a season folder
+          dir_has_forced_id = False
           for file in SOURCE_ID_FILES:                # check to see if the folder contains a forced id file
             file_fullpath = os.path.join(root, os.sep.join(list(reversed(reverse_path))), file)
             if os.path.isfile(file_fullpath):
-              has_forced_id_file = True
+              dir_has_forced_id = True
               Log.info(u'Source id detected: {}'.format(read_file(file_fullpath).strip()))
               break
-          if has_forced_id_file == True: continue     #if it has a forced id file, not a season folder
+          if dir_has_forced_id == True: break         # if it has a forced id file, not a season folder
           dir_clean = clean_string(dir, no_dash=True, no_underscore=True, no_dot=True)
           for rx in SEASON_RX:                        # in anime, more specials folders than season folders, so doing it first
             if rx.search(dir_clean):                  # get season number but Skip last entry in seasons (skipped folders)
@@ -1326,7 +1341,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             set_logging(root=root, filename=path.split(os.sep)[0]+'.scanner.log' , mode='w')  #Empty serie folder log
             set_logging(root=root, filename=path.split(os.sep)[0]+'.filelist.log', mode='w')  #Empty filelist     log
             set_logging(root=root, filename=log_filename         +'.scanner.log' , mode='a')  #Set back
-        if len(reverse_path)>1  and folder_count[root_folder]>1:  # and not season_folder_first ### Calling Scan for grouping folders only ###
+        if (len(reverse_path)>1  and folder_count[root_folder]>1) or has_forced_id:  # and not season_folder_first ### Calling Scan for grouping folders only ###
           Log.info(u'{}[{}] {:<{x}} {}'.format(''.ljust(path.count(os.sep)*4, ' '), 'S' if folder in season_folder else 'G', folder_clean, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
           if subdir_files:
             Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
