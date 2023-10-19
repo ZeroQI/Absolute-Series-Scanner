@@ -1278,7 +1278,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
       ### Skip path if matching Ignore dirs ###
       for rx in IGNORE_DIRS_RX:               # loop rx for folders to ignore
-        if rx.match(folder_clean):  # if folder match rx
+        if rx.match(folder):  # if folder match rx
           Log.info(u'{}[!] {} match IGNORE_DIRS_RX pattern [{}]'.format(''.ljust(path.count(os.sep)*4, ' '), os.path.basename(path), IGNORE_DIRS_RX.index(rx)))
           if full_path in dirs:  dirs.remove(full_path)  # Since iterating slice [:] or [:-1] doesn't hinder iteration. All ways to remove: reverse_path.pop(-1), reverse_path.remove(thing|array[0])
           break
@@ -1341,12 +1341,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             set_logging(root=root, filename=path.split(os.sep)[0]+'.scanner.log' , mode='w')  #Empty serie folder log
             set_logging(root=root, filename=path.split(os.sep)[0]+'.filelist.log', mode='w')  #Empty filelist     log
             set_logging(root=root, filename=log_filename         +'.scanner.log' , mode='a')  #Set back
-        if (len(reverse_path)>1  and folder_count[root_folder]>1) or has_forced_id:  # and not season_folder_first ### Calling Scan for grouping folders only ###
-          Log.info(u'{}[{}] {:<{x}} {}'.format(''.ljust(path.count(os.sep)*4, ' '), 'S' if folder in season_folder else 'G', folder_clean, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
+        if len(reverse_path)>1  and folder_count[root_folder]>1:  # and not season_folder_first ### Calling Scan for grouping folders only ###
+          Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 'S' if folder in season_folder else 'G', folder, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
           if subdir_files:
             Scan(path, sorted(subdir_files), media, sorted(subdir_dirs), language=language, root=root, kwargs_trigger=True)  #relative path for dir or it will show only grouping folder series
             set_logging(root=root, filename=log_filename+'.scanner.log', mode='a')  #due to concurrent calls, wouldn't log propertly without setting it back, just in case
-        else:  Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 's' if folder in season_folder else '_', folder_clean, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
+        else:  Log.info(u'{}[{}] {:<{x}}{}'.format(''.ljust(indent, ' '), 's' if folder in season_folder else '_', folder, '({:>3} files)'.format(len(subdir_files)) if subdir_files else '', x=120-indent))
 
     Log.info(u"".ljust(157, '='))
     Log.info(u"Dirs left for normal Plex calls:")
