@@ -1161,6 +1161,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         ep=word.lower().strip('-.')                                                                                                                                   # cannot use words[words.index(word)] otherwise# if word=='': continue filter prevent "" on double spaces
         if WS_VERSION.search(ep):                                                                                  ep=ep[:-2].rstrip('-.')                            #
         if not ep:                                                                                                 continue                                           #
+        skip_word = False
         for prefix in ["ep", "e", "act", "s"]:                                                                                                                        #
           if ep.startswith(prefix) and len(ep)>len(prefix) and WS_DIGIT.search(ep[len(prefix):]):
             if prefix == "s" and words.index(word) + 1 < len(words) and '-' in words[words.index(word) + 1:]:      skip_word = True; continue                         # don't take special if it is followed by the separator
