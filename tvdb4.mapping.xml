@@ -29,7 +29,7 @@
   <anime tvdbid="331753" name="Black Clover">
     01|001|027|Season 1
     02|028|050|Season 2
-    03|051|065|Season 3 
+    03|051|065|Season 3
     04|066|072|Season 4
     05|073|085|Season 5
     06|086|120|Season 6
@@ -49,7 +49,7 @@
     05|092|109|Bount Assault on Soul Society Arc
     06|110|131|Arrancar: The Arrival Arc
     07|132|151|Arrancar: The Hueco Mundo Sneak Entry Arc
-    08|152|167|Arrancar: The Fierce Fight 
+    08|152|167|Arrancar: The Fierce Fight
     09|168|189|The New Captain Shūsuke Amagai arc
     10|190|205|Arrancar vs. Shinigami Arc
     11|206|212|The Past Arc
@@ -90,6 +90,18 @@
   <anime tvdbid="254661" name="Daily Lives of High School Boys">
     01|001|012|Season 1
     02|013|019|Specials as Season 2
+  </anime>
+  <anime tvdbid="348545" name="Demon Slayer">
+	01|001|005|Final Selection Arc
+	02|006|007|Kidnapper's Bog Arc
+	03|008|010|Asakusa Arc
+	04|011|014|Tsuzumi Mansion Arc
+	05|015|021|Mount Natagumo Arc
+	06|022|026|Rehabilitation Training Arc
+	07|027|033|Mugen Train Arc
+	08|034|044|Entertainment District Arc
+	09|045|055|Swordsmith Village Arc
+	10|056|056|Hashira Training Arc (unknown length)
   </anime>
   <anime tvdbid="76666" name="Dragon Ball">
     01|001|013|Emperor Pilaf Saga
@@ -243,7 +255,7 @@
   <anime tvdbid="81797" name="One Piece">
     01|0001|0030|East Blue - Gathering the Crew
     02|0031|0044|Arlong Park
-    03|0045|0063|Entering into the Grand Line 
+    03|0045|0063|Entering into the Grand Line
     04|0064|0077|Whiskey Peak and Little Garden
     05|0078|0091|Drum Island
     06|0092|0135|Alabasta
