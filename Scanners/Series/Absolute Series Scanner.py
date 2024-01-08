@@ -1011,7 +1011,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
         json_playlist = Dict(json.loads(read_file(json_playlist_file)), 'entries')
         for file in os.listdir(os.path.join(root, path)):
           if extension(file) not in VIDEO_EXTS or os.path.isdir(os.path.join(root, path, file)):  continue  #files only with video extensions
-          for rank, video in enumerate(json_playlist or {}, start=1):
+          for rank, video in enumerate(sorted(json_playlist, key = lambda i: (i["upload_date"]), start=1):
             VideoID = Dict(video, 'id')
             if VideoID and VideoID in file:  add_episode_into_plex(media, os.path.join(root, path, file), root, path, folder_show, int(folder_season if folder_season is not None else 1), rank, Dict(video, 'title'), "", rank, 'YouTube', tvdb_mapping, unknown_series_length, offset_season, offset_episode, mappingList);  break
           else:                              Log.info(u'None of video IDs found in filename: {}'.format(file))# entry["_filename"], entry["playlist_index"], entry['upload_date'],
