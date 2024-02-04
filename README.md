@@ -292,6 +292,9 @@ The following suffixes are supported:
   
   "Seraph of the End - Vampire Reign    [tvdb4-79604]"
   "Seraph of the End - Battle in Nagoya [tvdb4-79604-s2]"
+
+== Example 5 ==
+  "Hand_Tool_Rescue [youtube2-UCasG9kJWi1eVxM0QkyqKVJQ]"
 </CODE></PRE>
 
 ### .plexignore files
