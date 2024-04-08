@@ -118,7 +118,7 @@ MOVIE_RX        = cic(ur'(?P<show>.*) \((?P<year>\d{4})\)$')
 DATE_RX         = [ cic(ur'(?P<year>\d{4})[ \-\.]?(?P<month>\d{2})[ \-\.]?(?P<day>\d{2})'),  # 2009-02-10  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
                     cic(ur'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]  # 02-10-2009
 ANIDB_RX        = [                                                                                                                                                              ###### AniDB Specials episode offset regex array
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                       #  0 # 001-099 Specials
+                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAD)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                   #  0 # 001-099 Specials
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                     #  1 # 100-149 Openings
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                      #  2 # 150-199 Endings
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T)[ _\.]?(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                         #  3 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
@@ -188,7 +188,7 @@ WS_VERSION          = com(ur'v\d$')
 WS_DIGIT            = com(ur'^\d+(\.\d+)?$')
 WS_MULTI_EP_SIMPLE  = com(ur'^(?P<ep>\d{1,3})-(?P<ep2>\d{1,3})$')
 WS_MULTI_EP_COMPLEX = com(ur'^(ep?[ -]?)?(?P<ep>\d{1,3})(-|ep?|-ep?)(?P<ep2>\d{1,3})')
-WS_SPECIALS         = com(ur'^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?)(\d{1,3})?$)')
+WS_SPECIALS         = com(ur'^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?|oad)(\d{1,3})?$)')
 # Switch to turn on youtube date scanning
 
 ### Setup core variables ################################################################################
