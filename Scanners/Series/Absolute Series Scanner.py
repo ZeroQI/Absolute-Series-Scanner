@@ -115,7 +115,7 @@ SERIES_RX       = [                                                             
   cic(ur'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.\-]+(?P<title>.*)|$)') #20th Television production format (Futurama)
   ]
 MOVIE_RX        = cic(ur'(?P<show>.*) \((?P<year>\d{4})\)$')
-DATE_RX         = [ cic(ur'(?P<year>\d{4})[ \-\.]?(?P<month>\d{2})[ \-\.]?(?P<day>\d{2})'),  # 2009-02-10  #https://support.plex.tv/articles/200381053-naming-date-based-tv-shows/
+DATE_RX         = [ cic(ur'(?P<year>(0[1-9]|[12][0-9]|3[01]))[ \-\.]?(?P<month>(0[1-9]|1[1,2]))[ \-\.]?(?P<day>(0[1-9]|[12][0-9]|3[01]))'),
                     cic(ur'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]  # 02-10-2009
 ANIDB_RX        = [                                                                                                                                                              ###### AniDB Specials episode offset regex array
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAD)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                   #  0 # 001-099 Specials
