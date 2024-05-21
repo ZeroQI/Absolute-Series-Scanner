@@ -823,16 +823,10 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             page = Dict(episodes_json_page, 'links', 'next')
 
           # SORT JSON EPISODES
-          sorted_episodes_json = {}
-          for episode_json in episodes_json: sorted_episodes_json['s{:02d}e{:03d}'.format(Dict(episode_json, 'airedSeason'), Dict(episode_json, 'airedEpisodeNumber'))] = episode_json
-          sorted_episodes_index_list = sorted(sorted_episodes_json, key=natural_sort_key)  #Log.Info(u'len: {}, sorted_episodes_index_list: {}'.format(len(sorted_episodes_index_list), sorted_episodes_index_list))
+          tvdb_mapping = {}
+          for episode_json in episodes_json: tvdb_mapping [Dict(episode_json, 'absoluteNumber')] = ( Dict(episode_json, 'airedSeason'), Dict(episode_json, 'airedEpisodeNumber') if source =='tvdb2' else Dict(episode_json, 'absoluteNumber') )
+          tvdb_mapping = sorted(tvdb_mapping, key=natural_sort_key)  #Log.Info(u'len: {}, tvdb_mapping: {}'.format(len(tvdb_mapping), tvdb_mapping))
 
-          # Loop through sorted episodes list
-          absolute_number, tvdb_mapping = 0, {}
-          for index in sorted_episodes_index_list:
-            if Dict(sorted_episodes_json[index], 'airedSeason')>0: #continue
-              absolute_number = absolute_number + 1
-              tvdb_mapping[int(absolute_number)] = (Dict(sorted_episodes_json[index], 'airedSeason'), Dict(sorted_episodes_json[index], 'airedEpisodeNumber') if source =='tvdb2' else int(absolute_number))
         except Exception as e:  Log.error("json loading issue, Exception: %s" % e)
 
       #tvdb4 - Absolute numbering in any season arrangements aka saga mode
