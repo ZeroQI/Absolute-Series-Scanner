@@ -115,8 +115,8 @@ SERIES_RX       = [                                                             
   cic(ur'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.\-]+(?P<title>.*)|$)') #20th Television production format (Futurama)
   ]
 MOVIE_RX        = cic(ur'(?P<show>.*) \((?P<year>\d{4})\)$')
-DATE_RX         = [ cic(ur'(?P<year>(0[1-9]|[12][0-9]|3[01]))[ \-\.]?(?P<month>(0[1-9]|1[1,2]))[ \-\.]?(?P<day>(0[1-9]|[12][0-9]|3[01]))'),
-                    cic(ur'(?P<month>\d{2})\W+(?P<day>\d{2})\W+(?P<year>\d{4})(\D|$)')]  # 02-10-2009
+DATE_RX         = [ cic(ur'(?P<year>(0[1-9]|[12][0-9]|3[01]))[ \-\.\/]?(?P<month>(0[1-9]|1[0-2]))\2?(?P<day>(0[1-9]|[12][0-9]|3[01]))'),                                         #2024-05-21, 2024/25/31, 2024.05.31, 2024 05 31
+                    cic(ur'(?P<day>(0[1-9]|[12][0-9]|3[01]))[ \-\.\/]?(?P<month>(0[1-9]|1[0-2]))\2?(?P<year>(0[1-9]|[12][0-9]|3[01]))?')]                                        #21-05-2024, 21/05/2024, 21.05.2024, 21 05 2024
 ANIDB_RX        = [                                                                                                                                                              ###### AniDB Specials episode offset regex array
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAD)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                   #  0 # 001-099 Specials
                     cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                     #  1 # 100-149 Openings
