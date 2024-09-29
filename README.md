@@ -21,7 +21,7 @@ Any information missing or wrong inthere in Plex is an Agent issue, refer to the
 - Anime:     AniDB.net, Hama use an offline title database from them ("main title" is the best, or romaji "x-jat". "En" titles have horrors like "bombshells from the sky" for "Asobi ni Iku yo!" series). AniDB use small posters, no background. Hama use ScudLee's xml mapping files to crosss reference the anidb id to the tvdb series. Hama supports AniDB, TheTVDB, mainly, and if ScudLee mapping file has it, TheMoviedB, MyAnimeList, TelevisionTunes for full length theme songs, ...
 - TV Series: TheTVDB.com or TVrage or TheMovieDB (support series now), no db site will store (DVD) boxset specific files (nor sport or porn for TheTVDB). TVDB has high resolution posters, background images, screenshots, and episodes summaries, all lacking from AniDB.net, but they do not carry porn series so no metadata for this type. TheTVDB uses seasons which can be practical for long anime. Episodes have titles and summary in many languages
 - Movies:    TheMovieDB.org, naming convention: "Movie Title (Year).ext"
-- YouTube:   Series/Movie library YouTube-Agent for Movies '[youtube-video_id]' and Series/seasons '[youtube-playlist_id]' (starts with PL then 16/32 chars)
+- YouTube:   Series/Movie library YouTube-Agent for Movies '{youtube-video_id}' and Series/seasons '{youtube-playlist_id}' (starts with PL then 16/32 chars)
 
 ## Absolute series scanner functions that differes from Plex Series Scanner
 - .plexignore' fully working including subfolders
@@ -154,55 +154,57 @@ Hama supports the following guid_type:
 - youtube for youtube channel and playlist id (and video id on filenames)
 
 You can specify the guid to use the following way:
-- In Series folder name by adding " [guid_type-id_number]" at the end (like "Oruchuban Ebichu [anidb-150]")
+- In Series folder name by adding " {guid_type-id_number}" at the end (like "Oruchuban Ebichu {anidb-150}")
 - In "series_folder/guid_type.id" file with the id in it (ex: "Oruchuban Ebichu/anidb.id" file with "150" inside without double quotes)
-- In custom search series name by adding " [guid_type-id_number]" at the end (ex " [anidb-150]") for modes which do not change the season or episode numbers at scanner level (so anidb, tvdb and not numbered guid_types unless tvdb4 and you already put the eps in their respective seasons folders)
+- In custom search series name by adding " {guid_type-id_number}" at the end (ex " {anidb-150}") for modes which do not change the season or episode numbers at scanner level (so anidb, tvdb and not numbered guid_types unless tvdb4 and you already put the eps in their respective seasons folders)
+
+**Note: You may use either the old-style Absolute-Series-Scanner format with square brackets (`[anidb-###]`) or the new style Plex-Folder-Id format with curly braces. (`{anidb-###}`) They are both interchangable to help people with converting to the new format.**
 
 <TABLE>
 <THEAD> <TR> <TH> guid_type </TH> <TH> Real file numbering     </TH>  <TH> Seasons numbering   </TH> <TH>Episodes numbering</TH> <TH>Use case (example)</TH></TR></THEAD>
 <TBODY>
         <TR> <TD> anidb     </TD> <TD> Absolute                </TD> <TD> 1                </TD> <TD>AniDb          </TD> <TD>Force the anidb series id. Series will follow anidb episode numbering convention including specials
-        <UL><LI>Sword Art online                           [anidb-8692]</LI>
+        <UL><LI>Sword Art online                           {anidb-8692}</LI>
         </UL></TD> </TR>
         <TR> <TD> anidb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Map Anidb entries to the tvdb at the right season and ep number to show one Plex series entry only (need to be within a single tvdb entry)
-        <UL><LI>Sword Art online                           [anidb2-8692]</LI>
-            <LI>Sword Art online II                        [anidb2-10376]</LI>
-            <LI>Sword Art Online Extra Edition             [anidb2-10022]</LI>
-            <LI>Gekijouban Sword Art Online: Ordinal Scale [anidb2-11681]</LI>
+        <UL><LI>Sword Art online                           {anidb2-8692}</LI>
+            <LI>Sword Art online II                        {anidb2-10376}</LI>
+            <LI>Sword Art Online Extra Edition             {anidb2-10022}</LI>
+            <LI>Gekijouban Sword Art Online: Ordinal Scale {anidb2-11681}</LI>
         </UL></TD> </TR>
         <TR> <TD> anidb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Uses ScudLee mapping to map the AniDB series to TVDB entries BUT overrides the mapping for TVDB season 0 entries and puts them in AniDB relational order by appending to existing seasons or adding new seasons at after the last TVDB season
-        <UL><LI>Date a Live                          [anidb3-8808]  => TVDB s1   </LI>
-            <LI>Date a Live: Date to Date            [anidb3-9734]  => TVDB s0e1 -> s1e101</LI>
-            <LI>Date a Live II                       [anidb3-9935]  => TVDB s2   </LI>
-            <LI>Date a Live II: Kurumi Star Festival [anidb3-10568] => TVDB s0e2 -> s2e101</LI>
+        <UL><LI>Date a Live                          {anidb3-8808}  => TVDB s1   </LI>
+            <LI>Date a Live: Date to Date            {anidb3-9734}  => TVDB s0e1 -> s1e101</LI>
+            <LI>Date a Live II                       {anidb3-9935}  => TVDB s2   </LI>
+            <LI>Date a Live II: Kurumi Star Festival {anidb3-10568} => TVDB s0e2 -> s2e101</LI>
             <LI>TBD (prep entry in TVDB)                            => TVDB s3   </LI>
         </UL></TD> </TR>
         <TR> <TD> anidb4     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB          </TD> <TD>Uses ScudLee mapping to map the AniDB series to TVDB entries BUT overrides the mapping for TVDB seasons entries and puts them in AniDB relational order by inserting new seasons and pushing later TVDB seasons back
-        <UL><LI>Date a Live                          [anidb3-8808]  => TVDB s1   -> s1</LI>
-            <LI>Date a Live: Date to Date            [anidb3-9734]  => TVDB s0e1 -> s2</LI>
-            <LI>Date a Live II                       [anidb3-9935]  => TVDB s2   -> s3</LI>
-            <LI>Date a Live II: Kurumi Star Festival [anidb3-10568] => TVDB s0e2 -> s4</LI>
+        <UL><LI>Date a Live                          {anidb3-8808}  => TVDB s1   -> s1</LI>
+            <LI>Date a Live: Date to Date            {anidb3-9734}  => TVDB s0e1 -> s2</LI>
+            <LI>Date a Live II                       {anidb3-9935}  => TVDB s2   -> s3</LI>
+            <LI>Date a Live II: Kurumi Star Festival {anidb3-10568} => TVDB s0e2 -> s4</LI>
             <LI>TBD (prep entry in TVDB)                            => TVDB s3   -> s5</LI>
         </UL></TD> </TR>
         <TR> <TD> tvdb     </TD> <TD> Season                   </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>Force the tvdbid, series will follow tvdb episode numbering convention including specials
         <UL>
-          <LI>Sword Art Online [tvdb-259640]</LI>
+          <LI>Sword Art Online {tvdb-259640}</LI>
           <LI>Season 1 - Sword Art Online [1-25]/ep ##.ext with ## from 1 to 25
           <LI>Season 2 - Alfheim & Gun Gale Online [1-25]/ep ##.ext ## from 1 to 25
         </UL>        
         </TD> </TR>
         <TR> <TD> tvdb2     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>TVDB              </TD> <TD>for absolute numbering displayed virtually as tvdb numbering, episode number resets to 1 each season, for series like Sword art Online(1-50, will be split into Season 1 [1-25] and Season 2 [1-25])
         <UL>
-          <LI>Sword Art Online [tvdb2-259640]/Ep ##.ext with ## from 1 to 50</LI>
+          <LI>Sword Art Online {tvdb2-259640}/Ep ##.ext with ## from 1 to 50</LI>
         </UL>        
         </TD> </TR>
-        <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>For absolute numbering episodes displayed virtually using tvdb season numbering for long running series like One piece (1-700+, will be split into seasons while keeping the absolute episode number intact without having to create seasons in the real folder
-        <UL><LI>Metantei Conan [tvdb3-72454] </LI></UL></TD> </TR>
+        <TR> <TD> tvdb3     </TD> <TD> Absolute                </TD> <TD> TVDB                </TD> <TD>Absolute          </TD> <TD>For absolute numbering episodes displayed virtually using tvdb season numbering for long running series like One piece (1-700+), will be split into seasons while keeping the absolute episode number intact without having to create seasons in the real folder
+        <UL><LI>Metantei Conan {tvdb3-72454} </LI></UL></TD> </TR>
         <TR> <TD> tvdb4     </TD> <TD> Absolute, random season </TD> <TD> Abs/Custom/Arc db   </TD> <TD>Absolute          </TD> <TD>For absolute numbering episodes displayed using series arc as season for long running series with arcs like Dragon Ball Kai, or separated anidb series considered as half seasons by thetvdb (like 'Seraph of the end' numbered 1-24 splitted into 2 seasons). Will take the arc definitions from tvdb4.mapping.xml and posters from tvdb4.posters.xml unless the absolute numbered episodes were placed in season folders already
-        <UL><LI>One Piece [tvdb4-81797] </LI></UL>        
+        <UL><LI>One Piece {tvdb4-81797} </LI></UL>        
         </TD> </TR>
         <TR> <TD> tvdb5     </TD> <TD> TVDB                    </TD> <TD>Absolute             </TD> <TD>Absolute          </TD> <TD>TheTVDB Absolute numbering order (most useful for Star Wars: The Clone Wars, First ep is s02e15...) will remove seasons present and use the 'absolute_number' tvdb field order to re-sort the episodes. Allow to insert specials in between episodes too (prequel)
-<UL><LI>Star Wars: The Clone Wars [tvdb5-83268] </LI></UL>
+<UL><LI>Star Wars: The Clone Wars {tvdb5-83268} </LI></UL>
 </TD> </TR>
         <TR> <TD> youtube     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Put Playlist id (PL... 2+16/32 chars long) on series folder or season folder (auto-reversing) or channel id on series folder (year used as season, added as date-based unless there are duplicates for the date in which case it choose ep number MMDDxx with XX being incremental)</TD> </TR>
         <TR> <TD> youtube2     </TD> <TD> YouTube                    </TD> <TD> None             </TD> <TD> None          </TD> <TD> Recommended for channels that release multiple episodes per day. Put channel id on series folder (year used as season, episodes added as MMDDhhmm. If date not present in filename, will use the files date for Month, Day, Hour and Minute, but if the date is present in the filename than Month and Day are pulled from it instead)</TD> </TR>
@@ -228,21 +230,21 @@ Because it doesn't have an XML extension, it won't accept XML tags inside. Forma
 Filebot support metadata in file system extended attributes, and has released a movies, series scanner and secondary agent here: https://github.com/filebot/plex-agents/blob/master/Scanners/Series/FileBot%20Xattr%20Series%20Scanner.py
 
 One can instruct to save metadata in the OS file system metadata (examples attached)
-- "database":"TheTVDB", "type":"TV Series","id":253463 => translate into [tvdb-id]
-- "database":"AniDB", "type":"Anime", "id":578 => translate into [anidb-id
-- "database":"TheMovieDB::TV", "type":"TV Series","id":42009 => translate into [tsdb-id]
-- "database":"TheMovieDB::??????","type":"Movies", "id":????? => translate into [tmdb-id]
+- "database":"TheTVDB", "type":"TV Series","id":253463 => translate into {tvdb-id}
+- "database":"AniDB", "type":"Anime", "id":578 => translate into {anidb-id}
+- "database":"TheMovieDB::TV", "type":"TV Series","id":42009 => translate into {tsdb-id}
+- "database":"TheMovieDB::??????","type":"Movies", "id":????? => translate into {tmdb-id}
    {"@type":"Movie","year":2016,"imdbId":2513074,"tmdbId":293767,"language":"en","id":293767,"name":"Billy Lynn's Long Halftime Walk","aliasNames":[]}
 
 ##### Advanced modes
 If the season and/or episode numbers of your files don't match up with the AniDB or TVDB episodes, you can manually specify the season and the episode offset in the parent folder name.
 
 The following suffixes are supported:
-- `-sY]` All episodes in the folder are assigned to season Y, but the episode number stays the same.
-- `-eZ]` Episode numbers found in the files are adjusted.
+- `-sY}` All episodes in the folder are assigned to season Y, but the episode number stays the same.
+- `-eZ}` Episode numbers found in the files are adjusted.
   - For positive offsets, the episode number becomes epNum+Z-1. (Episode 1 will show up as episode Z)
   - For negative offsets, the episode number becomes epNum+Z. (For Z=-13, episode 14 will show up as episode 1)
-- `-sYeZ]` The effects of the options above are combined.
+- `-sYeZ}` The effects of the options above are combined.
 
 - **!!IMPORTANT NOTES!!**
   - When defining your modes on your folders:
@@ -256,18 +258,18 @@ The following suffixes are supported:
 
 ##### Examples: 
 <PRE><CODE>== Example 1 ==
-- "Bakuman      [anidb2-7251]" = "Bakuman      [tvdb-193811-s1]" = "Bakuman [tvdb-193811]"
-- "Bakuman 2011 [anidb2-8150]" = "Bakuman 2011 [tvdb-193811-s2]"
-- "Bakuman 2012 [anidb2-8836]" = "Bakuman 2012 [tvdb-193811-s3]"
+- "Bakuman      {anidb2-7251}" = "Bakuman      {tvdb-193811-s1}" = "Bakuman {tvdb-193811}"
+- "Bakuman 2011 {anidb2-8150}" = "Bakuman 2011 {tvdb-193811-s2}"
+- "Bakuman 2012 {anidb2-8836}" = "Bakuman 2012 {tvdb-193811-s3}"
 
 == Example 2 ==
-- "Sailor Moon Crystal [tvdb2-275039]"
-- "Sailor Moon Crystal Season 3 [anidb2-11665]" = "[tvdb-275039-s3]" | "[tvdb2-275039-s3]" (depending if you keep absolute numbered eps in seasons)
+- "Sailor Moon Crystal {tvdb2-275039}"
+- "Sailor Moon Crystal Season 3 {anidb2-11665}" = "{tvdb-275039-s3}" | "{tvdb2-275039-s3}" (depending if you keep absolute numbered eps in seasons)
   
 == Example 3 ==
-- "Bleach                                    [tvdb3-74796]"
-- "Bleach movie 1 Memories in the Rain       [tvdb3-74796-s0]"
-- "Bleach movie 2 The Diamond Dust Rebellion [tvdb3-74796-s0e4]"
+- "Bleach                                    {tvdb3-74796}"
+- "Bleach movie 1 Memories in the Rain       {tvdb3-74796-s0}"
+- "Bleach movie 2 The Diamond Dust Rebellion {tvdb3-74796-s0e4}"
   
 == Example 4 == tvdb4 Custom selected Arcs as seasons (as tvdb use them as half seasons for black lagoon for example)
   The arc definition to split into seasons the absolute numbering is done using the following order:
@@ -286,15 +288,15 @@ The following suffixes are supported:
       02|013|024|Battle in Nagoya
     &lt;/anime&gt;
 
-  "Black Lagoon                         [tvdb4-79604]"
-  "Black Lagoon - The Second Barrage    [tvdb4-79604-s2]"
-  "Black Lagoon - Roberta`s Blood Trail [tvdb4-79604-s3]"
+  "Black Lagoon                         {tvdb4-79604}"
+  "Black Lagoon - The Second Barrage    {tvdb4-79604-s2}"
+  "Black Lagoon - Roberta`s Blood Trail {tvdb4-79604-s3}"
   
-  "Seraph of the End - Vampire Reign    [tvdb4-79604]"
-  "Seraph of the End - Battle in Nagoya [tvdb4-79604-s2]"
+  "Seraph of the End - Vampire Reign    {tvdb4-79604}"
+  "Seraph of the End - Battle in Nagoya {tvdb4-79604-s2}"
 
 == Example 5 ==
-  "Hand_Tool_Rescue [youtube2-UCasG9kJWi1eVxM0QkyqKVJQ]"
+  "Hand_Tool_Rescue {youtube2-UCasG9kJWi1eVxM0QkyqKVJQ}"
 </CODE></PRE>
 
 ### .plexignore files
