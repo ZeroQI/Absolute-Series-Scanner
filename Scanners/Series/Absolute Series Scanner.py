@@ -101,29 +101,29 @@ TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
 
 FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
-SEASON_RX       = [ cic(ur'^(Specials|Speciali|SPs?|映像特典)'),                                                                                                                                           # Specials (season 0)
-                    cic(ur'(^|(?P<show>.*)[\._\-\— ]+)(Season|Series|Book|Saison|Livre|Temporada|Stagione|[Ss]|se)[\._\—\- ]*?(?P<season>\d{1,4})([\._\-\— ]*.*|$)'),                      # (title) S01
+SEASON_RX       = [ cic(ur'^(Specials|Speciali|SPs?|映像特典)'),                                                                                                                  # Specials (season 0)
+                    cic(ur'(^|(?P<show>.*)[\._\-\— ]+)(Season|Series|Book|Saison|Livre|Temporada|Stagione|[Ss]|se)[\._\—\- ]*?(?P<season>\d{1,4})([\._\-\— ]*.*|$)'),            # (title) S01
                     cic(u'(?P<show>.*)(?P<season>\d{1,4}).*сезон.*'),                                                                    # (title) S01
-                    cic(ur'(^|(?P<show>.*)[\._\-\— ]*)Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                 # (title) S01
-                    cic(ur'^(Saga|(Story )?Ar[kc])')]                                                                                                                             # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
+                    cic(ur'(^|(?P<show>.*)[\._\-\— ]*)Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                # (title) S01
+                    cic(ur'^(Saga|(Story )?Ar[kc])')]                                                                                                                            # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
-  cic(ur'(^|(?P<show>.*?)[ _\.\-]*)(?P<season>\d{1,2})XE?(?P<ep>\d{1,4})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,4}))?([ _\.\-]+(?P<title>.*))?$'),                                    #  0 # 1x01
-  cic(ur'(^|(?P<show>.*?)[ _\.\-]*)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,4})(([\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,4}))?[ _\.]*(?P<title>.*?)$'),                        #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,4})[ _\.\-]?of[ _\.\-]?\d{1,4}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
+  cic(ur'(^|(?P<show>.*?)[ _\.\-]*)(?P<season>\d{1,2})XE?(?P<ep>\d{1,4})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,4}))?([ _\.\-]+(?P<title>.*))?$'),                                   #  0 # 1x01
+  cic(ur'(^|(?P<show>.*?)[ _\.\-]*)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,4})(([\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,4}))?[ _\.]*(?P<title>.*?)$'),                           #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,4})[ _\.\-]?of[ _\.\-]?\d{1,4}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
   cic(ur'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'), # 2 # Serie - xx - title.ext | ep01-ep02 | e01-02
   cic(ur'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,4})\][ _\.](?P<title>.*)$'),
   cic(ur'^\[.*\]\[(?P<show>.*)\]\[第?(?P<ep>\d{1,4})[话話集]?(-(?P<ep2>\d{1,4})[话話集]?)?\].*$'),
   cic(ur'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.\-]+(?P<title>.*)|$)') #20th Television production format (Futurama)
   ]
 MOVIE_RX        = cic(ur'(?P<show>.*) \((?P<year>\d{4})\)$')
-DATE_RX         = [ cic(ur'(?P<year>(19[0-9][0-9]|20[0-3][0-9]))[\-\.\/\_](?P<month>(0[1-9]|1[0-2]))\2(?P<day>(0[1-9]|[12][0-9]|3[01]))'),                                       #2024-05-21, 2024/25/31, 2024.05.31
-                    cic(ur'(?P<day>(0[1-9]|[12][0-9]|3[01]))[ \-\.\/\_](?P<month>(0[1-9]|1[0-2]))\2(?P<year>(19[0-9][0-9]|20[0-3][0-9]))')]                                        #21-05-2024, 21/05/2024, 21.05.2024
+DATE_RX         = [ cic(ur'(?P<year>19[0-9][0-9]|20[0-3][0-9])([\-\.\/\_])(?P<month>0[1-9]|1[0-2])\2(?P<day>0[1-9]|[12][0-9]|3[01])'),                                           #2024-05-21, 2024/25/31, 2024.05.31
+                    cic(ur'(?P<day>0[1-9]|[12][0-9]|3[01])([ \-\.\/\_])(?P<month>0[1-9]|1[0-2])\2(?P<year>19[0-9][0-9]|20[0-3][0-9])')]                                          #21-05-2024, 21/05/2024, 21.05.2024 
 ANIDB_RX        = [                                                                                                                                                              ###### AniDB Specials episode offset regex array
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAD)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                   #  0 # 001-099 Specials
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                     #  1 # 100-149 Openings
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                      #  2 # 150-199 Endings
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T)[ _\.]?(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                         #  3 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                                         #  4 # 400-499 Others
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(EP?[ _\.\-]?)?第?(?P<ep>\d{1,4})[话話集]?((-|-?EP?)(?P<ep2>\d{1,4})[话話集]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$')]        #  5 # E01 | E01-02| E01-E02 | E01E02
+                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAD)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                  #  0 # 001-099 Specials
+                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                    #  1 # 100-149 Openings
+                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                     #  2 # 150-199 Endings
+                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T)[ _\.]?(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                        #  3 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
+                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                                        #  4 # 400-499 Others
+                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(EP?[ _\.\-]?)?第?(?P<ep>\d{1,4})[话話集]?((-|-?EP?)(?P<ep2>\d{1,4})[话話集]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$')]    #  5 # E01 | E01-02| E01-E02 | E01E02
 ANIDB_OFFSET    = [        0,       100,      150,       200,     400,         0,         0]                                                                                     ###### AniDB Specials episode offset value array
 ANIDB_TYPE      = ['Special', 'Opening', 'Ending', 'Trailer', 'Other', 'Episode', 'Episode']                                                                                     ###### AniDB titles
 COUNTER         = 500
