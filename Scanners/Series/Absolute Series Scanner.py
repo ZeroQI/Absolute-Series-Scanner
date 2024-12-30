@@ -83,9 +83,9 @@ PLEX_LIBRARY_URL       = "http://localhost:32400/library/sections/"  # Allow to 
 SSL_CONTEXT            = ssl.SSLContext(SSL_PROTOCOL)
 HEADERS                = {'Content-type': 'application/json'}
 
-SOURCE_IDS             = cic(ur'[\[\{]((?P<source>(anidb(|[2-4])|tvdb(|[2-6])|tmdb|tsdb|imdb|mal|youtube(|[2-3])))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))[\]\}]')
+SOURCE_IDS             = cic(r'[\[\{]((?P<source>(anidb(|[2-4])|tvdb(|[2-6])|tmdb|tsdb|imdb|mal|youtube(|[2-3])))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))[\]\}]')
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "mal.id", "youtube.id", "youtube2.id", "youtube3.id"]
-SOURCE_ID_OFFSET       = cic(ur'(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?')
+SOURCE_ID_OFFSET       = cic(r'(?P<id>\d{1,7})-(?P<season>s\d{1,3})?(?P<episode>e-?\d{1,3})?')
 ASS_MAPPING_URL        = 'https://rawgit.com/ZeroQI/Absolute-Series-Scanner/master/tvdb4.mapping.xml'
 
 ANIDB_HTTP_API_URL     = 'http://api.anidb.net:9001/httpapi?request=anime&client=hama&clientver=1&protover=1&aid='
@@ -101,29 +101,29 @@ TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
 
 FILTER_CHARS    = "\\/:*?<>|;"  #_.~                                                                                                                                             # Windows file naming limitations + "~;" as plex cut title at this for the agent
-SEASON_RX       = [ cic(ur'^(Specials|Speciali|SPs?|映像特典)'),                                                                                                                  # Specials (season 0)
-                    cic(ur'(^|(?P<show>.*)[\._\-\— ]+)(Season|Series|Book|Saison|Livre|Temporada|Stagione|[Ss]|se)[\._\—\- ]*?(?P<season>\d{1,4})([\._\-\— ]*.*|$)'),            # (title) S01
+SEASON_RX       = [ cic(r'^(Specials|Speciali|SPs?|映像特典)'),                                                                                                                  # Specials (season 0)
+                    cic(r'(^|(?P<show>.*)[\._\-\— ]+)(Season|Series|Book|Saison|Livre|Temporada|Stagione|[Ss]|se)[\._\—\- ]*?(?P<season>\d{1,4})([\._\-\— ]*.*|$)'),            # (title) S01
                     cic(u'(?P<show>.*)(?P<season>\d{1,4}).*сезон.*'),                                                                    # (title) S01
-                    cic(ur'(^|(?P<show>.*)[\._\-\— ]*)Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                # (title) S01
-                    cic(ur'^(Saga|(Story )?Ar[kc])')]                                                                                                                            # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
+                    cic(r'(^|(?P<show>.*)[\._\-\— ]*)Volume[\._\-\— ]*?(?P<season>(?=[MDCLXVI])M*D?C{0,4}L?X{0,4}V?I{0,4}).*?'),                                                # (title) S01
+                    cic(r'^(Saga|(Story )?Ar[kc])')]                                                                                                                            # Last entry, folder name droped but files kept: Saga / Story Ar[kc] / Ar[kc]
 SERIES_RX       = [                                                                                                                                                              ######### Series regex - "serie - xxx - title" ###
-  cic(ur'(^|(?P<show>.*?)[ _\.\-]*)(?P<season>\d{1,2})XE?(?P<ep>\d{1,4})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,4}))?([ _\.\-]+(?P<title>.*))?$'),                                   #  0 # 1x01
-  cic(ur'(^|(?P<show>.*?)[ _\.\-]*)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,4})(([\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,4}))?[ _\.]*(?P<title>.*?)$'),                           #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,4})[ _\.\-]?of[ _\.\-]?\d{1,4}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
-  cic(ur'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'), # 2 # Serie - xx - title.ext | ep01-ep02 | e01-02
-  cic(ur'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,4})\][ _\.](?P<title>.*)$'),
-  cic(ur'^\[.*\]\[(?P<show>.*)\]\[第?(?P<ep>\d{1,4})[话話集]?(-(?P<ep2>\d{1,4})[话話集]?)?\].*$'),
-  cic(ur'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.\-]+(?P<title>.*)|$)') #20th Television production format (Futurama)
+  cic(r'(^|(?P<show>.*?)[ _\.\-]*)(?P<season>\d{1,2})XE?(?P<ep>\d{1,4})(([_\-X]|[_\-]\d{1,2}X)(?P<ep2>\d{1,4}))?([ _\.\-]+(?P<title>.*))?$'),                                   #  0 # 1x01
+  cic(r'(^|(?P<show>.*?)[ _\.\-]*)SE?(?P<season>\d{1,4})[ _\.\-]?EP?(?P<ep>\d{1,4})(([\-]|EP?|[ _\.\-]EP?)(?P<ep2>\d{1,4}))?[ _\.]*(?P<title>.*?)$'),                           #  1 # s01e01-02 | ep01-ep02 | e01-02 | s01-e01 | s01 e01'(^|(?P<show>.*?)[ _\.\-]+)(?P<ep>\d{1,4})[ _\.\-]?of[ _\.\-]?\d{1,4}([ _\.\-]+(?P<title>.*?))?$',                                                              #  2 # 01 of 08 (no stacking for this one ?)
+  cic(r'^(?P<show>.*?)[ _\.]-[ _\.](EP?)?(?P<ep>\d{1,3})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]*?(?P<title>.*)$'), # 2 # Serie - xx - title.ext | ep01-ep02 | e01-02
+  cic(r'^(?P<show>.*?)[ _\.]\[(?P<season>\d{1,2})\][ _\.]\[(?P<ep>\d{1,4})\][ _\.](?P<title>.*)$'),
+  cic(r'^\[.*\]\[(?P<show>.*)\]\[第?(?P<ep>\d{1,4})[话話集]?(-(?P<ep2>\d{1,4})[话話集]?)?\].*$'),
+  cic(r'(^|(?P<show>.*)[ _\.\-]+)(?P<season>\d{1,2})ACV(?P<ep>\d{1,2})([ _\.\-]+(?P<title>.*)|$)') #20th Television production format (Futurama)
   ]
-MOVIE_RX        = cic(ur'(?P<show>.*) \((?P<year>\d{4})\)$')
-DATE_RX         = [ cic(ur'(?P<year>19[0-9][0-9]|20[0-3][0-9])([\-\.\/\_])(?P<month>0[1-9]|1[0-2])\2(?P<day>0[1-9]|[12][0-9]|3[01])'),                                           #2024-05-21, 2024/25/31, 2024.05.31
-                    cic(ur'(?P<day>0[1-9]|[12][0-9]|3[01])([ \-\.\/\_])(?P<month>0[1-9]|1[0-2])\2(?P<year>19[0-9][0-9]|20[0-3][0-9])')]                                          #21-05-2024, 21/05/2024, 21.05.2024 
+MOVIE_RX        = cic(r'(?P<show>.*) \((?P<year>\d{4})\)$')
+DATE_RX         = [ cic(r'(?P<year>19[0-9][0-9]|20[0-3][0-9])([\-\.\/\_])(?P<month>0[1-9]|1[0-2])\2(?P<day>0[1-9]|[12][0-9]|3[01])'),                                           #2024-05-21, 2024/25/31, 2024.05.31
+                    cic(r'(?P<day>0[1-9]|[12][0-9]|3[01])([ \-\.\/\_])(?P<month>0[1-9]|1[0-2])\2(?P<year>19[0-9][0-9]|20[0-3][0-9])')]                                          #21-05-2024, 21/05/2024, 21.05.2024
 ANIDB_RX        = [                                                                                                                                                              ###### AniDB Specials episode offset regex array
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAD)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                  #  0 # 001-099 Specials
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                    #  1 # 100-149 Openings
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                     #  2 # 150-199 Endings
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T)[ _\.]?(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                        #  3 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                                        #  4 # 400-499 Others
-                    cic(ur'(^|(?P<show>.*?)[ _\.\-]+)(EP?[ _\.\-]?)?第?(?P<ep>\d{1,4})[话話集]?((-|-?EP?)(?P<ep2>\d{1,4})[话話集]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$')]    #  5 # E01 | E01-02| E01-E02 | E01E02
+                    cic(r'(^|(?P<show>.*?)[ _\.\-]+)(S|SP|SPECIAL|OAD)[ _\.]?(?P<ep>\d{1,2})(-(?P<ep2>\d{1,3}))?(V\d)?[ _\.]?(?P<title>.*)$'),                                  #  0 # 001-099 Specials
+                    cic(r'(^|(?P<show>.*?)[ _\.\-]+)(OP|NCOP|OPENING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                    #  1 # 100-149 Openings
+                    cic(r'(^|(?P<show>.*?)[ _\.\-]+)(ED|NCED|ENDING)[ _\.]?(?P<ep>\d{1,2}[a-z]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                     #  2 # 150-199 Endings
+                    cic(r'(^|(?P<show>.*?)[ _\.\-]+)(TRAILER|PROMO|PV|T)[ _\.]?(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                        #  3 # 200-299 Trailer, Promo with a  number  '(^|(?P<show>.*?)[ _\.\-]+)((?<=E)P|PARODY|PARODIES?) ?(?P<ep>\d{1,2})? ?(v2|v3|v4|v5)?(?P<title>.*)$',                                                                        # 10 # 300-399 Parodies
+                    cic(r'(^|(?P<show>.*?)[ _\.\-]+)(O|OTHERS?)(?P<ep>\d{1,2})[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$'),                                                        #  4 # 400-499 Others
+                    cic(r'(^|(?P<show>.*?)[ _\.\-]+)(EP?[ _\.\-]?)?第?(?P<ep>\d{1,4})[话話集]?((-|-?EP?)(?P<ep2>\d{1,4})[话話集]?)?[ _\.]?(V\d)?([ _\.\-]+(?P<title>.*))?$')]    #  5 # E01 | E01-02| E01-E02 | E01E02
 ANIDB_OFFSET    = [        0,       100,      150,       200,     400,         0,         0]                                                                                     ###### AniDB Specials episode offset value array
 ANIDB_TYPE      = ['Special', 'Opening', 'Ending', 'Trailer', 'Other', 'Episode', 'Episode']                                                                                     ###### AniDB titles
 COUNTER         = 500
@@ -140,7 +140,7 @@ IGNORE_DIRS_RX_RAW  = [ '@Recycle', r'\.@__thumb', r'lost\+found', r'\.AppleDoub
                         '@eaDir', 'Extras', r'Samples?', 'bonus', r'.*bonus disc.*', r'trailers?', r'.*_UNPACK_.*', r'.*_FAILED_.*', r'_?Misc', '.xattr', 'audio', r'^subs?$', '.*Special Features', '@Recently-Snapshot']        # source: Filters.py  removed '\..*',
 IGNORE_DIRS_RX      = [cic(entry) for entry in IGNORE_DIRS_RX_RAW]
 # Uses re.match() so forces a '^'
-IGNORE_FILES_RX     = [cic(ur'[ _\.\-]?sample'), cic(ur'-Recap\.'), cic(ur'\._'), cic(ur'OST'), cic(ur'soundtrack')]
+IGNORE_FILES_RX     = [cic(r'[ _\.\-]?sample'), cic(r'-Recap\.'), cic(r'\._'), cic(r'OST'), cic(r'soundtrack')]
 
 VIDEO_EXTS          = [ '3g2', '3gp', 'asf', 'asx', 'avc', 'avi', 'avs', 'bin', 'bivx', 'divx', 'dv', 'dvr-ms', 'evo', 'fli', 'flv', 'img', 'iso', 'm2t', 'm2ts', 'm2v',         #
                         'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 'mts', 'nrg', 'nsv', 'nuv', 'ogm', 'ogv', 'tp', 'pva', 'qt', 'rm', 'rmvb', 'sdp', 'swf', 'svq3', 'strm',      #
@@ -184,11 +184,11 @@ WHACK               = [                                                         
                       ]
 
 # Word Search Compiled Regex (IGNORECASE is not required as word is lowered at start)
-WS_VERSION          = com(ur'v\d$')
-WS_DIGIT            = com(ur'^\d+(\.\d+)?$')
-WS_MULTI_EP_SIMPLE  = com(ur'^(?P<ep>\d{1,3})-(?P<ep2>\d{1,3})$')
-WS_MULTI_EP_COMPLEX = com(ur'^(ep?[ -]?)?(?P<ep>\d{1,3})(-|ep?|-ep?)(?P<ep2>\d{1,3})')
-WS_SPECIALS         = com(ur'^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?|oad)(\d{1,3})?$)')
+WS_VERSION          = com(r'v\d$')
+WS_DIGIT            = com(r'^\d+(\.\d+)?$')
+WS_MULTI_EP_SIMPLE  = com(r'^(?P<ep>\d{1,3})-(?P<ep2>\d{1,3})$')
+WS_MULTI_EP_COMPLEX = com(r'^(ep?[ -]?)?(?P<ep>\d{1,3})(-|ep?|-ep?)(?P<ep2>\d{1,3})')
+WS_SPECIALS         = com(r'^((t|o)\d{1,3}$|(sp|special|op|ncop|opening|ed|nced|ending|trailer|promo|pv|others?|oad)(\d{1,3})?$)')
 # Switch to turn on youtube date scanning
 
 ### Setup core variables ################################################################################
@@ -389,14 +389,14 @@ def filter_chars(string):
   return string
 
 ### Allow to display ints even if equal to None at times ################################################
-CS_PARENTHESIS     = com(ur'\([^\(\)]*?\)')
-CS_BRACKETS_CHAR   = com(ur'(\[|\]|\{|\})')
-CS_BRACKETS        = com(ur'(\[(?!(第?\d{1,3}[话話集]?(-\d{1,3}[话話集]?)?([Vv]\d)?|((OP|NCOP|OPENING|ED|NCED|ENDING|OVA)(\d{1,3})?[ _\.]?(EP?)?(\d{1,3})?))\])[^\[\]]*?\]|\{(?!\d{1,3}\})[^\{\}]*?\})')
-CS_SPECIAL_EP_PAT, CS_SPECIAL_EP_REP   = com(ur'(?P<a>[^0-9Ssv]\d{1,3})\.(?P<b>\d{1,2}(\D|$))'), ur'\g<a>DoNoTfIlTeR\g<b>'
-CS_CRC_HEX         = com(ur'[0-9a-fA-F]{8}')
-CS_VIDEO_SIZE      = com(ur'\d{3,4} ?[Xx] ?\d{3,4}')
-CS_PAREN_SPACE_PAT, CS_PAREN_SPACE_REP = com(ur'\([ _\.]*(?P<internal>[^\(\)]*?)[ _\.]*\)'), ur'(\g<internal>)'
-CS_PAREN_EMPTY     = com(ur'\([-Xx]?\)')
+CS_PARENTHESIS     = com(r'\([^\(\)]*?\)')
+CS_BRACKETS_CHAR   = com(r'(\[|\]|\{|\})')
+CS_BRACKETS        = com(r'(\[(?!(第?\d{1,3}[话話集]?(-\d{1,3}[话話集]?)?([Vv]\d)?|((OP|NCOP|OPENING|ED|NCED|ENDING|OVA)(\d{1,3})?[ _\.]?(EP?)?(\d{1,3})?))\])[^\[\]]*?\]|\{(?!\d{1,3}\})[^\{\}]*?\})')
+CS_SPECIAL_EP_PAT, CS_SPECIAL_EP_REP   = com(r'(?P<a>[^0-9Ssv]\d{1,3})\.(?P<b>\d{1,2}(\D|$))'), r'\g<a>DoNoTfIlTeR\g<b>'
+CS_CRC_HEX         = com(r'[0-9a-fA-F]{8}')
+CS_VIDEO_SIZE      = com(r'\d{3,4} ?[Xx] ?\d{3,4}')
+CS_PAREN_SPACE_PAT, CS_PAREN_SPACE_REP = com(r'\([ _\.]*(?P<internal>[^\(\)]*?)[ _\.]*\)'), r'(\g<internal>)'
+CS_PAREN_EMPTY     = com(r'\([-Xx]?\)')
 
 def clean_string(string, no_parenthesis=False, no_whack=False, no_dash=False, no_underscore=False, no_dot=False):
   if not string: return ""                                                                                                           # if empty return empty string
@@ -1126,12 +1126,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       else: filename = clean_string(filename)
       ep = filename
       if "Complete Movie" in ep:  ep = "01"  ### Movies ### If using WebAOM (anidb rename), as clean_string remove leading " - "
-      elif len(files)==1 and (not re.search(ur'\d+(\.\d+)?', clean_string(filename, True)) or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in ep.lower()+folder_show.lower() or "-m" in folder_show.split()):
+      elif len(files)==1 and (not re.search(r'\d+(\.\d+)?', clean_string(filename, True)) or "movie" in ep.lower()+folder_show.lower() or "gekijouban" in ep.lower()+folder_show.lower() or "-m" in folder_show.split()):
         ep, title = "01", folder_show  #if  ("movie" in ep.lower()+folder_show.lower() or "gekijouban" in folder_show.lower()) or "-m" in folder_show.split():  ep, title,      = "01", folder_show                  ### Movies ### If only one file in the folder & contains '(movie|gekijouban)' in the file or folder name
       if folder_show and folder_season >= 1:                                                                                                                                         #
         for prefix in ("s%d" % folder_season, "s%02d" % folder_season):                                                         #"%s %d " % (folder_show, folder_season),
           if prefix in ep.lower() or prefix in misc_count and misc_count[prefix]>1:  ep = re.sub(prefix, "", ep, 1, re.IGNORECASE).lstrip()   # Series S2  like transformers (bad naming)  # Serie S2  in season folder, Anidb specials regex doesn't like
-      if folder_show and ep.lower().startswith("special") or re.search(ur'[^a-z]omake[^a-z]', ep.lower()) or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ###
+      if folder_show and ep.lower().startswith("special") or re.search(r'[^a-z]omake[^a-z]', ep.lower()) or "picture drama" in ep.lower():  season, title = 0, ep.title()                        # If specials, season is 0 and if title empty use as title ###
 
       if not path:
         root_filename = clean_string(root_filename.split(ep)[0] if ep else root_filename)
