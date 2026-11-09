@@ -457,7 +457,7 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
 
   # Season/Episode Offset
   if isinstance(ep, int) or isinstance(ep, str) and ep.isdigit():  #date-based
-    if season > 0:  season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, int(ep)+offset_episode, int(ep2)+offset_episode if ep2 else None
+    season, ep, ep2 = season+offset_season if offset_season >= 0 else 0, int(ep)+offset_episode, int(ep2)+offset_episode if ep2 else None
 
     # Mapping List
     ep_orig        = "s{}e{}{}".format(season, ep, "" if not ep2 or ep==ep2 else "-{}".format(ep2))
