@@ -1258,8 +1258,15 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if " - " in ep and len(ep.split(" - "))>1:  title = clean_string(" - ".join(ep.split(" - ")[1:])).strip()
       COUNTER = COUNTER+1
       #Log.info(u'COUNTER "{}"'.format(COUNTER))
-      if not path and not title:  unknown_holding.append([file, root, path, clean_string(root_filename), 1, 1, title or clean_string(filename, False, no_underscore=True), year, "", ""])
-      else:                       unknown_holding.append([file, root, path, show if path else title, 0, COUNTER, title or clean_string(filename, False, no_underscore=True), year, "", ""])
+      if not path and not title:
+        unknown_holding.append([file, root, path, clean_string(root_filename), 1, 1, title or clean_string(filename, False, no_underscore=True), year, "", ""])
+      else:
+        # We allow the user to override the episode offset for season 0 episodes.
+        # We don't allow arbitrary season offsets because when offset_season == 0, we can't be sure if the user wants to force season 1,
+        # or they omitted the season number altogether. And in all other cases, is the offset to be intended relative to season 1 or 0?
+        # On the contrary, offset_season == -1 can only happen if the user wants to explicitly set the season number to 0.
+        # In case the user specifies s0 without starting episode number, we will start at 1, rather than 501.
+        unknown_holding.append([file, root, path, show if path else title, 0, COUNTER, title or clean_string(filename, False, no_underscore=True), year, "", "", {}, unknown_series_length, 0, offset_episode - 500 if offset_season == -1 else 0, {}])
     if run_count == 1 and len(files) > 0 and len(unknown_holding) == len(files):
       Log.info(u"[All files were seen as unknown(5XX). Trying one more time without miscellaneous string filtering.]")
       run_count, standard_holding, unknown_holding, COUNTER = run_count + 1, [], [], COUNTER - len(unknown_holding)
