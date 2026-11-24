@@ -82,6 +82,8 @@ PLEX_LIBRARY           = {}
 PLEX_LIBRARY_URL       = "http://localhost:32400/library/sections/"  # Allow to get the library name to get a log per library https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 SSL_CONTEXT            = ssl.SSLContext(SSL_PROTOCOL)
 HEADERS                = {'Content-type': 'application/json'}
+URL_TIMEOUT            = 60  # Seconds, so a stalled connection can't hang the scan
+MAPPING_TREES          = {}
 
 SOURCE_IDS             = cic(ur'[\[\{]((?P<source>(anidb(|[2-4])|tvdb(|[2-6])|tmdb|tsdb|imdb|mal|youtube(|[2-3])))-(?P<id>[^\[\]]*)|(?P<yt>(PL[^\[\]]{16}|PL[^\[\]]{32}|(UU|FL|LP|RD|UC|HC)[^\[\]]{22})))[\]\}]')
 SOURCE_ID_FILES        = ["anidb.id", "anidb2.id", "anidb3.id", "anidb4.id", "tvdb.id", "tvdb2.id", "tvdb3.id", "tvdb4.id", "tvdb5.id", "tmdb.id", "tsdb.id", "imdb.id", "mal.id", "youtube.id", "youtube2.id", "youtube3.id"]
@@ -248,8 +250,8 @@ def write_file(local_file, file_content):
 def read_url(url, data=None):
   url_content = ""
   try:
-    if data is None:  url_content = urlopen(url, context=SSL_CONTEXT).read()
-    else:             url_content = urlopen(url, context=SSL_CONTEXT, data=data).read()
+    if data is None:  url_content = urlopen(url, context=SSL_CONTEXT, timeout=URL_TIMEOUT).read()
+    else:             url_content = urlopen(url, context=SSL_CONTEXT, data=data, timeout=URL_TIMEOUT).read()
     return url_content
   except Exception as e:  Log.error("Error reading url '%s', Exception: '%s'" % (url, e)); raise e
 
@@ -506,6 +508,11 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
   before = " (Orig: %s)" % ep_orig_padded if ep_orig!=ep_final else "".ljust(20, ' ')
   Log.info(u'"{ushow}" s{season:>02d}e{episode:>10}{multi:s}{before} "{regex}" "{title}" "{file}"'.format(ushow=ushow, season=season, episode=ep, multi=multi, before=before, regex=index or '__', title=utitle, file=ufile))
   #Log.info(show)
+
+### Parse each mapping list once per scan as it is read for every series folder ########################
+def mapping_tree(url):
+  if url not in MAPPING_TREES:  MAPPING_TREES[url] = etree.fromstring(read_cached_url(url, foldername='AnimeLists'))
+  return MAPPING_TREES[url]
 
 ### Get the tvdbId from the AnimeId #####################################################################
 def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
@@ -895,12 +902,12 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
 
       # Online mod mapping file = ANIDB_TVDB_MAPPING_MOD (anime-list-corrections.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING_MOD, foldername='AnimeLists')), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(mapping_tree(ANIDB_TVDB_MAPPING_MOD), id)
         except Exception as e:  Log.error("Error parsing ASS's file mod content, Exception: '%s'" % e)
 
       # Online mapping file = ANIDB_TVDB_MAPPING (anime-list-master.xml)
       if not a2_tvdbid:
-        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(etree.fromstring(read_cached_url(ANIDB_TVDB_MAPPING, foldername='AnimeLists')), id)
+        try:                    a2_tvdbid, mappingList = anidbTvdbMapping(mapping_tree(ANIDB_TVDB_MAPPING), id)
         except Exception as e:  Log.error("Error parsing ScudLee's file content, Exception: '%s'" % e)
 
       # Set folder_show from successful mapping
@@ -1094,8 +1101,9 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       for separator in [' ', '.', '-', '_']:  misc = misc.replace(separator, '|')
       misc = "|".join([s for s in misc.split('|') if s])  #Log.info(u"misc: '%s'" % misc)
       for item in misc.split('|'):  misc_count[item] = misc_count[item]+1 if item in misc_count else 1
+      misc_max = max(misc_count.values()) if misc_count else 0
       for item in misc_count:
-        if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== max(misc_count.values()) and max(misc_count.values())>3 ):  misc_words.append(item)
+        if item and (misc_count[item] >= len(files) and len(files)>=6 or misc_count[item]== misc_max and misc_max>3 ):  misc_words.append(item)
         #misc = misc.replace("|%s|" % item, '|')  #Log.info(u"misc_words: '%s', misc_count: '%s'" % (str(misc_words), str(misc_count)))
       misc_words.sort(key=len, reverse=True)  # Sort by string length so largest words are taken out first so smaller words that are in the larger words are not an issue
       #Log.info(u'misc_count: {}'.format(misc_count))
