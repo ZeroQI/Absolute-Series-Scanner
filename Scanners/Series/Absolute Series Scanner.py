@@ -516,6 +516,9 @@ def add_episode_into_plex(media, file, root, path, show, season=1, ep=1, title="
     if ep<=0 and season == 0:                          COUNTER = COUNTER+1; season, ep, ep2 = 0, COUNTER, COUNTER  # s00e00    => s00e5XX (happens when ScudLee mapps to S0E0)
     if ep<=0 and season > 0:                                                season, ep, ep2 = 0, 1, 1              # s[1-0]e00 => s00e01
     if not ep2 or ep > ep2:                                                 ep2             = ep                   #  make ep2 same as ep for loop and tests
+    tvdb_absolute = Dict(mappingList, 'tvdb_absolute')
+    if tvdb_absolute and season > 1 and (season, ep) in tvdb_absolute and (ep not in tvdb_mapping or tvdb_mapping[ep][0] != season):  # eg S24E01 is absolute 763, while S16E628 is already absolute
+      ep, ep2 = tvdb_absolute[(season, ep)], tvdb_absolute.get((season, ep2), tvdb_absolute[(season, ep)] + ep2 - ep)
     if tvdb_mapping and season > 0 :
       max_ep_num, season_buffer = max(tvdb_mapping.keys()), 0 if unknown_series_length else 1
       if   ep  in tvdb_mapping:               season, ep  = tvdb_mapping[ep ]
@@ -870,6 +873,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
             abs_number = Dict(episode_json, 'absoluteNumber')
             if abs_number:  # Only process episodes with absolute numbers
               tvdb_mapping[abs_number] = ( Dict(episode_json, 'seasonNumber'), Dict(episode_json, 'number') if source =='tvdb2' else abs_number )
+              if Dict(episode_json, 'seasonNumber'):  mappingList.setdefault('tvdb_absolute', {})[(Dict(episode_json, 'seasonNumber'), Dict(episode_json, 'number'))] = abs_number  # For files named SxxEyy with season episode numbers
 
         except Exception as e:  Log.error("json loading issue, Exception: %s" % e)
 
