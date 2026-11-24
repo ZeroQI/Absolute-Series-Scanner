@@ -97,8 +97,11 @@ ANIDB_TVDB_MAPPING     = 'https://raw.githubusercontent.com/Anime-Lists/anime-li
 ANIDB_TVDB_MAPPING_MOD = 'https://raw.githubusercontent.com/ZeroQI/Absolute-Series-Scanner/refs/heads/master/anime-list-corrections.xml'
 ANIDB_TVDB_MAPPING_LOC = 'anime-list-custom.xml'  # Custom local correction for ScudLee mapping file url
 
-TVDB_API1_URL          = 'http://thetvdb.com/api/A27AD9BE0DA63333/series/%s/all/en.xml'
-TVDB_API2_LOGIN        = "https://api.thetvdb.com/login"
+TVDB_API4_LOGIN        = "https://api4.thetvdb.com/v4/login"
+TVDB_API4_KEY          = None  # add your API key here to use the v4 API
+TVDB_API4_PIN          = None  # add your PIN here to use the v4 API
+TVDB_API4_EPISODES     = 'https://api4.thetvdb.com/v4/series/{}/episodes/default?page={}'
+TVDB_API2_LOGIN        = "https://api.thetvdb.com/login"                     # Legacy API, used unless both the v4 key and PIN are set
 TVDB_API2_KEY          = "A27AD9BE0DA63333"
 TVDB_API2_EPISODES     = 'https://api.thetvdb.com/series/{}/episodes?page={}'
 
@@ -298,12 +301,19 @@ def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6da
         Log.info(u"Using {action} file - Filename: '{file}', Age: '{age:.2f} days', Limit: '{limit} days', url: '{url}'".format(action="cached file" if file_content_cache else "error response", file=local_filename, age=file_age/86400, limit=cache/86400, url=url))
         Log.info(u"-- Error response received: {}".format(file_content))
         return file_content_cache or file_content  # If an error has been hit, return cached content (or error response if there is no cached content)
+    elif "api4.thetvdb.com" in url:
+      if 'Authorization' not in HEADERS:
+        payload = tvdb_credentials()
+        if not payload:  raise Exception("TheTVDB v4 needs both TVDB_API4_KEY and TVDB_API4_PIN at the top of the scanner")
+        page = read_url(Request(TVDB_API4_LOGIN, headers=HEADERS), data=json.dumps(payload))
+        HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['data']['token']
+        Log.info(u'Now authorised with TheTVDB v4')
+      file_content = read_url(Request(url, headers=HEADERS))
     elif "api.thetvdb.com" in url:
-      if 'Authorization' in HEADERS:  Log.info(u'Authorised, HEADERS: {}'.format(HEADERS))
-      else:
+      if 'Authorization' not in HEADERS:
         page = read_url(Request(TVDB_API2_LOGIN, headers=HEADERS), data=json.dumps({"apikey": TVDB_API2_KEY}))
         HEADERS['Authorization'] = 'Bearer ' + json.loads(page)['token']
-        Log.info(u'Now authorised, HEADERS: {}'.format(HEADERS))
+        Log.info(u'Now authorised with the legacy TheTVDB API')
       file_content = read_url(Request(url, headers=HEADERS))
     else:
       file_content = read_url(url)
@@ -315,6 +325,35 @@ def read_cached_url(url, foldername='', filename='', cache=518400):  # cache=6da
   except Exception as e:  # Exception hit from possible: xml parsing, file reading/writing, bad url call
     Log.error("Error downloading '{}', Exception: '{}'".format(url, e))
     raise e
+
+### TheTVDB v4 helpers ##################################################################################
+def tvdb_credentials():
+  """ Login payload, None unless both the API key and PIN are set
+  """
+  if not (TVDB_API4_KEY and TVDB_API4_PIN):  return None
+  return {'apikey': TVDB_API4_KEY, 'pin': TVDB_API4_PIN}
+
+def tvdb_episodes(tvdbid):
+  """ Load every page of the series' episodes in its default season order (pages start at 0)
+  """
+  if not tvdb_credentials():  return tvdb_episodes_legacy(tvdbid)
+  episodes, page = [], 0
+  while True:
+    page_json = json.loads(read_cached_url(TVDB_API4_EPISODES.format(tvdbid, page), foldername=os.path.join('TheTVDBv4','json',tvdbid), filename="episodes_default_page{}.json".format(page)))
+    episodes.extend(Dict(page_json, 'data', 'episodes', default=[]))
+    if not Dict(page_json, 'links', 'next'):  return episodes
+    page += 1
+
+def tvdb_episodes_legacy(tvdbid):
+  """ Load every page from the legacy API (pages start at 1), returned with the v4 field names
+  """
+  episodes, page = [], 1
+  while page not in (None, '', 'null'):
+    page_json = json.loads(read_cached_url(TVDB_API2_EPISODES.format(tvdbid, page), foldername=os.path.join('TheTVDB','json',tvdbid), filename="episodes_page{}_en.json".format(page)))
+    for episode in Dict(page_json, 'data', default=[]):
+      episodes.append({'seasonNumber': Dict(episode, 'airedSeason'), 'number': Dict(episode, 'airedEpisodeNumber'), 'absoluteNumber': Dict(episode, 'absoluteNumber')})
+    page = Dict(page_json, 'links', 'next')
+  return episodes
 
 ### Sanitize string #####################################################################################
 def os_filename_clean_string(string):
@@ -823,17 +862,14 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
       if source in ('tvdb2', 'tvdb3'):
         Log.info(u"TVDB season mode ({}) enabled".format(source))
         try:
-          #Load series episode pages and group them in one dict
-          episodes_json, page = [], 1
-          while page not in (None, '', 'null'):
-            episodes_json_page = json.loads(read_cached_url(TVDB_API2_EPISODES.format(id, page), foldername=os.path.join('TheTVDB','json',id), filename="episodes_page{}_en.json".format(page)))
-            episodes_json.extend(episodes_json_page['data'] if 'data' in episodes_json_page else [])  #Log.Info(u'TVDB_API2_EPISODES: {}, links: {}'.format(TVDB_API2_EPISODES.format(id, page), Dict(episodes_json_page, 'links')))
-            page = Dict(episodes_json_page, 'links', 'next')
+          episodes_json = tvdb_episodes(id)
 
           # SORT JSON EPISODES
           tvdb_mapping = {}
-          for episode_json in episodes_json: tvdb_mapping [Dict(episode_json, 'absoluteNumber')] = ( Dict(episode_json, 'airedSeason'), Dict(episode_json, 'airedEpisodeNumber') if source =='tvdb2' else Dict(episode_json, 'absoluteNumber') )
-          tvdb_mapping = sorted(tvdb_mapping, key=natural_sort_key)  #Log.Info(u'len: {}, tvdb_mapping: {}'.format(len(tvdb_mapping), tvdb_mapping))
+          for episode_json in episodes_json:
+            abs_number = Dict(episode_json, 'absoluteNumber')
+            if abs_number:  # Only process episodes with absolute numbers
+              tvdb_mapping[abs_number] = ( Dict(episode_json, 'seasonNumber'), Dict(episode_json, 'number') if source =='tvdb2' else abs_number )
 
         except Exception as e:  Log.error("json loading issue, Exception: %s" % e)
 
@@ -856,17 +892,19 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           if str(e) == "list index out of range":  Log.error("tvdbid: '%s' not found in online season mapping file" % id)
           else:                                    Log.error("Error opening tvdb4 mapping, Exception: '%s'" % e)
 
-      #tvdb5 - TheTVDB to absolute index order
+      #tvdb5 - TheTVDB to absolute index order (using v4 API)
       elif source=='tvdb5':
-        tvdb_guid_url = TVDB_API1_URL % id
-        Log.info(u"TVDB season mode (%s) enabled, tvdb serie rl: '%s'" % (source, tvdb_guid_url))
+        Log.info(u"TVDB season mode (%s) enabled, tvdb series id: '%s'" % (source, id))
         try:
-          tvdbanime = etree.fromstring(read_cached_url(tvdb_guid_url, foldername=os.path.join('TheTVDB','json',id), filename="series_en.xml"))
-          for episode in tvdbanime.xpath('Episode'):
-            if episode.xpath('absolute_number')[0].text:
-              mappingList['s%se%s'%(episode.xpath('SeasonNumber')[0].text, episode.xpath('EpisodeNumber')[0].text)] = "s1e%s" % episode.xpath('absolute_number')[0].text
+          episodes_json = tvdb_episodes(id)
+          for episode in episodes_json:
+            abs_number = Dict(episode, 'absoluteNumber')
+            if abs_number:
+              season = Dict(episode, 'seasonNumber')
+              episode_num = Dict(episode, 'number')
+              mappingList['s%se%s'%(season, episode_num)] = "s1e%s" % abs_number
           Log.info(u"mappingList: %s" % str(mappingList))
-        except Exception as e:  Log.error("xml loading issue, Exception: '%s''" % e)
+        except Exception as e:  Log.error("json loading issue, Exception: '%s'" % e)
 
       if tvdb_mapping:  Log.info(u"unknown_series_length: %s, tvdb_mapping: %s (showing changing seasons/episodes only)" % (unknown_series_length, str({x:tvdb_mapping[x] for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)})))  #[for x in tvdb_mapping if tvdb_mapping[x]!=(1,x)]
       Log.info(u"".ljust(157, '-'))
@@ -951,8 +989,8 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
           # Process if entries are found for the anidbid with a valid tvdbid
           if len(season_map) > 0:
             # Get the max season number from TVDB API
-            for episode in etree.fromstring(read_cached_url(TVDB_API1_URL % a3_tvdbid, foldername=os.path.join('TheTVDB','json',a3_tvdbid), filename="series_en.xml")).xpath('Episode'):
-              if int(episode.xpath('SeasonNumber')[0].text) > max_season:  max_season = int(episode.xpath('SeasonNumber')[0].text)
+            for episode in tvdb_episodes(a3_tvdbid):
+              max_season = max(max_season, Dict(episode, 'seasonNumber', default=0))
             # Set the min/max season to ints & update max value to the next min-1 to handle multi tvdb season anidb entries
             map_min_values = [int(season_map[x]['min']) for x in season_map for y in season_map[x] if y=='min']
             for entry in season_map:
