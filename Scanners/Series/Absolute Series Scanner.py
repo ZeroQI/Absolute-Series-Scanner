@@ -567,6 +567,7 @@ def anidbTvdbMapping(AniDB_TVDB_mapping_tree, anidbid):
       else:                                        mappingList['defaulttvdbseason_a'] = False
       try:
         for season in anime.iter('mapping'):
+          if season.get("tvdbseason") is None:  continue  # TMDB only row
           for episode in range(int(season.get("start")), int(season.get("end"))+1) if season.get("start") and season.get("end") else []:
             mappingList[ 's'+season.get("anidbseason") + 'e' + str(episode)          ] = 's' + season.get("tvdbseason") + 'e' + str(episode+int(season.get("offset") or 0))
           for episode in filter(None, season.text.split(';')) if season.text else []:
@@ -987,6 +988,7 @@ def Scan(path, files, media, dirs, language=None, root=None, **kwargs): #get cal
                   season_map[anime2.get("anidbid")] = {'min': (anime2.get('defaulttvdbseason') or '1').replace('a', '1'), 'max': (anime2.get('defaulttvdbseason') or '1').replace('a', '1')}  # Set the min/max season to the 'defaulttvdbseason'
                   if source=="anidb4" and int(anime2.get('episodeoffset') or '0')>0:  season_map[anime2.get("anidbid")] = {'min': '0', 'max': '0'}    # Force series as special if not starting the TVDB season
                   for season in anime2.iter('mapping'):
+                    if season.get("tvdbseason") is None:  continue  # TMDB only row
                     if season_map[anime2.get("anidbid")]['max'].isdigit() and int(season_map[anime2.get("anidbid")]['max']) < int(season.get("tvdbseason")):
                       season_map[anime2.get("anidbid")]['max'] = season.get("tvdbseason")      # Update the max season to the largest 'tvdbseason' season seen in 'mapping-list'
 
